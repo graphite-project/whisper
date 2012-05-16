@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright 2008 Orbitz WorldWide
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -774,3 +773,4 @@ def merge(path_from, path_to, step=1<<12):
       pointsToWrite.sort(key=lambda p: p[0],reverse=True) #order points by timestamp, newest first
       update_many(path_to, pointsToWrite)
       fromTime = untilTime
+#!/usr/bin/env python
