@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
 import sys
-import whisper
+import optparse
 
-from optparse import OptionParser
+try:
+  import whisper
+except ImportError:
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
-option_parser = OptionParser(
+
+option_parser = optparse.OptionParser(
     usage='''%prog [options] from_path to_path''')
 
 (options, args) = option_parser.parse_args()

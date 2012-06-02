@@ -1,11 +1,21 @@
 #!/usr/bin/env python
 
-import sys, os, time
-import rrdtool
-import whisper
-from optparse import OptionParser
+import os
+import sys
+import time
+import optparse
 
-option_parser = OptionParser(usage='''%prog rrd_path''')
+try:
+  import rrdtool
+except ImportError, exc:
+  raise SystemExit('[ERROR] Missing dependency: %s' % str(exc))
+
+try:
+  import whisper
+except ImportError:
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+option_parser = optparse.OptionParser(usage='''%prog rrd_path''')
 option_parser.add_option('--xFilesFactor', default=0.5, type='float')
 
 (options, args) = option_parser.parse_args()

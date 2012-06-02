@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
 import os
-import struct
-import whisper
 import mmap
-from optparse import OptionParser
+import struct
+import optparse
 
-option_parser = OptionParser(usage='''%prog path''')
+try:
+  import whisper
+except ImportError:
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+option_parser = optparse.OptionParser(usage='''%prog path''')
 (options, args) = option_parser.parse_args()
 
 if len(args) != 1:
@@ -15,7 +19,7 @@ else:
   path = args[0]
 
 def mmap_file(filename):
-  fd = os.open(filename, os.O_RDONLY) 
+  fd = os.open(filename, os.O_RDONLY)
   map = mmap.mmap(fd, 0, prot=mmap.PROT_READ)
   os.close(fd)
   return map

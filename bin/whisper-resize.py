@@ -1,12 +1,19 @@
 #!/usr/bin/env python
 
-import sys, os, time, traceback
-import whisper
-from optparse import OptionParser
+import os
+import sys
+import time
+import optparse
+import traceback
+
+try:
+  import whisper
+except ImportError:
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
 now = int(time.time())
 
-option_parser = OptionParser(
+option_parser = optparse.OptionParser(
     usage='''%prog path timePerPoint:timeToStore [timePerPoint:timeToStore]*
 
 timePerPoint and timeToStore specify lengths of time, for example:
