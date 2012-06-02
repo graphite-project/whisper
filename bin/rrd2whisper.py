@@ -30,7 +30,10 @@ if len(args) < 1:
 
 rrd_path = args[0]
 
-rrd_info = rrdtool.info(rrd_path)
+try:
+  rrd_info = rrdtool.info(rrd_path)
+except rrdtool.error, exc:
+  raise SystemExit('[ERROR] %s' % str(exc))
 
 seconds_per_point = rrd_info['step']
 
@@ -60,7 +63,7 @@ else:
   datasources = list(set( key[3:].split(']')[0] for key in ds_keys ))
 
 for datasource in datasources:
-  now = int( time.time() )
+  now = int(time.time())
   path = rrd_path.replace('.rrd','_%s.wsp' % datasource)
   whisper.create(path, [(seconds_per_point,retention_points)], xFilesFactor=options.xFilesFactor)
   size = os.stat(path).st_size
