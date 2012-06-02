@@ -52,10 +52,17 @@ if len(args) < 2:
   sys.exit(1)
 
 path = args[0]
+
+if not os.path.exists(path):
+  sys.stderr.write("[ERROR] File '%s' does not exist!\n\n" % path)
+  option_parser.print_usage()
+  sys.exit(1)
+
+info = whisper.info(path)
+
 new_archives = [whisper.parseRetentionDef(retentionDef)
                 for retentionDef in args[1:]]
 
-info = whisper.info(path)
 old_archives = info['archives']
 # sort by precision, lowest to highest
 old_archives.sort(key=lambda a: a['secondsPerPoint'], reverse=True)
