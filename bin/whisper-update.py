@@ -2,12 +2,16 @@
 
 import sys
 import time
+import signal
 import optparse
 
 try:
   import whisper
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+# Ignore SIGPIPE
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 now = int( time.time() )
 

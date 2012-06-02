@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import signal
 import optparse
 
 try:
@@ -8,6 +9,8 @@ try:
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
+# Ignore SIGPIPE
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 option_parser = optparse.OptionParser(
     usage='''%prog [options] from_path to_path''')

@@ -3,6 +3,7 @@
 import os
 import sys
 import time
+import signal
 import optparse
 
 try:
@@ -14,6 +15,9 @@ try:
   import whisper
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+# Ignore SIGPIPE
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 option_parser = optparse.OptionParser(usage='''%prog rrd_path''')
 option_parser.add_option('--xFilesFactor', default=0.5, type='float')

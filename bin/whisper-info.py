@@ -2,6 +2,7 @@
 
 import os
 import sys
+import signal
 import optparse
 
 try:
@@ -9,6 +10,8 @@ try:
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
+# Ignore SIGPIPE
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 option_parser = optparse.OptionParser(usage='''%prog path [field]''')
 (options, args) = option_parser.parse_args()
