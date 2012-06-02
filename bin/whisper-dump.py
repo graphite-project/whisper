@@ -89,6 +89,9 @@ def dump_archives(archives):
       offset += whisper.pointSize
     print
 
+if not os.path.exists(path):
+  raise SystemExit('[ERROR] File "%s" does not exist!' % path)
+
 map = mmap_file(path)
 header = read_header(map)
 dump_header(header)
