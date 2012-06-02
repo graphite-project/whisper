@@ -1,10 +1,19 @@
 #!/usr/bin/env python
 
-import sys, os
-import whisper
-from optparse import OptionParser
+import os
+import sys
+import signal
+import optparse
 
-option_parser = OptionParser(
+try:
+  import whisper
+except ImportError:
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+# Ignore SIGPIPE
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+option_parser = optparse.OptionParser(
     usage='''%prog path timePerPoint:timeToStore [timePerPoint:timeToStore]*
 
 timePerPoint and timeToStore specify lengths of time, for example:
@@ -30,11 +39,14 @@ path = args[0]
 archives = [whisper.parseRetentionDef(retentionDef)
             for retentionDef in args[1:]]
 
-if options.overwrite and os.path.exists(path):
-  print 'Overwriting existing file: %s' % path
-  os.unlink(path)
+if os.path.exists(path) and options.overwrite:
+    print 'Overwriting existing file: %s' % path
+    os.unlink(path)
 
-whisper.create(path, archives, xFilesFactor=options.xFilesFactor, aggregationMethod=options.aggregationMethod)
+try:
+  whisper.create(path, archives, xFilesFactor=options.xFilesFactor, aggregationMethod=options.aggregationMethod)
+except whisper.WhisperException, exc:
+  raise SystemExit('[ERROR] %s' % str(exc))
 
 size = os.stat(path).st_size
 print 'Created: %s (%d bytes)' % (path,size)

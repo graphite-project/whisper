@@ -1,10 +1,19 @@
 #!/usr/bin/env python
 
-import sys, os
-import whisper
-from optparse import OptionParser
+import os
+import sys
+import signal
+import optparse
 
-option_parser = OptionParser(usage='''%prog path [field]''')
+try:
+  import whisper
+except ImportError:
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+# Ignore SIGPIPE
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+option_parser = optparse.OptionParser(usage='''%prog path [field]''')
 (options, args) = option_parser.parse_args()
 
 if len(args) < 1:
@@ -17,7 +26,11 @@ if len(args) > 1:
 else:
   field = None
 
-info = whisper.info(path)
+try:
+  info = whisper.info(path)
+except whisper.WhisperException, exc:
+  raise SystemExit('[ERROR] %s' % str(exc))
+
 info['fileSize'] = os.stat(path).st_size
 
 if field:

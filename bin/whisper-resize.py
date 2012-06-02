@@ -1,12 +1,23 @@
 #!/usr/bin/env python
 
-import sys, os, time, traceback
-import whisper
-from optparse import OptionParser
+import os
+import sys
+import time
+import signal
+import optparse
+import traceback
+
+try:
+  import whisper
+except ImportError:
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+# Ignore SIGPIPE
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 now = int(time.time())
 
-option_parser = OptionParser(
+option_parser = optparse.OptionParser(
     usage='''%prog path timePerPoint:timeToStore [timePerPoint:timeToStore]*
 
 timePerPoint and timeToStore specify lengths of time, for example:
@@ -41,10 +52,17 @@ if len(args) < 2:
   sys.exit(1)
 
 path = args[0]
+
+if not os.path.exists(path):
+  sys.stderr.write("[ERROR] File '%s' does not exist!\n\n" % path)
+  option_parser.print_usage()
+  sys.exit(1)
+
+info = whisper.info(path)
+
 new_archives = [whisper.parseRetentionDef(retentionDef)
                 for retentionDef in args[1:]]
 
-info = whisper.info(path)
 old_archives = info['archives']
 # sort by precision, lowest to highest
 old_archives.sort(key=lambda a: a['secondsPerPoint'], reverse=True)

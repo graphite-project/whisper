@@ -1,11 +1,25 @@
 #!/usr/bin/env python
 
-import sys, os, time
-import rrdtool
-import whisper
-from optparse import OptionParser
+import os
+import sys
+import time
+import signal
+import optparse
 
-option_parser = OptionParser(usage='''%prog rrd_path''')
+try:
+  import rrdtool
+except ImportError, exc:
+  raise SystemExit('[ERROR] Missing dependency: %s' % str(exc))
+
+try:
+  import whisper
+except ImportError:
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+# Ignore SIGPIPE
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+option_parser = optparse.OptionParser(usage='''%prog rrd_path''')
 option_parser.add_option('--xFilesFactor', default=0.5, type='float')
 
 (options, args) = option_parser.parse_args()
@@ -16,7 +30,10 @@ if len(args) < 1:
 
 rrd_path = args[0]
 
-rrd_info = rrdtool.info(rrd_path)
+try:
+  rrd_info = rrdtool.info(rrd_path)
+except rrdtool.error, exc:
+  raise SystemExit('[ERROR] %s' % str(exc))
 
 seconds_per_point = rrd_info['step']
 
@@ -46,7 +63,7 @@ else:
   datasources = list(set( key[3:].split(']')[0] for key in ds_keys ))
 
 for datasource in datasources:
-  now = int( time.time() )
+  now = int(time.time())
   path = rrd_path.replace('.rrd','_%s.wsp' % datasource)
   whisper.create(path, [(seconds_per_point,retention_points)], xFilesFactor=options.xFilesFactor)
   size = os.stat(path).st_size
