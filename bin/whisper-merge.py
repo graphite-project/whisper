@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import signal
 import optparse
@@ -23,5 +24,9 @@ if len(args) < 2:
 
 path_from = args[0]
 path_to = args[1]
+
+for filename in (path_from, path_to):
+   if not os.path.exists(filename):
+       raise SystemExit('[ERROR] File "%s" does not exist!' % filename)
 
 whisper.merge(path_from, path_to)
