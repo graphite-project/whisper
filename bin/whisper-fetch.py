@@ -1,13 +1,22 @@
 #!/usr/bin/env python
 
-import sys, time
-import whisper
-from optparse import OptionParser
+import sys
+import time
+import signal
+import optparse
+
+try:
+  import whisper
+except ImportError:
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+# Ignore SIGPIPE
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 now = int( time.time() )
 yesterday = now - (60 * 60 * 24)
 
-option_parser = OptionParser(usage='''%prog [options] path''')
+option_parser = optparse.OptionParser(usage='''%prog [options] path''')
 option_parser.add_option('--from', default=yesterday, type='int', dest='_from',
   help=("Unix epoch time of the beginning of "
         "your requested interval (default: 24 hours ago)"))
@@ -30,7 +39,11 @@ from_time = int( options._from )
 until_time = int( options.until )
 
 
-(timeInfo, values) = whisper.fetch(path, from_time, until_time)
+try:
+  (timeInfo, values) = whisper.fetch(path, from_time, until_time)
+except whisper.WhisperException, exc:
+  raise SystemExit('[ERROR] %s' % str(exc))
+
 
 (start,end,step) = timeInfo
 
