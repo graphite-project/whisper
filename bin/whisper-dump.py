@@ -41,7 +41,7 @@ def read_header(map):
     try:
       (offset, secondsPerPoint, points) = struct.unpack(whisper.archiveInfoFormat, map[archiveOffset:archiveOffset+whisper.archiveInfoSize])
     except:
-      raise CorruptWhisperFile("Unable to reda archive %d metadata" % i)
+      raise CorruptWhisperFile("Unable to read archive %d metadata" % i)
 
     archiveInfo = {
       'offset' : offset,
