@@ -363,7 +363,7 @@ aggregationMethod specifies the function to use when propogating data (see ``whi
 
   fh.close()
 
-def __aggregate(aggregationMethod, knownValues):
+def aggregate(aggregationMethod, knownValues):
   if aggregationMethod == 'average':
     return float(sum(knownValues)) / float(len(knownValues))
   elif aggregationMethod == 'sum':
@@ -437,7 +437,7 @@ def __propagate(fh,header,timestamp,higher,lower):
 
   knownPercent = float(len(knownValues)) / float(len(neighborValues))
   if knownPercent >= xff: #we have enough data to propagate a value!
-    aggregateValue = __aggregate(aggregationMethod, knownValues)
+    aggregateValue = aggregate(aggregationMethod, knownValues)
     myPackedPoint = struct.pack(pointFormat,lowerIntervalStart,aggregateValue)
     fh.seek(lower['offset'])
     packedPoint = fh.read(pointSize)
