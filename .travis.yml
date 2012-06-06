@@ -1,0 +1,20 @@
+language: python
+
+python:
+  - 2.5
+  - 2.6
+  - 2.7
+  - pypy
+
+install:
+    pip install .
+
+script:
+  - bin/whisper-create.py --help
+  - bin/whisper-dump.py --help
+  - bin/whisper-fetch.py --help
+  - bin/whisper-info.py --help
+  - bin/whisper-merge.py --help
+  - bin/whisper-resize.py --help
+  - bin/whisper-set-aggregation-method.py --help
+  - bin/whisper-update.py --help
