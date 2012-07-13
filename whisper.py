@@ -683,8 +683,6 @@ def file_fetch(fh, fromTime, untilTime):
     raise InvalidTimeInterval("Invalid time interval: from %s until %s" % (fromTime, untilTime))
   if untilTime > now:
     untilTime = now
-  if untilTime < fromTime:
-    untilTime = now
 
   diff = now - fromTime
   for archive in header['archives']:
