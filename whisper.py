@@ -680,7 +680,7 @@ def file_fetch(fh, fromTime, untilTime):
     fromTime = oldestTime
 
   if not (fromTime < untilTime):
-    raise InvalidTimeInterval("Invalid time interval")
+    raise InvalidTimeInterval("Invalid time interval: from %s until %s" % (fromTime, untilTime))
   if untilTime > now:
     untilTime = now
   if untilTime < fromTime:
