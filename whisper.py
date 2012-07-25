@@ -32,6 +32,42 @@ try:
 except ImportError:
   CAN_LOCK = False
 
+try:
+  import ctypes
+  import ctypes.util
+  CAN_FALLOCATE = True
+except ImportError:
+  CAN_FALLOCATE = False
+
+fallocate = None
+
+if CAN_FALLOCATE: 
+  libc_name = ctypes.util.find_library('c')
+  libc = ctypes.CDLL(libc_name)
+  c_off64_t = ctypes.c_int64
+  c_off_t = ctypes.c_int
+
+  try:
+    _fallocate = libc.posix_fallocate64
+    _fallocate.restype = ctypes.c_int
+    _fallocate.argtypes = [ctypes.c_int, c_off64_t, c_off64_t]
+  except AttributeError, e:
+    try:
+      _fallocate = libc.posix_fallocate
+      _fallocate.restype = ctypes.c_int
+      _fallocate.argtypes = [ctypes.c_int, c_off_t, c_off_t]
+    except AttributeError, e:
+      CAN_FALLOCATE = False
+
+  if CAN_FALLOCATE:
+    def _py_fallocate(fd, offset, len_):
+      res = _fallocate(fd.fileno(), offset, len_)
+      if res != 0:
+        raise IOError(res, 'fallocate')
+    fallocate = _py_fallocate
+  del libc
+  del libc_name
+
 LOCK = False
 CACHE_HEADERS = False
 AUTOFLUSH = False
@@ -303,7 +339,7 @@ def validateArchiveList(archiveList):
         (i + 1, pointsPerConsolidation, i, archivePoints))
 
 
-def create(path,archiveList,xFilesFactor=None,aggregationMethod=None,sparse=False):
+def create(path,archiveList,xFilesFactor=None,aggregationMethod=None,sparse=False,useFallocate=False):
   """create(path,archiveList,xFilesFactor=0.5,aggregationMethod='average')
 
 path is a string
@@ -350,12 +386,15 @@ aggregationMethod specifies the function to use when propogating data (see ``whi
     # If not creating the file sparsely, then fill the rest of the file with
     # zeroes.
     remaining = archiveOffsetPointer - headerSize
-    chunksize = 16384
-    zeroes = '\x00' * chunksize
-    while remaining > chunksize:
-      fh.write(zeroes)
-      remaining -= chunksize
-    fh.write(zeroes[:remaining])
+    if CAN_FALLOCATE and useFallocate:
+      fallocate(fh, headerSize, remaining)
+    else:  
+      chunksize = 16384
+      zeroes = '\x00' * chunksize
+      while remaining > chunksize:
+        fh.write(zeroes)
+        remaining -= chunksize
+      fh.write(zeroes[:remaining])
 
   if AUTOFLUSH:
     fh.flush()
