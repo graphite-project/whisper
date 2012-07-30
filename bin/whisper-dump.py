@@ -24,7 +24,7 @@ else:
 
 def mmap_file(filename):
   fd = os.open(filename, os.O_RDONLY)
-  map = mmap.mmap(fd, 0, prot=mmap.PROT_READ)
+  map = mmap.mmap(fd, os.fstat(fd).st_size, prot=mmap.PROT_READ)
   os.close(fd)
   return map
 
