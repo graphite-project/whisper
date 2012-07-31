@@ -380,8 +380,8 @@ aggregationMethod specifies the function to use when propogating data (see ``whi
     archiveOffsetPointer += (points * pointSize)
 
   if sparse:
-    fh.seek(archiveOffsetPointer - headerSize - 1)
-    fh.write("\0")
+    fh.seek(archiveOffsetPointer - 1)
+    fh.write('\x00')
   else:
     # If not creating the file sparsely, then fill the rest of the file with
     # zeroes.
