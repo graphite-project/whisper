@@ -714,15 +714,16 @@ def file_fetch(fh, fromTime, untilTime):
   fromTime = int(fromTime)
   untilTime = int(untilTime)
 
+  if not (fromTime < untilTime):
+    raise InvalidTimeInterval("Invalid time interval: from %s until %s" % (fromTime, untilTime))
+
   oldestTime = now - header['maxRetention']
   if fromTime < oldestTime:
-    fromTime = oldestTime
-
-  if not (fromTime < untilTime):
-    raise InvalidTimeInterval("Invalid time interval")
+    if oldestTime < untilTime>: # most likely
+      fromTime = oldestTime
+    else: # this is an edge case, but should be handled cleanly
+      fromTime = untilTime
   if untilTime > now:
-    untilTime = now
-  if untilTime < fromTime:
     untilTime = now
 
   diff = now - fromTime
