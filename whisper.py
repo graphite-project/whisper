@@ -700,7 +700,12 @@ def fetch(path,fromTime,untilTime=None):
 
 path is a string
 fromTime is an epoch time
-untilTime is also an epoch time, but defaults to now
+untilTime is also an epoch time, but defaults to now.
+
+Returns a tuple of (timeInfo, valueList)
+where timeInfo is itself a tuple of (fromTime, untilTime, step)
+
+Returns None if no data can be returned
 """
   fh = open(path,'rb')
   return file_fetch(fh, fromTime, untilTime)
@@ -714,15 +719,23 @@ def file_fetch(fh, fromTime, untilTime):
   fromTime = int(fromTime)
   untilTime = int(untilTime)
 
-  if not (fromTime < untilTime):
-    raise InvalidTimeInterval("Invalid time interval: from %s until %s" % (fromTime, untilTime))
+  # Here we try and be flexible and return as much data as we can.
+  # If the range of data is from too far in the past or fully in the future, we
+  # return nothing
+  if (fromTime > untilTime):
+    raise InvalidTimeInterval("Invalid time interval: from time '%s' is after until time '%s'" % (fromTime, untilTime))
 
   oldestTime = now - header['maxRetention']
+  # Range is in the future
+  if fromTime > now:
+    return None
+  # Range is beyond retention
+  if untilTime < oldestTime:
+    return None
+  # Range requested is partially beyond retention, adjust
   if fromTime < oldestTime:
-    if oldestTime < untilTime>: # most likely
-      fromTime = oldestTime
-    else: # this is an edge case, but should be handled cleanly
-      fromTime = untilTime
+    fromTime = oldestTime
+  # Range is partially in the future, adjust
   if untilTime > now:
     untilTime = now
 
