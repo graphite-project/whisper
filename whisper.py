@@ -379,22 +379,22 @@ aggregationMethod specifies the function to use when propogating data (see ``whi
     fh.write(archiveInfo)
     archiveOffsetPointer += (points * pointSize)
 
-  if sparse:
+  #If configured to use fallocate and capable of fallocate use that, else
+  #attempt sparse if configure or zero pre-allocate if sparse isn't configured.
+  if CAN_FALLOCATE and useFallocate:
+    remaining = archiveOffsetPointer - headerSize
+    fallocate(fh, headerSize, remaining)
+  elif sparse:
     fh.seek(archiveOffsetPointer - 1)
     fh.write('\x00')
   else:
-    # If not creating the file sparsely, then fill the rest of the file with
-    # zeroes.
     remaining = archiveOffsetPointer - headerSize
-    if CAN_FALLOCATE and useFallocate:
-      fallocate(fh, headerSize, remaining)
-    else:  
-      chunksize = 16384
-      zeroes = '\x00' * chunksize
-      while remaining > chunksize:
-        fh.write(zeroes)
-        remaining -= chunksize
-      fh.write(zeroes[:remaining])
+    chunksize = 16384
+    zeroes = '\x00' * chunksize
+    while remaining > chunksize:
+      fh.write(zeroes)
+      remaining -= chunksize
+    fh.write(zeroes[:remaining])
 
   if AUTOFLUSH:
     fh.flush()
