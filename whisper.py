@@ -695,7 +695,7 @@ path is a string
   return info
 
 
-def fetch(path,fromTime,untilTime=None):
+def fetch(path,fromTime,untilTime=None,now=None):
   """fetch(path,fromTime,untilTime=None)
 
 path is a string
@@ -708,12 +708,16 @@ where timeInfo is itself a tuple of (fromTime, untilTime, step)
 Returns None if no data can be returned
 """
   fh = open(path,'rb')
-  return file_fetch(fh, fromTime, untilTime)
+  return file_fetch(fh, fromTime, untilTime,now)
 
 
-def file_fetch(fh, fromTime, untilTime):
+def file_fetch(fh, fromTime, untilTime, now=None):
   header = __readHeader(fh)
-  now = int( time.time() )
+  if now == None:
+    now = int( time.time() )
+  else:
+    now = int(now)
+
   if untilTime is None:
     untilTime = now
   fromTime = int(fromTime)
@@ -801,29 +805,52 @@ def file_fetch(fh, fromTime, untilTime):
   timeInfo = (fromInterval,untilInterval,step)
   return (timeInfo,valueList)
 
-def merge(path_from, path_to, step=1<<12):
+
+
+
+def merge(path_from, path_to):
+  # imagine your archives look like this:
+  # past -------> now
+  #             00000
+  #          11111111
+  #      222222222222
+  # 33333333333333333
+
+  # the function will write these values: (starting
+  #   at top, going to bottom)
+  # past -------> now
+  #             00000
+  #          111xxxxx
+  #      2222xxxxxxxx
+  # 33333xxxxxxxxxxxx
+  #
+  # the x's will automatically be filled in using the
+  # appropriate aggregationMethod on the destination
+
   headerFrom = info(path_from)
+  headerTo = info(path_to)
+
+  # deep compare of archive structures
+  if headerFrom['archives'] != headerTo['archives']:
+    # There are perfectly acceptable, correct ways to merge
+    # archives with differing configurations.  However, this warrants
+    # good documentation, and a much larger and more carefully written function.
+    raise NotImplementedError("%s and %s archive configurations are not alike. Don't know how to merge." % (
+      path_from, path_to))
 
   archives = headerFrom['archives']
-  archives.sort(key=operator.itemgetter('retention'), reverse=True)
+  archives.sort(key=operator.itemgetter('retention'))
 
-  # Start from maxRetention of the oldest file, and skip forward at max 'step'
-  # points at a time.
-  fromTime = int(time.time()) - headerFrom['maxRetention']
+  now = int(time.time())
+  untilTime = now
   for archive in archives:
-    pointsRemaining = archive['points']
-    while pointsRemaining:
-      pointsToRead = step
-      if pointsRemaining < step:
-        pointsToRead = pointsRemaining
-      pointsRemaining -= pointsToRead
-      untilTime = fromTime + (pointsToRead * archive['secondsPerPoint'])
-      (timeInfo, values) = fetch(path_from, fromTime, untilTime)
-      (start, end, archive_step) = timeInfo
-      pointsToWrite = list(itertools.ifilter(
-        lambda points: points[1] is not None,
-        itertools.izip(xrange(start, end, archive_step), values)))
-      pointsToWrite.sort(key=lambda p: p[0],reverse=True) #order points by timestamp, newest first
-      update_many(path_to, pointsToWrite)
-      fromTime = untilTime
+    fromTime = now - archive['retention']
+    (timeInfo, values) = fetch(path_from, fromTime, untilTime, now=now)
+    (start, end, archive_step) = timeInfo
+    pointsToWrite = list(itertools.ifilter(
+      lambda points: points[1] is not None,
+      itertools.izip(xrange(start, end, archive_step), values)))
+    update_many(path_to, pointsToWrite)
+    untilTime = fromTime
+
 #!/usr/bin/env python
