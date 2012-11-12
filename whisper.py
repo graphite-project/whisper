@@ -809,8 +809,9 @@ def merge(path_from, path_to, step=1<<12):
 
   # Start from maxRetention of the oldest file, and skip forward at max 'step'
   # points at a time.
-  fromTime = int(time.time()) - headerFrom['maxRetention']
+  now = int( time.time() )
   for archive in archives:
+    fromTime = now - headerFrom['maxRetention']
     pointsRemaining = archive['points']
     while pointsRemaining:
       pointsToRead = step
