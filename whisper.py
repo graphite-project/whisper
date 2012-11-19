@@ -744,6 +744,14 @@ def file_fetch(fh, fromTime, untilTime):
     if archive['retention'] >= diff:
       break
 
+  return __archive_fetch(fh, archive, fromTime, untilTime)
+
+def __archive_fetch(fh, archive, fromTime, untilTime):
+  """
+Fetch data from a single archive. Note that checks for validity of the time
+period requested happen above this level so it's possible to wrap around the
+archive on a read and request data older than the archive's retention
+"""
   fromInterval = int( fromTime - (fromTime % archive['secondsPerPoint']) ) + archive['secondsPerPoint']
   untilInterval = int( untilTime - (untilTime % archive['secondsPerPoint']) ) + archive['secondsPerPoint']
   fh.seek(archive['offset'])
