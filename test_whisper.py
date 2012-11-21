@@ -6,17 +6,14 @@ import random
 
 class TestWhisper(unittest.TestCase):
     """
-    Testing functions for whisper. Testing is mostly done on
-    random methods, for now
+    Testing functions for whisper.
     """
     
-    def setUp(self):
-        """ SETUP method
-        removes any old databases left over from tests 
-        """
+    @classmethod
+    def setUpClass(cls):
         # remove old database
         try:
-            os.remove("db")
+            os.remove("db.wsp")
         except Exception:
             pass
 
@@ -62,16 +59,16 @@ class TestWhisper(unittest.TestCase):
         
         # check if invalid configuration fails successfully
         with self.assertRaises(whisper.InvalidConfiguration):
-            whisper.create("db",[])
+            whisper.create("db.wsp",[])
                    
         # create a new db with a valid configuration
-        whisper.create("db",retention)         
+        whisper.create("db.wsp",retention)         
         
         # attempt to create another db in the same file, this should fail
         with self.assertRaises(whisper.InvalidConfiguration):
-            whisper.create("db",0)
+            whisper.create("db.wsp",0)
             
-        info = whisper.info("db")
+        info = whisper.info("db.wsp")
         
         # check header information
         self.assertEqual(info['maxRetention'], max([a[0]*a[1] for a in retention]))
@@ -86,7 +83,7 @@ class TestWhisper(unittest.TestCase):
         self.assertEqual(info['archives'][1]['retention'],retention[1][0]*retention[1][1])
                 
         # remove database
-        os.remove("db")
+        os.remove("db.wsp")
         
         
     def test_fetch(self):    
@@ -98,13 +95,13 @@ class TestWhisper(unittest.TestCase):
             
         # SECOND MINUTE HOUR DAY
         retention = [(1,60),(60,60),(3600,24),(86400,365)]
-        whisper.create("db",retention)  
+        whisper.create("db.wsp",retention)  
             
         # check a db with an invalid time range
         with self.assertRaises(whisper.InvalidTimeInterval):
-            whisper.fetch("db", time.time(), time.time()-6000)
+            whisper.fetch("db.wsp", time.time(), time.time()-6000)
     
-        fetch = whisper.fetch("db",0)
+        fetch = whisper.fetch("db.wsp",0)
         # print(fetch)
         
         # check time range 
@@ -116,11 +113,11 @@ class TestWhisper(unittest.TestCase):
         # check step size
         self.assertEqual(fetch[0][2], retention[-1][0])
         
-        os.remove("db")
+        os.remove("db.wsp")
         
     def test_update(self):
         
-        whisper.create("db", [(1, 5)])
+        whisper.create("db.wsp", [(1, 5)])
 
         tn = time.time()-4
         data = []
@@ -129,10 +126,10 @@ class TestWhisper(unittest.TestCase):
             data.append((tn, random.random()*10))
             tn = tn+1
         
-        whisper.update("db", data[0][1], data[0][0])
-        whisper.update_many("db", data[1:])
+        whisper.update("db.wsp", data[0][1], data[0][0])
+        whisper.update_many("db.wsp", data[1:])
         
-        fetch = whisper.fetch("db",0)
+        fetch = whisper.fetch("db.wsp",0)
         tstart = fetch[0][0]
         tend = fetch[0][1]
         
@@ -151,24 +148,20 @@ class TestWhisper(unittest.TestCase):
         
         # check TimestampNotCovered
         with self.assertRaises(whisper.TimestampNotCovered):
-            whisper.update("db", 1.337, time.time()+1)
+            whisper.update("db.wsp", 1.337, time.time()+1)
         with self.assertRaises(whisper.TimestampNotCovered):
-            whisper.update("db", 1.337, time.time()-10)
+            whisper.update("db.wsp", 1.337, time.time()-10)
         
-        os.remove("db")
-        
+        os.remove("db.wsp")        
     
         
-    
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         # make sure file is removed
         try:
-            os.remove("db")
+            os.remove("db.wsp")
         except Exception:
-            pass
-        
-        
-        
+            pass       
     
 
 if __name__ == '__main__':
