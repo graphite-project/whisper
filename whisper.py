@@ -809,29 +809,35 @@ archive on a read and request data older than the archive's retention
   timeInfo = (fromInterval,untilInterval,step)
   return (timeInfo,valueList)
 
-def merge(path_from, path_to, step=1<<12):
-  headerFrom = info(path_from)
+def merge(path_from, path_to):
+  """ Merges the data from one whisper file into another. Each file must have
+  the same archive configuration
+"""
+  fh_from = open(path_from)
+  fh_to = open(path_to)
+  return file_merge(fh_from, fh_to)
+
+def file_merge(fh_from, fh_to):
+  headerFrom = __readHeader(fh_from)
+  headerTo = __readHeader(fh_to)
+
+  if headerFrom['archives'] != headerTo['archives']:
+    raise NotImplementedError("%s and %s archive configurations are unalike. " \
+    "Resize the input before merging" % (fh_from.name, fh_to.name))
 
   archives = headerFrom['archives']
-  archives.sort(key=operator.itemgetter('retention'), reverse=True)
+  archives.sort(key=operator.itemgetter('retention'))
 
-  # Start from maxRetention of the oldest file, and skip forward at max 'step'
-  # points at a time.
-  fromTime = int(time.time()) - headerFrom['maxRetention']
+  now = int(time.time())
+  untilTime = now
   for archive in archives:
-    pointsRemaining = archive['points']
-    while pointsRemaining:
-      pointsToRead = step
-      if pointsRemaining < step:
-        pointsToRead = pointsRemaining
-      pointsRemaining -= pointsToRead
-      untilTime = fromTime + (pointsToRead * archive['secondsPerPoint'])
-      (timeInfo, values) = fetch(path_from, fromTime, untilTime)
-      (start, end, archive_step) = timeInfo
-      pointsToWrite = list(itertools.ifilter(
-        lambda points: points[1] is not None,
-        itertools.izip(xrange(start, end, archive_step), values)))
-      pointsToWrite.sort(key=lambda p: p[0],reverse=True) #order points by timestamp, newest first
-      update_many(path_to, pointsToWrite)
-      fromTime = untilTime
+    fromTime = now - archive['retention']
+    (timeInfo, values) = __fetch_archive(from_fh, archive, path_from, fromTime, untilTime)
+    (start, end, archive_step) = timeInfo
+    pointsToWrite = list(itertools.ifilter(
+      lambda points: points[1] is not None,
+      itertools.izip(xrange(start, end, archive_step), values)))
+    __archive_update_many(to_fh, archive, pointsToWrite)
+    untilTime = fromTime
+
 #!/usr/bin/env python
