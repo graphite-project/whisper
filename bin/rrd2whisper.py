@@ -19,7 +19,10 @@ except ImportError:
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-aggregationMethods = whisper.aggregationMethods - 'sum'
+aggregationMethods = whisper.aggregationMethods
+
+# RRD doesn't have a 'sum' or 'total' type
+aggregationMethods.remove('sum')
 
 option_parser = optparse.OptionParser(usage='''%prog rrd_path''')
 option_parser.add_option(
@@ -39,7 +42,7 @@ option_parser.add_option(
 (options, args) = option_parser.parse_args()
 
 if len(args) < 1:
-  option_parser.print_usage()
+  option_parser.print_help()
   sys.exit(1)
 
 rrd_path = args[0]
