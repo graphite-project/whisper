@@ -328,7 +328,7 @@ def validateArchiveList(archiveList):
       raise InvalidConfiguration("Lower precision archives must cover "
         "larger time intervals than higher precision archives "
         "(archive%d: %s seconds, archive%d: %s seconds)" %
-        (i, archive[1], i + 1, nextArchive[1]))
+        (i, retention, i + 1, nextRetention))
 
     archivePoints = archive[1]
     pointsPerConsolidation = nextArchive[0] / archive[0]
