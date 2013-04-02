@@ -30,7 +30,7 @@ option_parser.add_option('--pretty', default=False, action='store_true',
 (options, args) = option_parser.parse_args()
 
 if len(args) != 1:
-  option_parser.print_usage()
+  option_parser.print_help()
   sys.exit(1)
 
 path = args[0]
