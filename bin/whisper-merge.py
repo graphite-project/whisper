@@ -19,7 +19,7 @@ option_parser = optparse.OptionParser(
 (options, args) = option_parser.parse_args()
 
 if len(args) < 2:
-  option_parser.print_usage()
+  option_parser.print_help()
   sys.exit(1)
 
 path_from = args[0]
