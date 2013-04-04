@@ -54,14 +54,14 @@ option_parser.add_option(
 (options, args) = option_parser.parse_args()
 
 if len(args) < 2:
-  option_parser.print_usage()
+  option_parser.print_help()
   sys.exit(1)
 
 path = args[0]
 
 if not os.path.exists(path):
   sys.stderr.write("[ERROR] File '%s' does not exist!\n\n" % path)
-  option_parser.print_usage()
+  option_parser.print_help()
   sys.exit(1)
 
 info = whisper.info(path)

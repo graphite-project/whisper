@@ -19,7 +19,7 @@ option_parser = optparse.OptionParser(
 (options, args) = option_parser.parse_args()
 
 if len(args) < 2:
-  option_parser.print_usage()
+  option_parser.print_help()
   sys.exit(1)
 
 path = args[0]
@@ -29,7 +29,7 @@ try:
   oldAggregationMethod = whisper.setAggregationMethod(path, aggregationMethod)
 except IOError, exc:
   sys.stderr.write("[ERROR] File '%s' does not exist!\n\n" % path)
-  option_parser.print_usage()
+  option_parser.print_help()
   sys.exit(1)
 except whisper.WhisperException, exc:
   raise SystemExit('[ERROR] %s' % str(exc))
