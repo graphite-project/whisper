@@ -18,3 +18,5 @@ script:
   - bin/whisper-resize.py --help
   - bin/whisper-set-aggregation-method.py --help
   - bin/whisper-update.py --help
+  - contrib/whisper-auto-update.py --help
+  - contrib/whisper-auto-resize.py --help
