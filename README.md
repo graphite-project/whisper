@@ -26,7 +26,17 @@ rrd2whisper.py
 Convert a rrd file into a whisper (.wsp) file.
 
 ```
-Usage: rrd2whisper.py path
+Usage: rrd2whisper.py rrd_path
+
+Options:
+  -h, --help            show this help message and exit
+  --xFilesFactor=XFILESFACTOR
+                        The xFilesFactor to use in the output file. Defaults
+                        to the input RRD's xFilesFactor
+  --aggregationMethod=AGGREGATIONMETHOD
+                        The consolidation function to fetch from on input and
+                        aggregationMethod to set on output. One of: average,
+                        last, max, min
 ```
 
 whisper-create.py
