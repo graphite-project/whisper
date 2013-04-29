@@ -834,8 +834,8 @@ def merge(path_from, path_to):
   """ Merges the data from one whisper file into another. Each file must have
   the same archive configuration
 """
-  fh_from = open(path_from)
-  fh_to = open(path_to)
+  fh_from = open(path_from, 'rb')
+  fh_to = open(path_to, 'rb+')
   return file_merge(fh_from, fh_to)
 
 def file_merge(fh_from, fh_to):
@@ -853,13 +853,15 @@ def file_merge(fh_from, fh_to):
   untilTime = now
   for archive in archives:
     fromTime = now - archive['retention']
-    (timeInfo, values) = __archive_fetch(from_fh, archive, path_from, fromTime, untilTime)
+    (timeInfo, values) = __archive_fetch(fh_from, archive, fromTime, untilTime)
     (start, end, archive_step) = timeInfo
     pointsToWrite = list(itertools.ifilter(
       lambda points: points[1] is not None,
       itertools.izip(xrange(start, end, archive_step), values)))
-    __archive_update_many(to_fh, archive, pointsToWrite)
+    __archive_update_many(fh_to, headerTo, archive, pointsToWrite)
     untilTime = fromTime
+    fh_from.close()
+    fh_to.close()
 
 def diff(path_from, path_to, ignore_empty = False):
   """ Compare two whisper databases. Each file must have the same archive configuration """
