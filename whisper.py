@@ -752,6 +752,7 @@ Fetch data from a single archive. Note that checks for validity of the time
 period requested happen above this level so it's possible to wrap around the
 archive on a read and request data older than the archive's retention
 """
+  print fh
   fromInterval = int( fromTime - (fromTime % archive['secondsPerPoint']) ) + archive['secondsPerPoint']
   untilInterval = int( untilTime - (untilTime % archive['secondsPerPoint']) ) + archive['secondsPerPoint']
   fh.seek(archive['offset'])
@@ -805,7 +806,6 @@ archive on a read and request data older than the archive's retention
       valueList[i/2] = pointValue #in-place reassignment is faster than append()
     currentInterval += step
 
-  fh.close()
   timeInfo = (fromInterval,untilInterval,step)
   return (timeInfo,valueList)
 
@@ -813,8 +813,8 @@ def merge(path_from, path_to):
   """ Merges the data from one whisper file into another. Each file must have
   the same archive configuration
 """
-  fh_from = open(path_from)
-  fh_to = open(path_to)
+  fh_from = open(path_from, 'rb')
+  fh_to = open(path_to, 'rb+')
   return file_merge(fh_from, fh_to)
 
 def file_merge(fh_from, fh_to):
@@ -832,12 +832,14 @@ def file_merge(fh_from, fh_to):
   untilTime = now
   for archive in archives:
     fromTime = now - archive['retention']
-    (timeInfo, values) = __archive_fetch(from_fh, archive, path_from, fromTime, untilTime)
+    (timeInfo, values) = __archive_fetch(fh_from, archive, fromTime, untilTime)
     (start, end, archive_step) = timeInfo
     pointsToWrite = list(itertools.ifilter(
       lambda points: points[1] is not None,
       itertools.izip(xrange(start, end, archive_step), values)))
-    __archive_update_many(to_fh, archive, pointsToWrite)
+    __archive_update_many(fh_to, headerTo, archive, pointsToWrite)
     untilTime = fromTime
+  fh_from.close()
+  fh_to.close()
 
 #!/usr/bin/env python
