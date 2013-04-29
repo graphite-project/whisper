@@ -832,7 +832,7 @@ def file_merge(fh_from, fh_to):
   untilTime = now
   for archive in archives:
     fromTime = now - archive['retention']
-    (timeInfo, values) = __fetch_archive(from_fh, archive, path_from, fromTime, untilTime)
+    (timeInfo, values) = __archive_fetch(from_fh, archive, path_from, fromTime, untilTime)
     (start, end, archive_step) = timeInfo
     pointsToWrite = list(itertools.ifilter(
       lambda points: points[1] is not None,
