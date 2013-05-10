@@ -3,7 +3,7 @@
 [![Build Status](https://secure.travis-ci.org/graphite-project/whisper.png)](http://travis-ci.org/graphite-project/whisper)
 
 Whisper is one of the components of [Graphite][], and is responsible for
-the backend storage of incomming metrics from the network.
+the backend storage of incoming metrics from the network.
 Currently [Whisper][] is our stable, supported backend and
 [Ceres][] is the work-in-progress future replacement for Whisper.
 
@@ -114,7 +114,7 @@ Options:
 
 whisper-resize.py
 --------------
-Change the retention rates of an exisiting whisper file.
+Change the retention rates of an existing whisper file.
 
 ```
 Usage: whisper-resize.py path timePerPoint:timeToStore [timePerPoint:timeToStore]*
@@ -145,7 +145,7 @@ Options:
 
 whisper-set-aggregation-method.py
 --------------
-Change the aggeragation method of an wxisting whisper file.
+Change the aggregation method of an existing whisper file.
 
 ```
 Usage: whisper-set-aggregation-method.py path <average|sum|last|max|min>
