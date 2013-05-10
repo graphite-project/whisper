@@ -703,13 +703,14 @@ def info(path):
 
 path is a string
 """
+  fh = None
   try:
-    with open(path,'rb') as fh:
-      info = __readHeader(fh)
-      return info
-  except:
-    return None
-
+    fh = open(path,'rb')
+    return __readHeader(fh)
+  finally:
+    if fh:
+      fh.close()
+  return None
 
 def fetch(path,fromTime,untilTime=None):
   """fetch(path,fromTime,untilTime=None)
