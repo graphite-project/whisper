@@ -258,7 +258,7 @@ def setAggregationMethod(path, aggregationMethod):
 path is a string
 aggregationMethod specifies the method to use when propogating data (see ``whisper.aggregationMethods``)
 """
-  fm = map_path(path)
+  fm = map_path(path, 'w')
 
   packedMetadata = fm['map'].read(metadataSize)
 
@@ -504,7 +504,7 @@ value is a float
 timestamp is either an int or float
 """
   value = float(value)
-  fm = map_path(path)
+  fm = map_path(path, 'w')
   return file_update(fm, value, timestamp)
 
 
@@ -564,7 +564,7 @@ points is a list of (timestamp,value) points
   if not points: return
   points = [ (int(t),float(v)) for (t,v) in points]
   points.sort(key=lambda p: p[0],reverse=True) #order points by timestamp, newest first
-  fm = map_path(path)
+  fm = map_path(path, 'w')
   return file_update_many(fm, points)
 
 
@@ -674,7 +674,7 @@ def info(path):
 
 path is a string
 """
-  fm = map_path(path)
+  fm = map_path(path, 'r')
   info = __readHeader(fm)
   return info
 
@@ -693,16 +693,25 @@ Returns None if no data can be returned
 """
 
 # find the pointer to the file mmap in a dictionary, open it if not found
-  fm = map_path(path)
+  fm = map_path(path, 'r')
   return file_fetch(fm, fromTime, untilTime)
 
 
-def map_path(path):
+def map_path(path, access):
   if (path not in filemaps):
-    fd = os.open(path, os.O_RDWR)
+    if (access == 'r'):
+      prot = mmap.PROT_READ
+      flags = os.O_RDONLY
+    elif (access == 'w'):
+      prot = mmap.PROT_READ|mmap.PROT_WRITE
+      flags = os.O_RDWR
+    else:
+      raise ValueError("map_path access got '%s', accept 'r' or 'w'" % access)
+
+    fd = os.open(path, flags)
     filemaps[path] = {
       'name': path,
-      'map' : mmap.mmap(fd, os.fstat(fd).st_size, prot=mmap.PROT_READ|mmap.ACCESS_WRITE),
+      'map' : mmap.mmap(fd, os.fstat(fd).st_size, prot=prot),
     }
     os.close(fd)
   return filemaps[path]
@@ -812,8 +821,8 @@ def merge(from_path, to_path):
   """ Merges the data from one whisper file into another. Each file must have
   the same archive configuration
 """
-  from_fm = map_path(from_path)
-  to_fm = map_path(to_path)
+  from_fm = map_path(from_path, 'r')
+  to_fm = map_path(to_path, 'w')
   return file_merge(from_fm, to_fm)
 
 
