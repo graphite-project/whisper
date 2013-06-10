@@ -28,31 +28,33 @@ if len(args) != 2:
 
 def print_diffs(diffs,pretty=True,headers=True):
   if pretty:
-    f = "{0:>7} {1:>10} {2:>9} {3:>9}\n"
+    h = "%7s %11s %13s %13s\n"
+    f = "%7s %11d %13s %13s\n"
   else:
-    f = "{0} {1} {2} {3}\n"
+    h = "%s %s %s %s\n"
+    f = "%s %d %s %s\n"
   if headers:
-    sys.stdout.write(f.format('archive','timestamp','value_a','value_b'))
+    sys.stdout.write(h%('archive','timestamp','value_a','value_b'))
   for archive, points, total in diffs:
     count = count=points.__len__()
     if pretty:
-      sys.stdout.write('Archive {0} ({1} of {2} datapoints differ)\n'.format(archive,points.__len__(),total))
-      sys.stdout.write(f.format('','timestamp','value_a','value_b'))
+      sys.stdout.write('Archive %d (%d of %d datapoints differ)\n'%(archive,points.__len__(),total))
+      sys.stdout.write(h%('','timestamp','value_a','value_b'))
     for p in points:
       if pretty:
-        sys.stdout.write(f.format('',*p))
+        sys.stdout.write(f%('',p[0],p[1],p[2]))
       else:
-        sys.stdout.write(f.format(archive,*p))
+        sys.stdout.write(f%(archive,p[0],p[1],p[2]))
 
 def print_summary(diffs,pretty=True,headers=True):
   if pretty:
-    f = "{0:>7} {1:>9} {2:>9}\n"
+    f = "%7s %9s %9s\n"
   else:
-    f = "{0} {1} {2}\n"
+    f = "%s %s %s\n"
   if headers:
-    sys.stdout.write(f.format('archive','total','differing'))
+    sys.stdout.write(f%('archive','total','differing'))
   for archive, points, total in diffs:
-    sys.stdout.write(f.format(archive,total,points.__len__()))
+    sys.stdout.write(f%(archive,total,points.__len__()))
     
 archive_diffs = whisper.diff(path_a,path_b,ignore_empty=options.ignore_empty)
 if options.summary:
