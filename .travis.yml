@@ -21,4 +21,4 @@ script:
   - contrib/whisper-auto-update.py --help
   - contrib/whisper-auto-resize.py --help
   # Run the unit tests for >= 2.6, the test uses with statements
-  - "[ $TRAVIS_PYTHON_VERSION == '2.6' ] || [ $TRAVIS_PYTHON_VERSION == '2.7' ] && ./test_whisper.py"
+  - "[ $TRAVIS_PYTHON_VERSION == '2.6' ] || [ $TRAVIS_PYTHON_VERSION == '2.7' ] && chmod 755 test_whisper.py && ./test_whisper.py"
