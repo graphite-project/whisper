@@ -5,6 +5,7 @@ import unittest
 
 import whisper
 
+
 class TestWhisper(unittest.TestCase):
     """
     Testing functions for whisper.
@@ -17,13 +18,14 @@ class TestWhisper(unittest.TestCase):
 
     @classmethod
     def _removedb(cls):
+        """Remove the whisper database file"""
         try:
             if os.path.exists(cls.db):
                 os.unlink(cls.db)
         except (IOError, OSError):
             pass
 
-    def test_validateArchiveList(self):
+    def test_validate_archive_list(self):
         """blank archive config"""
         with self.assertRaises(whisper.InvalidConfiguration):
             whisper.validateArchiveList([])
@@ -85,16 +87,20 @@ class TestWhisper(unittest.TestCase):
         info = whisper.info(self.db)
 
         # check header information
-        self.assertEqual(info['maxRetention'], max([a[0] * a[1] for a in retention]))
+        self.assertEqual(info['maxRetention'],
+                         max([a[0] * a[1] for a in retention]))
         self.assertEqual(info['aggregationMethod'], 'average')
         self.assertEqual(info['xFilesFactor'], 0.5)
 
         # check archive information
         self.assertEqual(len(info['archives']), len(retention))
         self.assertEqual(info['archives'][0]['points'], retention[0][1])
-        self.assertEqual(info['archives'][0]['secondsPerPoint'], retention[0][0])
-        self.assertEqual(info['archives'][0]['retention'], retention[0][0] * retention[0][1])
-        self.assertEqual(info['archives'][1]['retention'], retention[1][0] * retention[1][1])
+        self.assertEqual(info['archives'][0]['secondsPerPoint'],
+                         retention[0][0])
+        self.assertEqual(info['archives'][0]['retention'],
+                         retention[0][0] * retention[0][1])
+        self.assertEqual(info['archives'][1]['retention'],
+                         retention[1][0] * retention[1][1])
 
         # remove database
         self._removedb()
@@ -108,7 +114,7 @@ class TestWhisper(unittest.TestCase):
 
         # SECOND MINUTE HOUR DAY
         retention = [(1, 60), (60, 60), (3600, 24), (86400, 365)]
-        whisper.create(self.db,retention)
+        whisper.create(self.db, retention)
 
         # check a db with an invalid time range
         with self.assertRaises(whisper.InvalidTimeInterval):
@@ -117,7 +123,8 @@ class TestWhisper(unittest.TestCase):
         fetch = whisper.fetch(self.db, 0)
 
         # check time range
-        self.assertEqual(fetch[0][1] - fetch[0][0], retention[-1][0] * retention[-1][1])
+        self.assertEqual(fetch[0][1] - fetch[0][0],
+                         retention[-1][0] * retention[-1][1])
 
         # check number of points
         self.assertEqual(len(fetch[1]), retention[-1][1])
@@ -136,7 +143,7 @@ class TestWhisper(unittest.TestCase):
         whisper.create(self.db, retention_schema)
 
         # create sample data
-        tn = time.time()-num_data_points
+        tn = time.time() - num_data_points
         data = []
         for i in range(num_data_points):
             data.append((tn + 1 + i, random.random() * 10))
@@ -151,8 +158,8 @@ class TestWhisper(unittest.TestCase):
         fetch = whisper.fetch(self.db, 0)   # all data
         fetch_data = fetch[1]
 
-        for i, (timestamp, value) in list(enumerate(data)):
-            # is value in the fetched data
+        for i, (timestamp, value) in enumerate(data):
+            # is value in the fetched data?
             self.assertEqual(value, fetch_data[i])
 
         # check TimestampNotCovered
@@ -161,7 +168,8 @@ class TestWhisper(unittest.TestCase):
             whisper.update(self.db, 1.337, time.time() + 1)
         with self.assertRaises(whisper.TimestampNotCovered):
             # before the past
-            whisper.update(self.db, 1.337, time.time() - retention_schema[0][1] - 1)
+            whisper.update(self.db, 1.337,
+                           time.time() - retention_schema[0][1] - 1)
 
         self._removedb()
 
