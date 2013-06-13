@@ -111,8 +111,30 @@ class TestWhisper(unittest.TestCase):
         # remove database
         self._removedb()
 
+    def test_merge(self):
+        """test merging two databases"""
+        testdb = "test-%s" % self.db
+        self._removedb()
+
+        try:
+          os.unlink(testdb)
+        except Exception:
+          pass
+
+        # Create 2 whisper databases and merge one into the other
+        self._update()
+        self._update(testdb)
+
+        whisper.merge(self.db, testdb)
+
+        self._removedb()
+        try:
+          os.unlink(testdb)
+        except Exception:
+          pass
+
     def test_fetch(self):
-        """ fetch info from database """
+        """fetch info from database """
 
         # check a db that doesnt exist
         with self.assertRaises(Exception):
@@ -140,13 +162,12 @@ class TestWhisper(unittest.TestCase):
 
         self._removedb()
 
-    def test_update_single_archive(self):
-        """Update with a single leveled archive"""
-
-        retention_schema = [(1, 20)]
+    def _update(self, wsp=None, schema=None):
+	wsp = wsp or self.db
+        schema = schema or [(1, 20)]
         num_data_points = 20
 
-        whisper.create(self.db, retention_schema)
+        whisper.create(wsp, schema)
 
         # create sample data
         tn = time.time() - num_data_points
@@ -155,11 +176,16 @@ class TestWhisper(unittest.TestCase):
             data.append((tn + 1 + i, random.random() * 10))
 
         # test single update
-        whisper.update(self.db, data[0][1], data[0][0])
+        whisper.update(wsp, data[0][1], data[0][0])
 
         # test multi update
-        whisper.update_many(self.db, data[1:])
+        whisper.update_many(wsp, data[1:])
+	return data
 
+    def test_update_single_archive(self):
+        """Update with a single leveled archive"""
+        retention_schema = [(1, 20)]
+        data = self._update(schema=retention_schema)
         # fetch the data
         fetch = whisper.fetch(self.db, 0)   # all data
         fetch_data = fetch[1]
