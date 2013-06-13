@@ -165,3 +165,16 @@ Options:
   -h, --help  show this help message and exit
 ```
 
+whisper-diff.py
+--------------
+Check the differences between whisper files.  Use sanity check before merging.
+```
+Usage: whisper-diff.py [options] path_a path_b
+
+Options:
+  -h, --help      show this help message and exit
+  --summary       show summary of differences
+  --ignore-empty  skip comparison if either value is undefined
+  --columns       print output in simple columns
+  --no-headers    do not print column headers
+```
