@@ -14,7 +14,7 @@ except ImportError:
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 option_parser = optparse.OptionParser(
-    usage='%%prog path <%s>' % '|'.join(whisper.aggregationMethods))
+    usage='%%prog path <%s> [xFormsFactor]' % '|'.join(whisper.aggregationMethods))
 
 (options, args) = option_parser.parse_args()
 
@@ -25,8 +25,12 @@ if len(args) < 2:
 path = args[0]
 aggregationMethod = args[1]
 
+xFormsFactor = None
+if len(args) == 3:
+  xFormsFactor = args[2]
+
 try:
-  oldAggregationMethod = whisper.setAggregationMethod(path, aggregationMethod)
+  oldAggregationMethod = whisper.setAggregationMethod(path, aggregationMethod, xFormsFactor)
 except IOError, exc:
   sys.stderr.write("[ERROR] File '%s' does not exist!\n\n" % path)
   option_parser.print_help()
