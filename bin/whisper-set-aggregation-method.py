@@ -18,7 +18,7 @@ except AttributeError:
   pass
 
 option_parser = optparse.OptionParser(
-    usage='%%prog path <%s> [xFormsFactor]' % '|'.join(whisper.aggregationMethods))
+    usage='%%prog path <%s> [xFilesFactor]' % '|'.join(whisper.aggregationMethods))
 
 (options, args) = option_parser.parse_args()
 
@@ -29,12 +29,12 @@ if len(args) < 2:
 path = args[0]
 aggregationMethod = args[1]
 
-xFormsFactor = None
+xFilesFactor = None
 if len(args) == 3:
-  xFormsFactor = args[2]
+  xFilesFactor = args[2]
 
 try:
-  oldAggregationMethod = whisper.setAggregationMethod(path, aggregationMethod, xFormsFactor)
+  oldAggregationMethod = whisper.setAggregationMethod(path, aggregationMethod, xFilesFactor)
 except IOError, exc:
   sys.stderr.write("[ERROR] File '%s' does not exist!\n\n" % path)
   option_parser.print_help()
