@@ -278,9 +278,16 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
       raise InvalidAggregationMethod("Unrecognized aggregation method: %s" %
             aggregationMethod)
 
-    #optionally update xFilesFactor
     if xFilesFactor is not None:
+        #use specified xFilesFactor
         xff = struct.pack( floatFormat, float(xFilesFactor) )
+    else:
+	#retain old value
+        xff = struct.pack( floatFormat, xff )
+
+    #repack the remaining header information
+    maxRetention = struct.pack( longFormat, maxRetention )
+    archiveCount = struct.pack(longFormat, archiveCount)
 
     packedMetadata = newAggregationType + maxRetention + xff + archiveCount
     fh.seek(0)

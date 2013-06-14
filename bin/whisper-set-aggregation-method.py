@@ -11,7 +11,11 @@ except ImportError:
     raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
 # Ignore SIGPIPE
-signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+try:
+  signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+except AttributeError:
+  #windows?
+  pass
 
 option_parser = optparse.OptionParser(
     usage='%%prog path <%s> [xFormsFactor]' % '|'.join(whisper.aggregationMethods))
