@@ -3,6 +3,7 @@
 import os
 import time
 import random
+import struct
 
 try:
     import unittest2 as unittest
@@ -163,7 +164,7 @@ class TestWhisper(unittest.TestCase):
         self._removedb()
 
     def _update(self, wsp=None, schema=None):
-	wsp = wsp or self.db
+        wsp = wsp or self.db
         schema = schema or [(1, 20)]
         num_data_points = 20
 
@@ -180,7 +181,7 @@ class TestWhisper(unittest.TestCase):
 
         # test multi update
         whisper.update_many(wsp, data[1:])
-	return data
+        return data
 
     def test_update_single_archive(self):
         """Update with a single leveled archive"""
@@ -204,6 +205,43 @@ class TestWhisper(unittest.TestCase):
                            time.time() - retention_schema[0][1] - 1)
 
         self._removedb()
+        
+    def test_setAggregation(self):
+        """Create a db, change aggregation, xFilesFactor, then use info() to validate"""
+        retention = [(1, 60), (60, 60)]
+
+        # create a new db with a valid configuration
+        whisper.create(self.db, retention)
+
+        #set setting every AggregationMethod available
+        for ag in whisper.aggregationMethods:
+          for xff in 0.0,0.2,0.4,0.7,0.75,1.0:
+            #original xFilesFactor
+            info0 = whisper.info(self.db)
+            #optional xFilesFactor not passed
+            whisper.setAggregationMethod(self.db, ag)
+
+            #original value should not change
+            info1 = whisper.info(self.db)
+            self.assertEqual(info0['xFilesFactor'],info1['xFilesFactor'])
+            #the selected aggregation method should have applied
+            self.assertEqual(ag,info1['aggregationMethod'])
+
+            #optional xFilesFactor used
+            whisper.setAggregationMethod(self.db, ag, xff)
+            #new info should match what we just set it to
+            info2 = whisper.info(self.db)
+            #packing and unpacking because
+            #AssertionError: 0.20000000298023224 != 0.2
+            target_xff = struct.unpack("!f", struct.pack("!f",xff))[0]
+            self.assertEqual(info2['xFilesFactor'], target_xff)
+
+            #same aggregationMethod asssertion again, but double-checking since
+            #we are playing with packed values and seek()
+            self.assertEqual(ag,info2['aggregationMethod'])
+
+        self._removedb()
+
 
     @classmethod
     def tearDownClass(cls):

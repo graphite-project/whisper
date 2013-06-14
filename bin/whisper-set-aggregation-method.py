@@ -11,10 +11,14 @@ except ImportError:
     raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
 # Ignore SIGPIPE
-signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+try:
+  signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+except AttributeError:
+  #windows?
+  pass
 
 option_parser = optparse.OptionParser(
-    usage='%%prog path <%s>' % '|'.join(whisper.aggregationMethods))
+    usage='%%prog path <%s> [xFilesFactor]' % '|'.join(whisper.aggregationMethods))
 
 (options, args) = option_parser.parse_args()
 
@@ -25,8 +29,12 @@ if len(args) < 2:
 path = args[0]
 aggregationMethod = args[1]
 
+xFilesFactor = None
+if len(args) == 3:
+  xFilesFactor = args[2]
+
 try:
-  oldAggregationMethod = whisper.setAggregationMethod(path, aggregationMethod)
+  oldAggregationMethod = whisper.setAggregationMethod(path, aggregationMethod, xFilesFactor)
 except IOError, exc:
   sys.stderr.write("[ERROR] File '%s' does not exist!\n\n" % path)
   option_parser.print_help()

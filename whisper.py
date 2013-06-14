@@ -251,11 +251,12 @@ def __readHeader(fh):
   return info
 
 
-def setAggregationMethod(path, aggregationMethod):
-  """setAggregationMethod(path,aggregationMethod)
+def setAggregationMethod(path, aggregationMethod, xFilesFactor=None):
+  """setAggregationMethod(path,aggregationMethod,xFilesFactor=None)
 
 path is a string
 aggregationMethod specifies the method to use when propogating data (see ``whisper.aggregationMethods``)
+xFilesFactor specifies the fraction of data points in a propagation interval that must have known values for a propagation to occur.  If None, the existing xFilesFactor in path will not be changed
 """
   fh = None
   try:
@@ -277,8 +278,21 @@ aggregationMethod specifies the method to use when propogating data (see ``whisp
       raise InvalidAggregationMethod("Unrecognized aggregation method: %s" %
             aggregationMethod)
 
+    if xFilesFactor is not None:
+        #use specified xFilesFactor
+        xff = struct.pack( floatFormat, float(xFilesFactor) )
+    else:
+	#retain old value
+        xff = struct.pack( floatFormat, xff )
+
+    #repack the remaining header information
+    maxRetention = struct.pack( longFormat, maxRetention )
+    archiveCount = struct.pack(longFormat, archiveCount)
+
+    packedMetadata = newAggregationType + maxRetention + xff + archiveCount
     fh.seek(0)
-    fh.write(newAggregationType)
+    #fh.write(newAggregationType)
+    fh.write(packedMetadata)
 
     if AUTOFLUSH:
       fh.flush()
