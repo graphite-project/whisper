@@ -18,12 +18,12 @@
 # Here is the basic layout of a whisper data file
 #
 # File = Header,Data
-#	Header = Metadata,ArchiveInfo+
-#		Metadata = aggregationType,maxRetention,xFilesFactor,archiveCount
-#		ArchiveInfo = Offset,SecondsPerPoint,Points
-#	Data = Archive+
-#		Archive = Point+
-#			Point = timestamp,value
+#       Header = Metadata,ArchiveInfo+
+#               Metadata = aggregationType,maxRetention,xFilesFactor,archiveCount
+#               ArchiveInfo = Offset,SecondsPerPoint,Points
+#       Data = Archive+
+#               Archive = Point+
+#                       Point = timestamp,value
 
 import os, struct, time, operator, itertools
 
@@ -280,9 +280,11 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
 
     if xFilesFactor is not None:
         #use specified xFilesFactor
-        xff = struct.pack( floatFormat, float(xFilesFactor) )
+        xFilesFactor = float(xFilesFactor)
+        validateXFilesFactor(xFilesFactor)
+        xff = struct.pack( floatFormat, xFilesFactor )
     else:
-	#retain old value
+        #retain old value
         xff = struct.pack( floatFormat, xff )
 
     #repack the remaining header information
@@ -358,6 +360,11 @@ def validateArchiveList(archiveList):
         "archive%d's points but it has only %d total points)" %
         (i + 1, pointsPerConsolidation, i, archivePoints))
 
+def validateXFilesFactor(xFilesFactor):
+  #ensure the number represents the known/expected ratio
+  if xFilesFactor < 0.0 or xFilesFactor > 1.0:
+    msg = "xFilesFactor %s is not between 0.0 and 1.0 inclusive"
+    raise ValueError(msg % repr(xFilesFactor))
 
 def create(path,archiveList,xFilesFactor=None,aggregationMethod=None,sparse=False,useFallocate=False):
   """create(path,archiveList,xFilesFactor=0.5,aggregationMethod='average')
@@ -376,6 +383,10 @@ aggregationMethod specifies the function to use when propogating data (see ``whi
   #Validate archive configurations...
   validateArchiveList(archiveList)
 
+  #Validate good ratio for xFilesFactor
+  xFilesFactor = float(xFilesFactor) #possibly raise ValueError
+  validateXFilesFactor(xFilesFactor)
+
   #Looks good, now we create the file and write the header
   if os.path.exists(path):
     raise InvalidConfiguration("File %s already exists!" % path)
@@ -388,7 +399,7 @@ aggregationMethod specifies the function to use when propogating data (see ``whi
     aggregationType = struct.pack( longFormat, aggregationMethodToType.get(aggregationMethod, 1) )
     oldest = max([secondsPerPoint * points for secondsPerPoint,points in archiveList])
     maxRetention = struct.pack( longFormat, oldest )
-    xFilesFactor = struct.pack( floatFormat, float(xFilesFactor) )
+    xFilesFactor = struct.pack( floatFormat, xFilesFactor )
     archiveCount = struct.pack(longFormat, len(archiveList))
     packedMetadata = aggregationType + maxRetention + xFilesFactor + archiveCount
     fh.write(packedMetadata)
