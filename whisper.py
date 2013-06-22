@@ -208,6 +208,33 @@ def enableDebug():
     debug("%s took %.5f seconds" % (name,time.time() - __timingBlocks.pop(name)))
 
 
+def map_path(path, access):
+  if (path in filemaps):
+    if (access == filemaps[path]['access'] or access == 'r'):
+      filemaps[path]['map'].seek(0)
+      return filemaps[path]
+    else:
+      filemaps[path]['map'].close()
+
+  if (access == 'r'):
+    prot = mmap.PROT_READ
+    flags = os.O_RDONLY
+  elif (access == 'w'):
+    prot = mmap.PROT_READ|mmap.PROT_WRITE
+    flags = os.O_RDWR
+  else:
+    raise ValueError("map_path access got '%s', accept 'r' or 'w'" % access)
+
+  fd = os.open(path, flags)
+  filemaps[path] = {
+    'name': path,
+    'map' : mmap.mmap(fd, os.fstat(fd).st_size, prot=prot),
+    'access': access,
+  }
+#  os.close(fd) #TODO: remove?
+  return filemaps[path]
+
+
 def __readHeader(fm):
   info = __headerCache.get(fm['name'])
   if info:
@@ -297,8 +324,11 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
     fm['map'].flush()
     os.fsync(fm['map'].fileno())
 
-  if CACHE_HEADERS and fm.name in __headerCache:
-    del __headerCache[fm.name]
+  if AUTOFLUSH:
+    fm['map'].flush()
+
+  if CACHE_HEADERS and fm['name'] in __headerCache:
+    del __headerCache[fm['name']]
 
   return aggregationTypeToMethod.get(aggregationType, 'average')
 
@@ -715,38 +745,12 @@ Returns None if no data can be returned
   return file_fetch(fm, fromTime, untilTime)
 
 
-def map_path(path, access):
-  if (path in filemaps):
-    if (access == filemaps[path]['access'] or access == 'r'):
-      filemaps[path]['map'].seek(0)
-      return filemaps[path]
-    else:
-      close(path)
-
-  if (access == 'r'):
-    prot = mmap.PROT_READ
-    flags = os.O_RDONLY
-  elif (access == 'w'):
-    prot = mmap.PROT_READ|mmap.PROT_WRITE
-    flags = os.O_RDWR
-  else:
-    raise ValueError("map_path access got '%s', accept 'r' or 'w'" % access)
-
-  fd = os.open(path, flags)
-  filemaps[path] = {
-    'name': path,
-    'map' : mmap.mmap(fd, os.fstat(fd).st_size, prot=prot),
-    'access': access,
-  }
-  os.close(fd)
-  return filemaps[path]
-
-
 def close(path):
   if (path in filemaps):
     filemaps[path]['map'].close
     del filemaps[path]
     
+
 def file_fetch(fm, fromTime, untilTime):
   header = __readHeader(fm)
   now = int( time.time() )
