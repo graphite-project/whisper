@@ -260,11 +260,11 @@ path is a string
 aggregationMethod specifies the method to use when propogating data (see ``whisper.aggregationMethods``)
 xFilesFactor specifies the fraction of data points in a propagation interval that must have known values for a propagation to occur.  If None, the existing xFilesFactor in path will not be changed
 """
-
+  fm = map_path(path, 'w')
   packedMetadata = fm['map'].read(metadataSize)
 
   try:
-    aggregationType = struct.unpack(metadataFormat,packedMetadata)[0]
+    (aggregationType,maxRetention,xff,archiveCount) = struct.unpack(metadataFormat,packedMetadata)
   except:
     raise CorruptWhisperFile("Unable to read header", fm['name'])
 
@@ -277,32 +277,28 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
   fm['map'].seek(0)
   fm['map'].write(newAggregationType)
 
-    if xFilesFactor is not None:
-        #use specified xFilesFactor
-        xff = struct.pack( floatFormat, float(xFilesFactor) )
-    else:
-	#retain old value
-        xff = struct.pack( floatFormat, xff )
+  if xFilesFactor is not None:
+    #use specified xFilesFactor
+    xff = struct.pack( floatFormat, float(xFilesFactor) )
+  else:
+    #retain old value
+    xff = struct.pack( floatFormat, xff )
 
-    #repack the remaining header information
-    maxRetention = struct.pack( longFormat, maxRetention )
-    archiveCount = struct.pack(longFormat, archiveCount)
+  #repack the remaining header information
+  maxRetention = struct.pack( longFormat, maxRetention )
+  archiveCount = struct.pack(longFormat, archiveCount)
 
-    packedMetadata = newAggregationType + maxRetention + xff + archiveCount
-    fh.seek(0)
-    #fh.write(newAggregationType)
-    fh.write(packedMetadata)
+  packedMetadata = newAggregationType + maxRetention + xff + archiveCount
+  fm['map'].seek(0)
+  #fh.write(newAggregationType)
+  fm['map'].write(packedMetadata)
 
-    if AUTOFLUSH:
-      fh.flush()
-      os.fsync(fh.fileno())
+  if AUTOFLUSH:
+    fm['map'].flush()
+    os.fsync(fm['map'].fileno())
 
-      if CACHE_HEADERS and fh.name in __headerCache:
-        del __headerCache[fh.name]
-
-  finally:
-    if fh:
-      fh.close()
+  if CACHE_HEADERS and fm.name in __headerCache:
+    del __headerCache[fm.name]
 
   return aggregationTypeToMethod.get(aggregationType, 'average')
 
@@ -528,7 +524,7 @@ value is a float
 timestamp is either an int or float
 """
   value = float(value)
-  fm = map_path(path)
+  fm = map_path(path, 'w')
   return file_update(fm, value, timestamp)
 
 
@@ -588,7 +584,7 @@ points is a list of (timestamp,value) points
   if not points: return
   points = [ (int(t),float(v)) for (t,v) in points]
   points.sort(key=lambda p: p[0],reverse=True) #order points by timestamp, newest first
-  fm = map_path(path)
+  fm = map_path(path, 'w')
   return file_update_many(fm, points)
 
 
@@ -698,7 +694,7 @@ def info(path):
 
 path is a string
 """
-  fm = map_path(path)
+  fm = map_path(path, 'r')
   info = __readHeader(fm)
   return info
 
@@ -715,22 +711,42 @@ where timeInfo is itself a tuple of (fromTime, untilTime, step)
 Returns None if no data can be returned
 """
 
-# find the pointer to the file mmap in a dictionary, open it if not found
-  fm = map_path(path)
+  fm = map_path(path, 'r')
   return file_fetch(fm, fromTime, untilTime)
 
 
-def map_path(path):
-  if (path not in filemaps):
-    fd = os.open(path, os.O_RDWR)
-    filemaps[path] = {
-      'name': path,
-      'map' : mmap.mmap(fd, os.fstat(fd).st_size, prot=mmap.PROT_READ|mmap.ACCESS_WRITE),
-    }
-    os.close(fd)
+def map_path(path, access):
+  if (path in filemaps):
+    if (access == filemaps[path]['access'] or access == 'r'):
+      filemaps[path]['map'].seek(0)
+      return filemaps[path]
+    else:
+      close(path)
+
+  if (access == 'r'):
+    prot = mmap.PROT_READ
+    flags = os.O_RDONLY
+  elif (access == 'w'):
+    prot = mmap.PROT_READ|mmap.PROT_WRITE
+    flags = os.O_RDWR
+  else:
+    raise ValueError("map_path access got '%s', accept 'r' or 'w'" % access)
+
+  fd = os.open(path, flags)
+  filemaps[path] = {
+    'name': path,
+    'map' : mmap.mmap(fd, os.fstat(fd).st_size, prot=prot),
+    'access': access,
+  }
+  os.close(fd)
   return filemaps[path]
 
 
+def close(path):
+  if (path in filemaps):
+    filemaps[path]['map'].close
+    del filemaps[path]
+    
 def file_fetch(fm, fromTime, untilTime):
   header = __readHeader(fm)
   now = int( time.time() )
@@ -828,16 +844,15 @@ def _unpack_whisper(seriesString, fromInterval, archive, step):
       valueList[i/2] = pointValue #in-place reassignment is faster than append()
     currentInterval += step
 
-  timeInfo = (fromInterval,untilInterval,step)
-  return (timeInfo,valueList)
+  return valueList
 
 
 def merge(from_path, to_path):
   """ Merges the data from one whisper file into another. Each file must have
   the same archive configuration
 """
-  from_fm = map_path(from_path)
-  to_fm = map_path(to_path)
+  from_fm = map_path(from_path, 'r')
+  to_fm = map_path(to_path, 'w')
   return file_merge(from_fm, to_fm)
 
 
@@ -856,15 +871,13 @@ def file_merge(from_fm, to_fm):
   untilTime = now
   for archive in archives:
     fromTime = now - archive['retention']
-    (timeInfo, values) = __archive_fetch(fh_from, archive, fromTime, untilTime)
+    (timeInfo, values) = __archive_fetch(from_fm, archive, fromTime, untilTime)
     (start, end, archive_step) = timeInfo
     pointsToWrite = list(itertools.ifilter(
       lambda points: points[1] is not None,
       itertools.izip(xrange(start, end, archive_step), values)))
-    __archive_update_many(fh_to, headerTo, archive, pointsToWrite)
+    __archive_update_many(to_fm, headerTo, archive, pointsToWrite)
     untilTime = fromTime
-    fh_from.close()
-    fh_to.close()
 
 def diff(path_from, path_to, ignore_empty = False):
   """ Compare two whisper databases. Each file must have the same archive configuration """
