@@ -231,7 +231,7 @@ def map_path(path, access):
     'map' : mmap.mmap(fd, os.fstat(fd).st_size, prot=prot),
     'access': access,
   }
-#  os.close(fd) #TODO: remove?
+  os.close(fd)
   return filemaps[path]
 
 
