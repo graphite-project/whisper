@@ -25,7 +25,8 @@
 #		Archive = Point+
 #			Point = timestamp,value
 
-import os, struct, time, operator, itertools, mmap
+import os, struct, time, operator, itertools, mmap, resource
+from darts.lib.utils.lru import LRUDict
 
 try:
   import fcntl
@@ -99,7 +100,9 @@ aggregationMethods = aggregationTypeToMethod.values()
 
 debug = startBlock = endBlock = lambda *a,**k: None
 
-filemaps = dict()
+max_open_files = resource.getrlimit(resource.RLIMIT_NOFILE)
+
+filemaps = LRUDict(max_open_files[0]/2)
 
 UnitMultipliers = {
   'seconds' : 1,
