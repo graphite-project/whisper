@@ -4,7 +4,6 @@ import os
 from glob import glob
 from distutils.core import setup
 
-
 setup(
   name='whisper',
   version='0.9.10',
@@ -15,4 +14,5 @@ setup(
   description='Fixed size round-robin style database',
   py_modules=['whisper'],
   scripts=glob('bin/*'),
+  requires=['darts.util.lru'],
 )
