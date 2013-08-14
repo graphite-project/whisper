@@ -381,6 +381,12 @@ aggregationMethod specifies the function to use when propogating data (see ``whi
     raise InvalidConfiguration("File %s already exists!" % path)
   fh = None
   try:
+
+    # ensure the path
+    _path_dir = os.path.split(path)[0]
+    if not os.path.exists( _path_dir ):
+        os.makedirs( _path_dir )
+
     fh = open(path,'wb')
     if LOCK:
       fcntl.flock( fh.fileno(), fcntl.LOCK_EX )
