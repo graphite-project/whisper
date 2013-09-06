@@ -75,9 +75,8 @@ else:
     rra_info['xff'] = rrd_info['rra[%d].xff' % i]
     rras.append(rra_info)
 
-datasources = []
 if 'ds' in rrd_info:
-  datasource_names = rrd_info['ds'].keys()
+  datasources = rrd_info['ds'].keys()
 else:
   ds_keys = [key for key in rrd_info if key.startswith('ds[')]
   datasources = list(set(key[3:].split(']')[0] for key in ds_keys))
