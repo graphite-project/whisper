@@ -103,7 +103,7 @@ Options:
 
 whisper-merge.py
 --------------
-Join to existing whisper files together.
+Join two existing whisper files together.
 
 ```
 Usage: whisper-merge.py [options] from_path to_path
