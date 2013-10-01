@@ -186,6 +186,7 @@ except:
 
 if options.retainOwnership:
   try:
+    print 'Setting ownership of %s to %d:%d' % (path, stat.st_uid, stat.st_gid)
     os.chown(path, stat.st_uid, stat.st_gid)
   except:
     traceback.print_exc()
