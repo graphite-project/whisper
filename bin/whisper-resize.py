@@ -50,6 +50,9 @@ option_parser.add_option(
     '--aggregate', action='store_true',
     help='Try to aggregate the values to fit the new archive better.'
          ' Note that this will make things slower and use more memory.')
+option_parser.add_option(
+    '--retainOwnership', action='store_true',
+    help='Maintain ownership of the whisper database files.')
 
 (options, args) = option_parser.parse_args()
 
@@ -63,6 +66,8 @@ if not os.path.exists(path):
   sys.stderr.write("[ERROR] File '%s' does not exist!\n\n" % path)
   option_parser.print_help()
   sys.exit(1)
+
+stat = os.stat(path)
 
 info = whisper.info(path)
 
@@ -178,6 +183,14 @@ except:
   print '\nOperation failed, restoring backup'
   os.rename(backup, path)
   sys.exit(1)
+
+if options.retainOwnership:
+  try:
+    os.chown(path, stat.st_uid, stat.st_gid)
+  except:
+    traceback.print_exc()
+    print '\nFailed to preserve ownership of %s to %d:%d' % (path, stat.st_uid, stat.st_gid)
+    sys.exit(1)
 
 if options.nobackup:
   print "Unlinking backup: %s" % backup
