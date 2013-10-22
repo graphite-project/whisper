@@ -123,8 +123,8 @@ class TestWhisper(unittest.TestCase):
           pass
 
         # Create 2 whisper databases and merge one into the other
-        self._update()
-        self._update(testdb)
+        self._update(self.db, [(1,20), (10,20)])
+        self._update(testdb, [(1,20), (10,20)])
 
         whisper.merge(self.db, testdb)
 
