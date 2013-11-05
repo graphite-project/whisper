@@ -242,6 +242,38 @@ class TestWhisper(unittest.TestCase):
 
         self._removedb()
 
+    def test_parseRetentionData(self):
+        """Test a range of retention values to ensure the convinience function doesn't change"""
+
+        # Cover the "fast" path (integer arguments)
+        self.assertEqual(whisper.parseRetentionDef('1:60'),(1,60))
+        self.assertEqual(whisper.parseRetentionDef('60:60'),(60,60))
+
+        # Cover the regex paths
+        self.assertEqual(whisper.parseRetentionDef('1m:60'),(60,60))
+        self.assertEqual(whisper.parseRetentionDef('7d:60'),(604800,60))
+        self.assertEqual(whisper.parseRetentionDef('9h:60'),(32400,60))
+        self.assertEqual(whisper.parseRetentionDef('9y:60'),(283824000,60))
+        self.assertEqual(whisper.parseRetentionDef('60:1m'),(60,1))
+        self.assertEqual(whisper.parseRetentionDef('60:7d'),(60,10080))
+        self.assertEqual(whisper.parseRetentionDef('60:9h'),(60,540))
+        self.assertEqual(whisper.parseRetentionDef('60:9y'),(60,4730400))
+
+        # Cover the failure paths
+        with self.assertRaises(ValueError):
+            whisper.parseRetentionDef('-1:60')
+
+        with self.assertRaises(ValueError):
+            whisper.parseRetentionDef('60:-1')
+
+        with self.assertRaises(ValueError):
+            whisper.parseRetentionDef('a:60')
+
+        with self.assertRaises(ValueError):
+            whisper.parseRetentionDef('60:a')
+
+        with self.assertRaises(ValueError):
+            whisper.parseRetentionDef('a:a')
 
     @classmethod
     def tearDownClass(cls):
