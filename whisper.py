@@ -411,7 +411,7 @@ aggregationMethod specifies the function to use when propogating data (see ``whi
     else:
       remaining = archiveOffsetPointer - headerSize
       chunksize = 16384
-      zeroes = '\x00' * chunksize
+      zeroes = b'\x00' * chunksize
       while remaining > chunksize:
         fh.write(zeroes)
         remaining -= chunksize
