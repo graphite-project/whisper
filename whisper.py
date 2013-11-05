@@ -654,7 +654,7 @@ def __archive_update_many(fh,header,archive,points):
   #Create a packed string for each contiguous sequence of points
   packedStrings = []
   previousInterval = None
-  currentString = ""
+  currentString = b""
   for (interval,value) in alignedPoints:
     if (not previousInterval) or (interval == previousInterval + step):
       currentString += struct.pack(pointFormat,interval,value)
