@@ -163,10 +163,9 @@ class TestWhisper(unittest.TestCase):
 
         self._removedb()
 
-    def _update(self, wsp=None, schema=None):
+    def _update(self, wsp=None, schema=None, num_data_points=20):
         wsp = wsp or self.db
         schema = schema or [(1, 20)]
-        num_data_points = 20
 
         whisper.create(wsp, schema)
 
@@ -179,8 +178,12 @@ class TestWhisper(unittest.TestCase):
         # test single update
         whisper.update(wsp, data[0][1], data[0][0])
 
+        # one more single update to cover file_update -> 'not our first update'
+        whisper.update(wsp, data[1][1], data[1][0])
+
         # test multi update
-        whisper.update_many(wsp, data[1:])
+        whisper.update_many(wsp, data[2:])
+
         return data
 
     def test_update_single_archive(self):
@@ -205,7 +208,29 @@ class TestWhisper(unittest.TestCase):
                            time.time() - retention_schema[0][1] - 1)
 
         self._removedb()
-        
+
+    def test_update_complex_archive(self):
+        """Update with a multi leveled archive"""
+        retention_schema = [ whisper.parseRetentionDef('5m:1d'),
+                             whisper.parseRetentionDef('1h:7d'),
+                             whisper.parseRetentionDef('1d:30d'),
+                             whisper.parseRetentionDef('7d:1y')
+                           ]
+
+        # This test case is slightly abreviated, but it excercises the archiving code paths and highlights any exceptions
+        self._update(schema=retention_schema, num_data_points=1000000)
+
+        # check TimestampNotCovered
+        with self.assertRaises(whisper.TimestampNotCovered):
+            # in the future
+            whisper.update(self.db, 1.337, time.time() + 1000000000)
+        with self.assertRaises(whisper.TimestampNotCovered):
+            # before the past
+            whisper.update(self.db, 1.337,
+                           time.time() - 1000000000)
+
+        self._removedb()
+
     def test_setAggregation(self):
         """Create a db, change aggregation, xFilesFactor, then use info() to validate"""
         retention = [(1, 60), (60, 60)]
@@ -242,6 +267,77 @@ class TestWhisper(unittest.TestCase):
 
         self._removedb()
 
+    def test_parseRetentionData(self):
+        """Test a range of retention values to ensure the convinience function doesn't change"""
+
+        # Cover the "fast" path (integer arguments)
+        self.assertEqual(whisper.parseRetentionDef('1:60'),(1,60))
+        self.assertEqual(whisper.parseRetentionDef('60:60'),(60,60))
+
+        # Cover the regex paths
+        self.assertEqual(whisper.parseRetentionDef('1m:60'),(60,60))
+        self.assertEqual(whisper.parseRetentionDef('7d:60'),(604800,60))
+        self.assertEqual(whisper.parseRetentionDef('9h:60'),(32400,60))
+        self.assertEqual(whisper.parseRetentionDef('9y:60'),(283824000,60))
+        self.assertEqual(whisper.parseRetentionDef('60:1m'),(60,1))
+        self.assertEqual(whisper.parseRetentionDef('60:7d'),(60,10080))
+        self.assertEqual(whisper.parseRetentionDef('60:9h'),(60,540))
+        self.assertEqual(whisper.parseRetentionDef('60:9y'),(60,4730400))
+
+        # Cover the failure paths
+        with self.assertRaises(ValueError):
+            whisper.parseRetentionDef('-1:60')
+
+        with self.assertRaises(ValueError):
+            whisper.parseRetentionDef('60:-1')
+
+        with self.assertRaises(ValueError):
+            whisper.parseRetentionDef('a:60')
+
+        with self.assertRaises(ValueError):
+            whisper.parseRetentionDef('60:a')
+
+        with self.assertRaises(ValueError):
+            whisper.parseRetentionDef('a:a')
+
+    def test_diff(self):
+        """Create and populate four db's and attempt to compare them"""
+        retention_schema = [(1, 21)]
+        alt_retention_schema = [(1, 60), (60, 60), (3600, 24), (86400, 365)]
+
+        try:
+          os.unlink('one.wsp')
+          os.unlink('two.wsp')
+          os.unlink('three.wsp')
+          os.unlink('four.wsp')
+        except Exception:
+          pass
+
+        self._update(schema=retention_schema, wsp='one.wsp')
+        self._update(schema=retention_schema, wsp='two.wsp')
+        self._update(schema=retention_schema, wsp='three.wsp')
+        self._update(schema=alt_retention_schema, wsp='four.wsp')
+
+        # wsp's with different schemas should not diff
+        with self.assertRaises(NotImplementedError):
+            whisper.diff('one.wsp', 'four.wsp')
+
+        # a wsp diffed with itself results in [(0, [], 20)]
+        self.assertEqual(whisper.diff('one.wsp', 'one.wsp'), [(0, [], 20)])
+
+        # three wsp's with random data diffed should never match
+        self.assertNotEqual(whisper.diff('one.wsp', 'two.wsp'), whisper.diff('two.wsp', 'three.wsp'))
+
+        # wsp diff's shouldn't be equal with swapped arguments order
+        self.assertNotEqual(whisper.diff('one.wsp', 'two.wsp'), whisper.diff('two.wsp', 'one.wsp'))
+
+        try:
+          os.unlink('one.wsp')
+          os.unlink('two.wsp')
+          os.unlink('three.wsp')
+          os.unlink('four.wsp')
+        except Exception:
+          pass
 
     @classmethod
     def tearDownClass(cls):
