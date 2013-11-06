@@ -178,8 +178,12 @@ class TestWhisper(unittest.TestCase):
         # test single update
         whisper.update(wsp, data[0][1], data[0][0])
 
+        # one more single update to cover file_update -> 'not our first update'
+        whisper.update(wsp, data[1][1], data[1][0])
+
         # test multi update
-        whisper.update_many(wsp, data[1:])
+        whisper.update_many(wsp, data[2:])
+
         return data
 
     def test_update_single_archive(self):
