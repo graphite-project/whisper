@@ -881,9 +881,16 @@ def diff(path_from, path_to, ignore_empty = False):
   """ Compare two whisper databases. Each file must have the same archive configuration """
   fh_from = open(path_from, 'rb')
   fh_to = open(path_to, 'rb')
-  diffs = file_diff(fh_from, fh_to, ignore_empty)
-  fh_to.close()
-  fh_from.close()
+
+  try:
+    diffs = file_diff(fh_from, fh_to, ignore_empty)
+  except NotImplementedError:
+    # The caller expects to see this exception, but we should close file handles first
+    raise
+  finally:
+    fh_to.close()
+    fh_from.close()
+
   return diffs
 
 def file_diff(fh_from, fh_to, ignore_empty = False):
