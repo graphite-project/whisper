@@ -163,10 +163,9 @@ class TestWhisper(unittest.TestCase):
 
         self._removedb()
 
-    def _update(self, wsp=None, schema=None):
+    def _update(self, wsp=None, schema=None, num_data_points=20):
         wsp = wsp or self.db
         schema = schema or [(1, 20)]
-        num_data_points = 20
 
         whisper.create(wsp, schema)
 
@@ -205,7 +204,29 @@ class TestWhisper(unittest.TestCase):
                            time.time() - retention_schema[0][1] - 1)
 
         self._removedb()
-        
+
+    def test_update_complex_archive(self):
+        """Update with a multi leveled archive"""
+        retention_schema = [ whisper.parseRetentionDef('5m:1d'),
+                             whisper.parseRetentionDef('1h:7d'),
+                             whisper.parseRetentionDef('1d:30d'),
+                             whisper.parseRetentionDef('7d:1y')
+                           ]
+
+        # This test case is slightly abreviated, but it excercises the archiving code paths and highlights any exceptions
+        self._update(schema=retention_schema, num_data_points=1000000)
+
+        # check TimestampNotCovered
+        with self.assertRaises(whisper.TimestampNotCovered):
+            # in the future
+            whisper.update(self.db, 1.337, time.time() + 1000000000)
+        with self.assertRaises(whisper.TimestampNotCovered):
+            # before the past
+            whisper.update(self.db, 1.337,
+                           time.time() - 1000000000)
+
+        self._removedb()
+
     def test_setAggregation(self):
         """Create a db, change aggregation, xFilesFactor, then use info() to validate"""
         retention = [(1, 60), (60, 60)]
