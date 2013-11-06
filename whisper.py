@@ -138,7 +138,7 @@ def parseRetentionDef(retentionDef):
     points_re = re.compile(r'^(\d+)([a-z]+)$')
     match = points_re.match(points)
     if match:
-      points = int(match.group(1)) * UnitMultipliers[getUnitString(match.group(2))] / precision
+      points = int(match.group(1)) * UnitMultipliers[getUnitString(match.group(2))] // precision
     else:
       raise ValueError("Invalid retention specification '%s'" % points)
 
@@ -351,7 +351,7 @@ def validateArchiveList(archiveList):
         (i, retention, i + 1, nextRetention))
 
     archivePoints = archive[1]
-    pointsPerConsolidation = nextArchive[0] / archive[0]
+    pointsPerConsolidation = nextArchive[0] // archive[0]
     if not archivePoints >= pointsPerConsolidation:
       raise InvalidConfiguration("Each archive must have at least enough points "
         "to consolidate to the next archive (archive%d consolidates %d of "
@@ -455,11 +455,11 @@ def __propagate(fh,header,timestamp,higher,lower):
     higherFirstOffset = higher['offset']
   else:
     timeDistance = lowerIntervalStart - higherBaseInterval
-    pointDistance = timeDistance / higher['secondsPerPoint']
+    pointDistance = timeDistance // higher['secondsPerPoint']
     byteDistance = pointDistance * pointSize
     higherFirstOffset = higher['offset'] + (byteDistance % higher['size'])
 
-  higherPoints = lower['secondsPerPoint'] / higher['secondsPerPoint']
+  higherPoints = lower['secondsPerPoint'] // higher['secondsPerPoint']
   higherSize = higherPoints * pointSize
   relativeFirstOffset = higherFirstOffset - higher['offset']
   relativeLastOffset = (relativeFirstOffset + higherSize) % higher['size']
@@ -476,7 +476,7 @@ def __propagate(fh,header,timestamp,higher,lower):
 
   #Now we unpack the series data we just read
   byteOrder,pointTypes = pointFormat[0],pointFormat[1:]
-  points = len(seriesString) / pointSize
+  points = len(seriesString) // pointSize
   seriesFormat = byteOrder + (pointTypes * points)
   unpackedSeries = struct.unpack(seriesFormat, seriesString)
 
@@ -488,7 +488,7 @@ def __propagate(fh,header,timestamp,higher,lower):
   for i in xrange(0,len(unpackedSeries),2):
     pointTime = unpackedSeries[i]
     if pointTime == currentInterval:
-      neighborValues[i/2] = unpackedSeries[i+1]
+      neighborValues[i//2] = unpackedSeries[i+1]
     currentInterval += step
 
   #Propagate aggregateValue to propagate from neighborValues if we have enough known points
@@ -509,7 +509,7 @@ def __propagate(fh,header,timestamp,higher,lower):
       fh.write(myPackedPoint)
     else: #Not our first propagated update to this lower archive
       timeDistance = lowerIntervalStart - lowerBaseInterval
-      pointDistance = timeDistance / lower['secondsPerPoint']
+      pointDistance = timeDistance // lower['secondsPerPoint']
       byteDistance = pointDistance * pointSize
       lowerOffset = lower['offset'] + (byteDistance % lower['size'])
       fh.seek(lowerOffset)
@@ -570,7 +570,7 @@ def file_update(fh, value, timestamp):
     baseInterval,baseValue = myInterval,value
   else: #Not our first update
     timeDistance = myInterval - baseInterval
-    pointDistance = timeDistance / archive['secondsPerPoint']
+    pointDistance = timeDistance // archive['secondsPerPoint']
     byteDistance = pointDistance * pointSize
     myOffset = archive['offset'] + (byteDistance % archive['size'])
     fh.seek(myOffset)
@@ -660,13 +660,13 @@ def __archive_update_many(fh,header,archive,points):
       currentString += struct.pack(pointFormat,interval,value)
       previousInterval = interval
     else:
-      numberOfPoints = len(currentString) / pointSize
+      numberOfPoints = len(currentString) // pointSize
       startInterval = previousInterval - (step * (numberOfPoints-1))
       packedStrings.append( (startInterval,currentString) )
       currentString = struct.pack(pointFormat,interval,value)
       previousInterval = interval
   if currentString:
-    numberOfPoints = len(currentString) / pointSize
+    numberOfPoints = len(currentString) // pointSize
     startInterval = previousInterval - (step * (numberOfPoints-1))
     packedStrings.append( (startInterval,currentString) )
 
@@ -680,7 +680,7 @@ def __archive_update_many(fh,header,archive,points):
   #Write all of our packed strings in locations determined by the baseInterval
   for (interval,packedString) in packedStrings:
     timeDistance = interval - baseInterval
-    pointDistance = timeDistance / step
+    pointDistance = timeDistance // step
     byteDistance = pointDistance * pointSize
     myOffset = archive['offset'] + (byteDistance % archive['size'])
     fh.seek(myOffset)
@@ -796,20 +796,20 @@ archive on a read and request data older than the archive's retention
 
   if baseInterval == 0:
     step = archive['secondsPerPoint']
-    points = (untilInterval - fromInterval) / step
+    points = (untilInterval - fromInterval) // step
     timeInfo = (fromInterval,untilInterval,step)
     valueList = [None] * points
     return (timeInfo,valueList)
 
   #Determine fromOffset
   timeDistance = fromInterval - baseInterval
-  pointDistance = timeDistance / archive['secondsPerPoint']
+  pointDistance = timeDistance // archive['secondsPerPoint']
   byteDistance = pointDistance * pointSize
   fromOffset = archive['offset'] + (byteDistance % archive['size'])
 
   #Determine untilOffset
   timeDistance = untilInterval - baseInterval
-  pointDistance = timeDistance / archive['secondsPerPoint']
+  pointDistance = timeDistance // archive['secondsPerPoint']
   byteDistance = pointDistance * pointSize
   untilOffset = archive['offset'] + (byteDistance % archive['size'])
 
@@ -825,7 +825,7 @@ archive on a read and request data older than the archive's retention
 
   #Now we unpack the series data we just read (anything faster than unpack?)
   byteOrder,pointTypes = pointFormat[0],pointFormat[1:]
-  points = len(seriesString) / pointSize
+  points = len(seriesString) // pointSize
   seriesFormat = byteOrder + (pointTypes * points)
   unpackedSeries = struct.unpack(seriesFormat, seriesString)
 
@@ -838,7 +838,7 @@ archive on a read and request data older than the archive's retention
     pointTime = unpackedSeries[i]
     if pointTime == currentInterval:
       pointValue = unpackedSeries[i+1]
-      valueList[i/2] = pointValue #in-place reassignment is faster than append()
+      valueList[i//2] = pointValue #in-place reassignment is faster than append()
     currentInterval += step
 
   timeInfo = (fromInterval,untilInterval,step)
@@ -909,7 +909,7 @@ def file_diff(fh_from, fh_to, ignore_empty = False):
     (toTimeInfo, toValues) = __archive_fetch(fh_to, archive, startTime, untilTime)
     (start, end, archive_step) = ( min(fromTimeInfo[0],toTimeInfo[0]), max(fromTimeInfo[1],toTimeInfo[1]), min(fromTimeInfo[2],toTimeInfo[2]) )
 
-    points = map(lambda s: (s * archive_step + start,fromValues[s],toValues[s]), range(0,(end - start) / archive_step))
+    points = map(lambda s: (s * archive_step + start,fromValues[s],toValues[s]), range(0,(end - start) // archive_step))
     if ignore_empty:
       points = [p for p in points if p[1] != None and p[2] != None]
     else:
