@@ -300,6 +300,45 @@ class TestWhisper(unittest.TestCase):
         with self.assertRaises(ValueError):
             whisper.parseRetentionDef('a:a')
 
+    def test_diff(self):
+        """Create and populate four db's and attempt to compare them"""
+        retention_schema = [(1, 21)]
+        alt_retention_schema = [(1, 60), (60, 60), (3600, 24), (86400, 365)]
+
+        try:
+          os.unlink('one.wsp')
+          os.unlink('two.wsp')
+          os.unlink('three.wsp')
+          os.unlink('four.wsp')
+        except Exception:
+          pass
+
+        self._update(schema=retention_schema, wsp='one.wsp')
+        self._update(schema=retention_schema, wsp='two.wsp')
+        self._update(schema=retention_schema, wsp='three.wsp')
+        self._update(schema=alt_retention_schema, wsp='four.wsp')
+
+        # wsp's with different schemas should not diff
+        with self.assertRaises(NotImplementedError):
+            whisper.diff('one.wsp', 'four.wsp')
+
+        # a wsp diffed with itself results in [(0, [], 20)]
+        self.assertEqual(whisper.diff('one.wsp', 'one.wsp'), [(0, [], 20)])
+
+        # three wsp's with random data diffed should never match
+        self.assertNotEqual(whisper.diff('one.wsp', 'two.wsp'), whisper.diff('two.wsp', 'three.wsp'))
+
+        # wsp diff's shouldn't be equal with swapped arguments order
+        self.assertNotEqual(whisper.diff('one.wsp', 'two.wsp'), whisper.diff('two.wsp', 'one.wsp'))
+
+        try:
+          os.unlink('one.wsp')
+          os.unlink('two.wsp')
+          os.unlink('three.wsp')
+          os.unlink('four.wsp')
+        except Exception:
+          pass
+
     @classmethod
     def tearDownClass(cls):
         cls._removedb()
