@@ -41,7 +41,7 @@ Options:
 
 whisper-create.py
 -----------------
-Create a new whisper database file
+Create a new whisper database file.
 
 ```
 Usage: whisper-create.py path timePerPoint:timeToStore [timePerPoint:timeToStore]*
@@ -65,7 +65,7 @@ Options:
 
 whisper-dump.py
 ---------------
-Dump the metadata about a whisper file to stdout
+Dump the metadata about a whisper file to stdout.
 
 ```
 Usage: whisper-dump.py path
