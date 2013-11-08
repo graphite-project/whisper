@@ -40,7 +40,7 @@ Options:
 ```
 
 whisper-create.py
---------------
+-----------------
 Create a new whisper database file
 
 ```
@@ -64,7 +64,7 @@ Options:
 ```
 
 whisper-dump.py
---------------
+---------------
 Dump the metadata about a whisper file to stdout
 
 ```
@@ -75,7 +75,7 @@ Options:
 ```
 
 whisper-fetch.py
---------------
+----------------
 Fetch all the metrics stored in a whisper file to stdout.
 
 ```
@@ -92,7 +92,7 @@ Options:
 ```
 
 whisper-info.py
---------------
+---------------
 
 ```
 Usage: whisper-info.py path [field]
@@ -102,7 +102,7 @@ Options:
 ```
 
 whisper-merge.py
---------------
+----------------
 Join two existing whisper files together.
 
 ```
@@ -113,7 +113,7 @@ Options:
 ```
 
 whisper-resize.py
---------------
+-----------------
 Change the retention rates of an existing whisper file.
 
 ```
@@ -144,7 +144,7 @@ Options:
 ```
 
 whisper-set-aggregation-method.py
---------------
+---------------------------------
 Change the aggregation method of an existing whisper file.
 
 ```
@@ -155,7 +155,7 @@ Options:
 ```
 
 whisper-update.py
---------------
+-----------------
 Update a whisper file with 1 or many values, must provide a time stamp with the value.
 
 ```
@@ -166,7 +166,7 @@ Options:
 ```
 
 whisper-diff.py
---------------
+---------------
 Check the differences between whisper files.  Use sanity check before merging.
 ```
 Usage: whisper-diff.py [options] path_a path_b
