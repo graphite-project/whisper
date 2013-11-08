@@ -168,6 +168,7 @@ Options:
 whisper-diff.py
 ---------------
 Check the differences between whisper files.  Use sanity check before merging.
+
 ```
 Usage: whisper-diff.py [options] path_a path_b
 
