@@ -1,7 +1,6 @@
 language: python
 
 python:
-  - 2.5
   - 2.6
   - 2.7
   - pypy
@@ -20,6 +19,5 @@ script:
   - bin/whisper-update.py --help
   - contrib/whisper-auto-update.py --help
   - contrib/whisper-auto-resize.py --help
-  # Run the unit tests for >= 2.6, the test uses with statements
   - "if echo $TRAVIS_PYTHON_VERSION | egrep -q '^(2.6|pypy)$'; then pip install unittest2 --use-mirrors; fi"
-  - "if echo $TRAVIS_PYTHON_VERSION | egrep -q '^(2.[67]|pypy)$'; then python test_whisper.py; fi"
+  - python test_whisper.py
