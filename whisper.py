@@ -874,8 +874,8 @@ def file_merge(fh_from, fh_to):
       itertools.izip(xrange(start, end, archive_step), values)))
     __archive_update_many(fh_to, headerTo, archive, pointsToWrite)
     untilTime = fromTime
-    fh_from.close()
-    fh_to.close()
+  fh_from.close()
+  fh_to.close()
 
 def diff(path_from, path_to, ignore_empty = False):
   """ Compare two whisper databases. Each file must have the same archive configuration """
