@@ -727,7 +727,7 @@ path is a string
       fh.close()
   return None
 
-def fetch(path,fromTime,untilTime=None):
+def fetch(path,fromTime,untilTime=None,now=None):
   """fetch(path,fromTime,untilTime=None)
 
 path is a string
@@ -742,14 +742,15 @@ Returns None if no data can be returned
   fh = None
   try:
     fh = open(path,'rb')
-    return file_fetch(fh, fromTime, untilTime)
+    return file_fetch(fh, fromTime, untilTime, now)
   finally:
     if fh:
       fh.close()
 
-def file_fetch(fh, fromTime, untilTime):
+def file_fetch(fh, fromTime, untilTime, now = None):
   header = __readHeader(fh)
-  now = int( time.time() )
+  if now is None:
+    now = int( time.time() )
   if untilTime is None:
     untilTime = now
   fromTime = int(fromTime)
