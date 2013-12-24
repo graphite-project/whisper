@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import itertools
 import sys
 import time
 import signal
@@ -9,6 +10,11 @@ try:
   import whisper
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+_DROP_FUNCTIONS = {
+    'zeroes': lambda x: x != 0,
+    'nulls': lambda x: x is not None
+}
 
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
@@ -26,10 +32,12 @@ option_parser.add_option('--json', default=False, action='store_true',
   help="Output results in JSON form")
 option_parser.add_option('--pretty', default=False, action='store_true',
   help="Show human-readable timestamps instead of unix times")
-option_parser.add_option('--dropnulls', default=False, action='store_true',
-  help="Remove any NULL values")
-option_parser.add_option('--dropzeroes', default=False, action='store_true',
-  help="Remove any ZERO values")
+option_parser.add_option('--drop',
+                         choices=_DROP_FUNCTIONS.keys(),
+                         action='append',
+                         help="Specify 'nulls' to drop all null values. \
+Specify 'zeroes' to drop all zero values. \
+This option can be used more than once.")
 
 (options, args) = option_parser.parse_args()
 
@@ -48,18 +56,15 @@ try:
 except whisper.WhisperException, exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
+if options.drop:
+    vals = values
+    for key in options.drop:
+        assert key in _DROP_FUNCTIONS
 
-filter_fcn = None
-if options.dropzeroes and options.dropnulls:
-    filter_fcn = lambda x: x
-elif options.dropzeroes:
-    filter_fcn = lambda x: x != 0
-elif options.dropnulls:
-    filter_fcn = lambda x: x is not None
+        fcn = _DROP_FUNCTIONS.get(key)
+        vals = itertools.ifilter(fcn, vals)
 
-if filter_fcn:
-    values = filter(filter_fcn, values)
-
+    values = list(vals)
 
 (start,end,step) = timeInfo
 
