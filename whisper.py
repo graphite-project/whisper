@@ -255,7 +255,7 @@ def setAggregationMethod(path, aggregationMethod, xFilesFactor=None):
   """setAggregationMethod(path,aggregationMethod,xFilesFactor=None)
 
 path is a string
-aggregationMethod specifies the method to use when propogating data (see ``whisper.aggregationMethods``)
+aggregationMethod specifies the method to use when propagating data (see ``whisper.aggregationMethods``)
 xFilesFactor specifies the fraction of data points in a propagation interval that must have known values for a propagation to occur.  If None, the existing xFilesFactor in path will not be changed
 """
   fh = None
@@ -365,7 +365,7 @@ def create(path,archiveList,xFilesFactor=None,aggregationMethod=None,sparse=Fals
 path is a string
 archiveList is a list of archives, each of which is of the form (secondsPerPoint,numberOfPoints)
 xFilesFactor specifies the fraction of data points in a propagation interval that must have known values for a propagation to occur
-aggregationMethod specifies the function to use when propogating data (see ``whisper.aggregationMethods``)
+aggregationMethod specifies the function to use when propagating data (see ``whisper.aggregationMethods``)
 """
   # Set default params
   if xFilesFactor is None:
