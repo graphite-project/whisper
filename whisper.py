@@ -644,13 +644,22 @@ def file_update_many(fh, points):
     fh.flush()
     os.fsync(fh.fileno())
 
-
+#generator on ordered list of points, replaces any duplicates with first occurance, reverse list to get last occurance.
+def dedup( seq ):
+  old = None
+  for item in seq:
+    if item[0] == old:
+      continue
+    yield item
+    old = item[0]
 
 def __archive_update_many(fh,header,archive,points):
   step = archive['secondsPerPoint']
   alignedPoints = [ (timestamp - (timestamp % step), value)
                     for (timestamp,value) in points ]
-  alignedPoints = dict(alignedPoints).items() # Take the last val of duplicates
+  alignedPoints.reverse()
+  alignedPoints[:] = dedup(alignedPoints)
+  alignedPoints.reverse()
   #Create a packed string for each contiguous sequence of points
   packedStrings = []
   previousInterval = None
