@@ -597,7 +597,8 @@ points is a list of (timestamp,value) points
 """
   if not points: return
   points = [ (int(t),float(v)) for (t,v) in points]
-  points.sort(key=lambda p: p[0],reverse=True) #order points by timestamp, newest first
+  points.sort(key=lambda p: p[0]) #order points by timestamp
+  points.reverse() #newest first (also reverse any points with duplicate timestamps)
   fh = None
   try:
     fh = open(path,'r+b')
@@ -650,7 +651,6 @@ def __archive_update_many(fh,header,archive,points):
   step = archive['secondsPerPoint']
   alignedPoints = [ (timestamp - (timestamp % step), value)
                     for (timestamp,value) in points ]
-  alignedPoints = dict(alignedPoints).items() # Take the last val of duplicates
   #Create a packed string for each contiguous sequence of points
   packedStrings = []
   previousInterval = None
