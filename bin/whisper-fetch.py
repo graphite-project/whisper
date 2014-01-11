@@ -38,7 +38,8 @@ option_parser.add_option('--drop',
                          action='append',
                          help="Specify 'nulls' to drop all null values. \
 Specify 'zeroes' to drop all zero values. \
-This option can be used more than once.")
+Specify 'empty' to drop both null and zero values. \
+This option may be used more than once.")
 
 (options, args) = option_parser.parse_args()
 

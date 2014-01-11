@@ -89,8 +89,9 @@ Options:
                  (default: now)
   --json         Output results in JSON form
   --pretty       Show human-readable timestamps instead of unix times
-  --drop         Specify 'nulls' to drop all null values. Specify 'zeroes' to
-                 drop all zero values. This option can be used more than once.
+  --drop=DROP    Specify 'nulls' to drop all null values. Specify 'zeroes' to
+                 drop all zero values. Specify 'empty' to drop both null and
+                 zero values. This option may be used more than once.
 ```
 
 whisper-info.py
