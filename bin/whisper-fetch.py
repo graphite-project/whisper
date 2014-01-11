@@ -13,7 +13,8 @@ except ImportError:
 
 _DROP_FUNCTIONS = {
     'zeroes': lambda x: x != 0,
-    'nulls': lambda x: x is not None
+    'nulls': lambda x: x is not None,
+    'empty': lambda x: x != 0 and x is not None
 }
 
 # Ignore SIGPIPE
