@@ -142,11 +142,6 @@ def processMetric(fullPath, schemas, agg_schemas):
         rebuild = True
         messages += '%s aggregation schema differs real: %s should be: %s \n' % (metric, info['aggregationMethod'], aggregationMethod)
 
-    # check to see if the current and configured xFilesFactor are the same
-    if (xFilesFactor != info['xFilesFactor']):
-        rebuild = True
-        messages += '%s xFilesFactor differs real: %s should be: %s \n' % (metric, info['xFilesFactor'], xFilesFactor)
-
     # if we need to rebuild, lets do it.
     if (rebuild == True):
         cmd = 'whisper-resize.py %s %s --xFilesFactor=%s --aggregationMethod=%s %s' % (fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
