@@ -130,8 +130,13 @@ def processMetric(fullPath, schemas, agg_schemas):
         rebuild = True
         messages += 'updating Retentions from: %s to: %s \n' % (schema_file_args, schema_config_args)
 
-    print "xFilesFactor: %s (wsp file) / %s (storage-schema.cfg)" % (str(info['xFilesFactor']),str(xFilesFactor))
+    print "xFilesFactor: %s (wsp file) / %s (storage-aggregation.cfg)" % (str(info['xFilesFactor']),str(xFilesFactor))
 
+    # set xFilesFactor to the wsp files setting if there is nothing configured in storage-aggregation.conf
+    if not xFilesFactor:
+        xFilesFactor = info['xFilesFactor']
+        print "WARNING: no configuration for xFilesFactor found, using xFilesFactor from wsp file"
+        
     # only care about the first two decimals in the comparison since there is floaty stuff going on.
     info_xFilesFactor = "{0:.2f}".format(info['xFilesFactor'])
     str_xFilesFactor =  "{0:.2f}".format(xFilesFactor)
