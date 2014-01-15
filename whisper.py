@@ -674,7 +674,9 @@ def __archive_update_many(fh,header,archive,points):
   fh.seek(archive['offset'])
   packedBasePoint = fh.read(pointSize)
   (baseInterval,baseValue) = struct.unpack(pointFormat,packedBasePoint)
-  if baseInterval == 0: #This file's first update
+
+  # can only be calculated if there any points to update available
+  if packedStrings and baseInterval == 0: #This file's first update
     baseInterval = packedStrings[0][0] #use our first string as the base, so we start at the start
 
   #Write all of our packed strings in locations determined by the baseInterval
