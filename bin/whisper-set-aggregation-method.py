@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import os
 import sys
 import signal
 import optparse
 
 try:
     import whisper
+    from whisper import Log
 except ImportError:
     raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
@@ -43,4 +43,4 @@ except whisper.WhisperException, exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 
-print 'Updated aggregation method: %s (%s -> %s)' % (path,oldAggregationMethod,aggregationMethod)
+Log.info('Updated aggregation method: %s (%s -> %s)' % (path,oldAggregationMethod,aggregationMethod))

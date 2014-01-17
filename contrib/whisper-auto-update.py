@@ -7,6 +7,7 @@ import optparse
 
 try:
   import whisper
+  from whisper import Log
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
@@ -60,7 +61,7 @@ for value_old in values_old:
   else:
     timestr = str(t)
 
-  print "%s\t%s -> %s" % (timestr,value_str_old, value_str_new)
+  Log.info("%s\t%s -> %s" % (timestr, value_str_old, value_str_new))
   try:
     if value_new is not None:
       whisper.update(path, value_new, t)

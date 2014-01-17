@@ -1,7 +1,13 @@
 #!/usr/bin/env python
-import sys, os, fnmatch
+import sys, os, fnmatch, logging
 from subprocess import call
 from optparse import OptionParser
+
+try:
+    import whisper
+    from whisper import Log
+except ImportError:
+    raise SystemExit('[ERROR] Can\'t find the whisper module, try using --whisperlib to explicitly include the path')
 
 option_parser = OptionParser(
     usage='''%prog storagePath configPath
@@ -15,7 +21,7 @@ option_parser.add_option(
     help="This is not a drill, lets do it")
 option_parser.add_option(
     '-q', '--quiet', default=False, action='store_true',
-    help="Display extra debugging info")
+    help='Run in quiet mode. Only error messages are displayed.')
 option_parser.add_option(
     '--subdir', default=None,
     type='string', help="only process a subdir of whisper files")
@@ -33,6 +39,9 @@ option_parser.add_option(
     type='string', help="pass any additional arguments to the whisper-resize.py script")
 
 (options, args) = option_parser.parse_args()
+
+if options.quiet:
+    Log.set_log_level(logging.ERROR)
 
 if len(args) < 2:
     option_parser.print_help()
@@ -53,11 +62,6 @@ else:
 # Injecting the Whisper Lib Path if needed
 if options.whisperlib is not None:
     sys.path.insert(0, options.whisperlib)
-
-try:
-    import whisper
-except ImportError:
-    raise SystemExit('[ERROR] Can\'t find the whisper module, try using --whisperlib to explicitly include the path')
 
 # Injecting the Carbon Lib Path if needed
 if options.carbonlib is not None:
@@ -130,13 +134,14 @@ def processMetric(fullPath, schemas, agg_schemas):
         rebuild = True
         messages += 'updating Retentions from: %s to: %s \n' % (schema_file_args, schema_config_args)
 
-    print "xFilesFactor: %s (wsp file) / %s (storage-aggregation.cfg)" % (str(info['xFilesFactor']),str(xFilesFactor))
+    Log.info("xFilesFactor: %s (wsp file) / %s (storage-aggregation.cfg)" %
+                  (str(info['xFilesFactor']), str(xFilesFactor)))
 
     # set xFilesFactor to the wsp files setting if there is nothing configured in storage-aggregation.conf
     if not xFilesFactor:
         xFilesFactor = info['xFilesFactor']
-        print "WARNING: no configuration for xFilesFactor found, using xFilesFactor from wsp file"
-        
+        Log.warn('no configuration for xFilesFactor found, using xFilesFactor from wsp file')
+
     # only care about the first two decimals in the comparison since there is floaty stuff going on.
     info_xFilesFactor = "{0:.2f}".format(info['xFilesFactor'])
     str_xFilesFactor =  "{0:.2f}".format(xFilesFactor)
@@ -151,12 +156,11 @@ def processMetric(fullPath, schemas, agg_schemas):
 
     # if we need to rebuild, lets do it.
     if (rebuild == True):
-        cmd = 'whisper-resize.py %s %s --xFilesFactor=%s --aggregationMethod=%s %s' % (fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
-        if (options.quiet != True or options.confirm == True):
+        cmd = 'whisper-resize.py %s %s %s --xFilesFactor=%s --aggregationMethod=%s %s' % \
+              (['', '-q'][options.quiet], fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
+        if (options.confirm == True):
             print messages
             print cmd
-
-        if (options.confirm == True):
             options.doit = confirm("Would you like to run this command? [y/n]: ")
             if (options.doit == False):
                 print "Skipping command \n"
@@ -184,7 +188,7 @@ def getMetricFromPath(filePath):
     metric_name = filePath.replace(data_dir, '')
     metric_name = metric_name.replace('.wsp', '')
     metric_name = metric_name.replace('/', '.')
-    print "WORKING ON: " + metric_name
+    Log.info("WORKING ON: " + metric_name)
     return metric_name
 
 def confirm(question, error_response='Valid options : yes or no'):
