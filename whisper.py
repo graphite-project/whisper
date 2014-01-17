@@ -25,7 +25,7 @@
 #		Archive = Point+
 #			Point = timestamp,value
 
-import os, struct, time, operator, itertools
+import os, struct, time, operator, itertools, logging
 
 try:
   import fcntl
@@ -922,3 +922,25 @@ def file_diff(fh_from, fh_to, ignore_empty = False):
     archive_diffs.append( (archive_number, diffs, points.__len__()) )
     untilTime = startTime
   return archive_diffs
+
+
+class Log:
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+    @staticmethod
+    def info(message):
+        logging.info(message)
+
+    @staticmethod
+    def error(message):
+        logging.error(message)
+
+    @staticmethod
+    def warn(message):
+        logging.warn(message)
+
+    @staticmethod
+    def set_log_level(level):
+        root_logger = logging.getLogger(None)
+        root_logger.setLevel(level)
+

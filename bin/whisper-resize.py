@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
+import logging
 import os
 import sys
-import math
 import time
 import bisect
 import signal
@@ -11,6 +11,7 @@ import traceback
 
 try:
   import whisper
+  from whisper import Log
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
@@ -50,12 +51,18 @@ option_parser.add_option(
     '--aggregate', action='store_true',
     help='Try to aggregate the values to fit the new archive better.'
          ' Note that this will make things slower and use more memory.')
+option_parser.add_option(
+    '-q', '--quiet', default=False, action='store_true',
+    help='Run in quiet mode. Only error messages are displayed.')
 
 (options, args) = option_parser.parse_args()
 
 if len(args) < 2:
   option_parser.print_help()
   sys.exit(1)
+
+if options.quiet:
+    Log.set_log_level(logging.ERROR)
 
 path = args[0]
 
@@ -83,7 +90,7 @@ if options.aggregationMethod is None:
 else:
   aggregationMethod = options.aggregationMethod
 
-print 'Retrieving all data from the archives'
+Log.info('Retrieving all data from the archives')
 for archive in old_archives:
   fromTime = now - archive['retention'] + archive['secondsPerPoint']
   untilTime = now
@@ -93,20 +100,20 @@ for archive in old_archives:
 if options.newfile is None:
   tmpfile = path + '.tmp'
   if os.path.exists(tmpfile):
-    print 'Removing previous temporary database file: %s' % tmpfile
+    Log.info('Removing previous temporary database file: %s' % tmpfile)
     os.unlink(tmpfile)
   newfile = tmpfile
 else:
   newfile = options.newfile
 
-print 'Creating new whisper database: %s' % newfile
+Log.info('Creating new whisper database: %s' % newfile)
 whisper.create(newfile, new_archives, xFilesFactor=xff, aggregationMethod=aggregationMethod)
 size = os.stat(newfile).st_size
-print 'Created: %s (%d bytes)' % (newfile,size)
+Log.info('Created: %s (%d bytes)' % (newfile,size))
 
 if options.aggregate:
   # This is where data will be interpolated (best effort)
-  print 'Migrating data with aggregation...'
+  Log.info('Migrating data with aggregation...')
   all_datapoints = []
   for archive in old_archives:
     # Loading all datapoints into memory for fast querying
@@ -126,7 +133,7 @@ if options.aggregate:
   oldtimestamps = map( lambda p: p[0], all_datapoints)
   oldvalues = map( lambda p: p[1], all_datapoints)
 
-  print "oldtimestamps: %s" % oldtimestamps
+  Log.info("oldtimestamps: %s" % oldtimestamps)
   # Simply cleaning up some used memory
   del all_datapoints
 
@@ -137,9 +144,9 @@ if options.aggregate:
     step = archive['secondsPerPoint']
     fromTime = now - archive['retention'] + now % step
     untilTime = now + now % step + step
-    print "(%s,%s,%s)" % (fromTime,untilTime, step)
+    Log.info("(%s,%s,%s)" % (fromTime,untilTime, step))
     timepoints_to_update = range(fromTime, untilTime, step)
-    print "timepoints_to_update: %s" % timepoints_to_update
+    Log.info("timepoints_to_update: %s" % timepoints_to_update)
     newdatapoints = []
     for tinterval in zip( timepoints_to_update[:-1], timepoints_to_update[1:] ):
       # TODO: Setting lo= parameter for 'lefti' based on righti from previous
@@ -156,7 +163,7 @@ if options.aggregate:
                                                   non_none)])
     whisper.update_many(newfile, newdatapoints)
 else:
-  print 'Migrating data without aggregation...'
+  Log.info('Migrating data without aggregation...')
   for archive in old_archives:
     timeinfo, values = archive['data']
     datapoints = zip( range(*timeinfo), values )
@@ -167,18 +174,18 @@ if options.newfile is not None:
   sys.exit(0)
 
 backup = path + '.bak'
-print 'Renaming old database to: %s' % backup
+Log.info('Renaming old database to: %s' % backup)
 os.rename(path, backup)
 
 try:
-  print 'Renaming new database to: %s' % path
+  Log.info('Renaming new database to: %s' % path)
   os.rename(tmpfile, path)
 except:
   traceback.print_exc()
-  print '\nOperation failed, restoring backup'
+  Log.error('Operation failed, restoring backup')
   os.rename(backup, path)
   sys.exit(1)
 
 if options.nobackup:
-  print "Unlinking backup: %s" % backup
+  Log.info("Unlinking backup: %s" % backup)
   os.unlink(backup)
