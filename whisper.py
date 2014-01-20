@@ -924,23 +924,26 @@ def file_diff(fh_from, fh_to, ignore_empty = False):
   return archive_diffs
 
 
-class Log:
-    logging.basicConfig(level=logging.INFO, format='%(message)s')
+class WhisperLogger(object):
 
-    @staticmethod
-    def info(message):
-        logging.info(message)
+    def __init__(self):
+        self.logger = logging.getLogger('whisper')
+        self.logger.setLevel(logging.INFO)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
 
-    @staticmethod
-    def error(message):
-        logging.error(message)
+    def info(self, message):
+        self.logger.info(message)
 
-    @staticmethod
-    def warn(message):
-        logging.warn(message)
+    def error(self, message):
+        self.logger.error(message)
 
-    @staticmethod
-    def set_log_level(level):
-        root_logger = logging.getLogger(None)
-        root_logger.setLevel(level)
+    def warn(self, message):
+        self.logger.warn(message)
 
+    def set_log_level(self, level):
+        self.logger.setLevel(level)
+
+log = WhisperLogger()
