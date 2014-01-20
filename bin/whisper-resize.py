@@ -11,7 +11,7 @@ import traceback
 
 try:
   import whisper
-  from whisper import Log
+  from whisper import log
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
@@ -62,7 +62,7 @@ if len(args) < 2:
   sys.exit(1)
 
 if options.quiet:
-    Log.set_log_level(logging.ERROR)
+    log.set_log_level(logging.ERROR)
 
 path = args[0]
 
@@ -90,7 +90,7 @@ if options.aggregationMethod is None:
 else:
   aggregationMethod = options.aggregationMethod
 
-Log.info('Retrieving all data from the archives')
+log.info('Retrieving all data from the archives')
 for archive in old_archives:
   fromTime = now - archive['retention'] + archive['secondsPerPoint']
   untilTime = now
@@ -100,20 +100,20 @@ for archive in old_archives:
 if options.newfile is None:
   tmpfile = path + '.tmp'
   if os.path.exists(tmpfile):
-    Log.info('Removing previous temporary database file: %s' % tmpfile)
+    log.info('Removing previous temporary database file: %s' % tmpfile)
     os.unlink(tmpfile)
   newfile = tmpfile
 else:
   newfile = options.newfile
 
-Log.info('Creating new whisper database: %s' % newfile)
+log.info('Creating new whisper database: %s' % newfile)
 whisper.create(newfile, new_archives, xFilesFactor=xff, aggregationMethod=aggregationMethod)
 size = os.stat(newfile).st_size
-Log.info('Created: %s (%d bytes)' % (newfile,size))
+log.info('Created: %s (%d bytes)' % (newfile,size))
 
 if options.aggregate:
   # This is where data will be interpolated (best effort)
-  Log.info('Migrating data with aggregation...')
+  log.info('Migrating data with aggregation...')
   all_datapoints = []
   for archive in old_archives:
     # Loading all datapoints into memory for fast querying
@@ -133,7 +133,7 @@ if options.aggregate:
   oldtimestamps = map( lambda p: p[0], all_datapoints)
   oldvalues = map( lambda p: p[1], all_datapoints)
 
-  Log.info("oldtimestamps: %s" % oldtimestamps)
+  log.info("oldtimestamps: %s" % oldtimestamps)
   # Simply cleaning up some used memory
   del all_datapoints
 
@@ -144,9 +144,9 @@ if options.aggregate:
     step = archive['secondsPerPoint']
     fromTime = now - archive['retention'] + now % step
     untilTime = now + now % step + step
-    Log.info("(%s,%s,%s)" % (fromTime,untilTime, step))
+    log.info("(%s,%s,%s)" % (fromTime,untilTime, step))
     timepoints_to_update = range(fromTime, untilTime, step)
-    Log.info("timepoints_to_update: %s" % timepoints_to_update)
+    log.info("timepoints_to_update: %s" % timepoints_to_update)
     newdatapoints = []
     for tinterval in zip( timepoints_to_update[:-1], timepoints_to_update[1:] ):
       # TODO: Setting lo= parameter for 'lefti' based on righti from previous
@@ -163,7 +163,7 @@ if options.aggregate:
                                                   non_none)])
     whisper.update_many(newfile, newdatapoints)
 else:
-  Log.info('Migrating data without aggregation...')
+  log.info('Migrating data without aggregation...')
   for archive in old_archives:
     timeinfo, values = archive['data']
     datapoints = zip( range(*timeinfo), values )
@@ -174,18 +174,18 @@ if options.newfile is not None:
   sys.exit(0)
 
 backup = path + '.bak'
-Log.info('Renaming old database to: %s' % backup)
+log.info('Renaming old database to: %s' % backup)
 os.rename(path, backup)
 
 try:
-  Log.info('Renaming new database to: %s' % path)
+  log.info('Renaming new database to: %s' % path)
   os.rename(tmpfile, path)
 except:
   traceback.print_exc()
-  Log.error('Operation failed, restoring backup')
+  log.error('Operation failed, restoring backup')
   os.rename(backup, path)
   sys.exit(1)
 
 if options.nobackup:
-  Log.info("Unlinking backup: %s" % backup)
+  log.info("Unlinking backup: %s" % backup)
   os.unlink(backup)

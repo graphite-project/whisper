@@ -7,7 +7,7 @@ import optparse
 
 try:
   import whisper
-  from whisper import Log
+  from whisper import log
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
@@ -50,7 +50,7 @@ except whisper.WhisperException, exc:
 
 if options.json:
   values_json = str(values).replace('None','null')
-  Log.info( '''{
+  log.info( '''{
     "start" : %d,
     "end" : %d,
     "step" : %d,
@@ -68,5 +68,5 @@ for value in values:
     valuestr = "None"
   else:
     valuestr = "%f" % value
-  Log.info("%s\t%s" % (timestr,valuestr))
+  log.info("%s\t%s" % (timestr,valuestr))
   t += step

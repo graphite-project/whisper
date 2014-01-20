@@ -6,7 +6,7 @@ import optparse
 
 try:
     import whisper
-    from whisper import Log
+    from whisper import log
 except ImportError:
     raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
@@ -43,4 +43,4 @@ except whisper.WhisperException, exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 
-Log.info('Updated aggregation method: %s (%s -> %s)' % (path,oldAggregationMethod,aggregationMethod))
+log.info('Updated aggregation method: %s (%s -> %s)' % (path,oldAggregationMethod,aggregationMethod))

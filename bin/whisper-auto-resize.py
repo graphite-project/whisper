@@ -5,7 +5,7 @@ from optparse import OptionParser
 
 try:
     import whisper
-    from whisper import Log
+    from whisper import log
 except ImportError:
     raise SystemExit('[ERROR] Can\'t find the whisper module, try using --whisperlib to explicitly include the path')
 
@@ -44,7 +44,7 @@ option_parser.add_option(
 (options, args) = option_parser.parse_args()
 
 if options.quiet:
-    Log.set_log_level(logging.ERROR)
+    log.set_log_level(logging.ERROR)
 
 if len(args) < 2:
     option_parser.print_help()
@@ -104,7 +104,7 @@ def rebuild_metric(aggregationMethod, fullPath, messages, schema_config_args, xF
 
     if do_it:
         if call(cmd, shell=True) != 0:
-            Log.error('Error running: %s' % (cmd))
+            log.error('Error running: %s' % (cmd))
             return StatisticsCollector.REBUILD_ERROR
         else:
             return StatisticsCollector.REBUILD_DONE
@@ -161,13 +161,13 @@ def processMetric(fullPath, schemas, agg_schemas):
         rebuild = True
         messages += 'updating Retentions from: %s to: %s \n' % (schema_file_args, schema_config_args)
 
-    Log.info("xFilesFactor: %s (wsp file) / %s (storage-aggregation.cfg)" %
+    log.info("xFilesFactor: %s (wsp file) / %s (storage-aggregation.cfg)" %
              (str(info['xFilesFactor']), str(xFilesFactor)))
 
     # set xFilesFactor to the wsp files setting if there is nothing configured in storage-aggregation.conf
     if not xFilesFactor:
         xFilesFactor = info['xFilesFactor']
-        Log.warn('no configuration for xFilesFactor found, using xFilesFactor from wsp file')
+        log.warn('no configuration for xFilesFactor found, using xFilesFactor from wsp file')
 
     # only care about the first two decimals in the comparison since there is floaty stuff going on.
     info_xFilesFactor = "{0:.2f}".format(info['xFilesFactor'])
@@ -206,7 +206,7 @@ def getMetricFromPath(filePath):
     metric_name = filePath.replace(data_dir, '')
     metric_name = metric_name.replace('.wsp', '')
     metric_name = metric_name.replace('/', '.')
-    Log.info("WORKING ON: " + metric_name)
+    log.info("WORKING ON: " + metric_name)
     return metric_name
 
 
