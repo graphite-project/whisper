@@ -25,7 +25,7 @@
 #		Archive = Point+
 #			Point = timestamp,value
 
-import os, struct, time, operator, itertools
+import os, struct, time, operator, itertools, logging
 
 try:
   import fcntl
@@ -674,7 +674,9 @@ def __archive_update_many(fh,header,archive,points):
   fh.seek(archive['offset'])
   packedBasePoint = fh.read(pointSize)
   (baseInterval,baseValue) = struct.unpack(pointFormat,packedBasePoint)
-  if baseInterval == 0: #This file's first update
+
+  # can only be calculated if there any points to update available
+  if packedStrings and baseInterval == 0: #This file's first update
     baseInterval = packedStrings[0][0] #use our first string as the base, so we start at the start
 
   #Write all of our packed strings in locations determined by the baseInterval
@@ -921,3 +923,28 @@ def file_diff(fh_from, fh_to, ignore_empty = False):
     archive_diffs.append( (archive_number, diffs, points.__len__()) )
     untilTime = startTime
   return archive_diffs
+
+
+class WhisperLogger(object):
+
+    def __init__(self):
+        self.logger = logging.getLogger('whisper')
+        self.logger.setLevel(logging.INFO)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(message)s')
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+
+    def info(self, message):
+        self.logger.info(message)
+
+    def error(self, message):
+        self.logger.error(message)
+
+    def warn(self, message):
+        self.logger.warn(message)
+
+    def set_log_level(self, level):
+        self.logger.setLevel(level)
+
+log = WhisperLogger()
