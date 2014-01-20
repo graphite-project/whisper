@@ -8,7 +8,7 @@ import optparse
 
 try:
   import whisper
-  from whisper import Log
+  from whisper import log
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
@@ -63,29 +63,29 @@ def read_header(map):
   return header
 
 def dump_header(header):
-  Log.info('Meta data:')
-  Log.info('  aggregation method: %s' % header['aggregationMethod'])
-  Log.info('  max retention: %d' % header['maxRetention'])
-  Log.info('  xFilesFactor: %g' % header['xFilesFactor'])
+  log.info('Meta data:')
+  log.info('  aggregation method: %s' % header['aggregationMethod'])
+  log.info('  max retention: %d' % header['maxRetention'])
+  log.info('  xFilesFactor: %g' % header['xFilesFactor'])
   print
   dump_archive_headers(header['archives'])
 
 def dump_archive_headers(archives):
   for i,archive in enumerate(archives):
-    Log.info('Archive %d info:' % i)
-    Log.info('  offset: %d' % archive['offset'])
-    Log.info('  seconds per point: %d' % archive['secondsPerPoint'])
-    Log.info('  points: %d' % archive['points'])
-    Log.info('  retention: %d' % archive['retention'])
-    Log.info('  size: %d' % archive['size'])
+    log.info('Archive %d info:' % i)
+    log.info('  offset: %d' % archive['offset'])
+    log.info('  seconds per point: %d' % archive['secondsPerPoint'])
+    log.info('  points: %d' % archive['points'])
+    log.info('  retention: %d' % archive['retention'])
+    log.info('  size: %d' % archive['size'])
 
 def dump_archives(archives):
   for i,archive in enumerate(archives):
-    Log.info('Archive %d data:' %i)
+    log.info('Archive %d data:' %i)
     offset = archive['offset']
     for point in xrange(archive['points']):
       (timestamp, value) = struct.unpack(whisper.pointFormat, map[offset:offset+whisper.pointSize])
-      Log.info('%d: %d, %10.35g' % (point, timestamp, value))
+      log.info('%d: %d, %10.35g' % (point, timestamp, value))
       offset += whisper.pointSize
 
 if not os.path.exists(path):
