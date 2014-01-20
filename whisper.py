@@ -924,7 +924,7 @@ def file_diff(fh_from, fh_to, ignore_empty = False):
   return archive_diffs
 
 
-class Log:
+class Log(object):
     logging.basicConfig(level=logging.INFO, format='%(message)s')
 
     @staticmethod
