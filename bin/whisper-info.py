@@ -7,7 +7,7 @@ import optparse
 
 try:
   import whisper
-  from whisper import Log
+  from whisper import log
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
@@ -40,18 +40,18 @@ info['fileSize'] = os.stat(path).st_size
 
 if field:
   if field not in info:
-    Log.error('Unknown field "%s". Valid fields are %s' % (field, ','.join(info)))
+    log.error('Unknown field "%s". Valid fields are %s' % (field, ','.join(info)))
     sys.exit(1)
 
-  Log.info(info[field])
+  log.info(info[field])
   sys.exit(0)
 
 
 archives = info.pop('archives')
 for key,value in info.items():
-  Log.info('%s: %s' % (key,value))
+  log.info('%s: %s' % (key,value))
 
 for i,archive in enumerate(archives):
-  Log.info('Archive %d' % i)
+  log.info('Archive %d' % i)
   for key,value in archive.items():
-    Log.info('%s: %s' % (key,value))
+    log.info('%s: %s' % (key,value))

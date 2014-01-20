@@ -947,4 +947,4 @@ class WhisperLogger(object):
     def set_log_level(self, level):
         self.logger.setLevel(level)
 
-Log = WhisperLogger()
+log = WhisperLogger()
