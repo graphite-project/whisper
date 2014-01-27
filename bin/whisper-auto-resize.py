@@ -109,7 +109,7 @@ def rebuild_metric(aggregationMethod, fullPath, messages, schema_config_args, xF
         else:
             return StatisticsCollector.REBUILD_DONE
     else:
-        return StatisticsCollector.REBUILD_NOT_REQUIRED
+        return StatisticsCollector.REBUILD_REQUIRED
 
 
 def processMetric(fullPath, schemas, agg_schemas):
@@ -222,22 +222,22 @@ def confirm(question, error_response='Valid options : yes or no'):
         answer = raw_input(question).lower()
         if answer in ('y', 'yes'):
             return True
-        if answer in ('n', 'no' ):
+        if answer in ('n', 'no'):
             return False
         print error_response
 
 
-class StatisticsCollector:
+class StatisticsCollector(object):
     REBUILD_NOT_REQUIRED = 0
     REBUILD_DONE = 1
     REBUILD_ERROR = 2
-    statistics = {}
+    REBUILD_REQUIRED = 3
 
     def __init__(self):
-        self.statistics[self.REBUILD_DONE] = 0
-        self.statistics[self.REBUILD_ERROR] = 0
-        self.statistics[self.REBUILD_NOT_REQUIRED] = 0
-        pass
+        self.statistics = {self.REBUILD_DONE: 0,
+                           self.REBUILD_ERROR: 0,
+                           self.REBUILD_NOT_REQUIRED: 0,
+                           self.REBUILD_REQUIRED: 0}
 
     def update_counters(self, status_code):
         self.statistics[status_code] += 1
@@ -247,11 +247,12 @@ class StatisticsCollector:
 
     def as_string(self):
         total = sum(self.statistics.values())
-        return 'Metrics processed: %s, ok: %s, error: %s, not changed: %s' % \
+        return 'Metrics processed: %s, ok: %s, error: %s, not changed: %s, required but not done %s' % \
                (total,
                 self.statistics[self.REBUILD_DONE],
                 self.statistics[self.REBUILD_ERROR],
-                self.statistics[self.REBUILD_NOT_REQUIRED])
+                self.statistics[self.REBUILD_NOT_REQUIRED],
+                self.statistics[self.REBUILD_REQUIRED])
 
 statistics_collector = StatisticsCollector()
 for root, _, files in os.walk(processPath):
