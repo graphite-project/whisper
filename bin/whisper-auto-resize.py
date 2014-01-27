@@ -109,6 +109,7 @@ def rebuild_metric(aggregationMethod, fullPath, messages, schema_config_args, xF
         else:
             return StatisticsCollector.REBUILD_DONE
     else:
+        log.info("Would have resized %s but didn't." % fullPath)
         return StatisticsCollector.REBUILD_REQUIRED
 
 
