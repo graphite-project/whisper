@@ -592,7 +592,6 @@ def file_update_many(fh, points):
 
     while currentArchive['retention'] < age: #we can't fit any more points in this archive
       if currentPoints: #commit all the points we've found that it can fit
-        currentPoints.reverse() #put points in chronological order
         __archive_update_many(fh,header,currentArchive,currentPoints)
         currentPoints = []
       try:
@@ -607,7 +606,6 @@ def file_update_many(fh, points):
     currentPoints.append(point)
 
   if currentArchive and currentPoints: #don't forget to commit after we've checked all the archives
-    currentPoints.reverse()
     __archive_update_many(fh,header,currentArchive,currentPoints)
 
   if AUTOFLUSH:
@@ -622,6 +620,7 @@ def __archive_update_many(fh,header,archive,points):
   alignedPoints = [ (timestamp - (timestamp % step), value)
                     for (timestamp,value) in points ]
   alignedPoints = dict(alignedPoints).items() # Take the last val of duplicates
+  alignedPoints.sort(key=lambda p: p[0]) # order points by timetamp, oldest first
   #Create a packed string for each contiguous sequence of points
   packedStrings = []
   previousInterval = None
