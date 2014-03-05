@@ -151,19 +151,19 @@ def processMetric(fullPath, schemas, agg_schemas):
     if (rebuild == True):
         cmd = 'whisper-resize.py %s %s --xFilesFactor=%s --aggregationMethod=%s %s' % (fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
         if (options.quiet != True or options.confirm == True):
-            print messages
-            print cmd
+            print(messages)
+            print(cmd)
 
         if (options.confirm == True):
             options.doit = confirm("Would you like to run this command? [y/n]: ")
             if (options.doit == False):
-                print "Skipping command \n"
+                print("Skipping command \n")
 
         if (options.doit == True):
             exitcode = call(cmd, shell=True)
             # if the command failed lets bail so we can take a look before proceeding
             if (exitcode > 0):
-                print 'Error running: %s' % (cmd)
+                print('Error running: %s' % (cmd))
                 sys.exit(1)
 
 def getMetricFromPath(filePath):
@@ -198,7 +198,7 @@ def confirm(question, error_response='Valid options : yes or no'):
             return True
         if answer in ('n', 'no' ):
             return False
-        print error_response
+        print(error_response)
 
 for root, _, files in os.walk(processPath):
     # we only want to deal with non-hidden whisper files

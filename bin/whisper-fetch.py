@@ -49,12 +49,12 @@ except whisper.WhisperException, exc:
 
 if options.json:
   values_json = str(values).replace('None','null')
-  print '''{
+  print('''{
     "start" : %d,
     "end" : %d,
     "step" : %d,
     "values" : %s
-  }''' % (start,end,step,values_json)
+  }''' % (start,end,step,values_json))
   sys.exit(0)
 
 t = start
@@ -67,5 +67,5 @@ for value in values:
     valuestr = "None"
   else:
     valuestr = "%f" % value
-  print "%s\t%s" % (timestr,valuestr)
+  print("%s\t%s" % (timestr,valuestr))
   t += step

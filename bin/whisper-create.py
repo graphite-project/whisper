@@ -44,7 +44,7 @@ archives = [whisper.parseRetentionDef(retentionDef)
             for retentionDef in args[1:]]
 
 if os.path.exists(path) and options.overwrite:
-    print 'Overwriting existing file: %s' % path
+    print('Overwriting existing file: %s' % path)
     os.unlink(path)
 
 try:
@@ -53,4 +53,4 @@ except whisper.WhisperException, exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 size = os.stat(path).st_size
-print 'Created: %s (%d bytes)' % (path,size)
+print('Created: %s (%d bytes)' % (path,size))

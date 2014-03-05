@@ -111,9 +111,9 @@ for datasource in datasources:
     raise SystemExit('[ERROR] %s' % str(e))
   size = os.stat(path).st_size
   archiveConfig = ','.join(["%d:%d" % ar for ar in archives])
-  print "Created: %s (%d bytes) with archives: %s" % (path, size, archiveConfig)
+  print("Created: %s (%d bytes) with archives: %s" % (path, size, archiveConfig))
 
-  print "Migrating data"
+  print("Migrating data")
   archiveNumber = len(archives) - 1
   for precision, points in reversed(archives):
     retention = precision * points
@@ -132,6 +132,6 @@ for datasource in datasources:
     timestamps = list(range(*time_info))
     datapoints = zip(timestamps, values)
     datapoints = filter(lambda p: p[1] is not None, datapoints)
-    print ' migrating %d datapoints from archive %d' % (len(datapoints), archiveNumber)
+    print(' migrating %d datapoints from archive %d' % (len(datapoints), archiveNumber))
     archiveNumber -= 1
     whisper.update_many(path, datapoints)
