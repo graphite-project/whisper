@@ -41,7 +41,7 @@ until_time = int( options.until )
 
 try:
   (timeInfo, values) = whisper.fetch(path, from_time, until_time)
-except whisper.WhisperException, exc:
+except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 

@@ -36,5 +36,5 @@ try:
     whisper.update(path, value, timestamp)
   else:
     whisper.update_many(path, datapoints)
-except whisper.WhisperException, exc:
+except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))

@@ -35,11 +35,11 @@ if len(args) == 3:
 
 try:
   oldAggregationMethod = whisper.setAggregationMethod(path, aggregationMethod, xFilesFactor)
-except IOError, exc:
+except IOError:
   sys.stderr.write("[ERROR] File '%s' does not exist!\n\n" % path)
   option_parser.print_help()
   sys.exit(1)
-except whisper.WhisperException, exc:
+except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 

@@ -49,7 +49,7 @@ if os.path.exists(path) and options.overwrite:
 
 try:
   whisper.create(path, archives, xFilesFactor=options.xFilesFactor, aggregationMethod=options.aggregationMethod)
-except whisper.WhisperException, exc:
+except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 size = os.stat(path).st_size

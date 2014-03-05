@@ -8,7 +8,7 @@ import optparse
 
 try:
   import rrdtool
-except ImportError, exc:
+except ImportError as exc:
   raise SystemExit('[ERROR] Missing dependency: %s' % str(exc))
 
 try:
@@ -49,7 +49,7 @@ rrd_path = args[0]
 
 try:
   rrd_info = rrdtool.info(rrd_path)
-except rrdtool.error, exc:
+except rrdtool.error as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 seconds_per_pdp = rrd_info['step']
@@ -107,7 +107,7 @@ for datasource in datasources:
   path = rrd_path.replace('.rrd', '_%s.wsp' % datasource)
   try:
     whisper.create(path, archives, xFilesFactor=xFilesFactor)
-  except whisper.InvalidConfiguration, e:
+  except whisper.InvalidConfiguration as e:
     raise SystemExit('[ERROR] %s' % str(e))
   size = os.stat(path).st_size
   archiveConfig = ','.join(["%d:%d" % ar for ar in archives])

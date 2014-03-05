@@ -46,7 +46,7 @@ until_time = int( options.until )
 
 try:
   (timeInfo, values_old) = whisper.fetch(path, from_time, until_time)
-except whisper.WhisperException, exc:
+except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 (start,end,step) = timeInfo
@@ -65,6 +65,6 @@ for value_old in values_old:
     if value_new is not None:
       whisper.update(path, value_new, t)
     t += step
-  except whisper.WhisperException, exc:
+  except whisper.WhisperException as exc:
     raise SystemExit('[ERROR] %s' % str(exc))
 
