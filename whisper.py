@@ -35,7 +35,7 @@ import time
 izip = getattr(itertools, 'izip', zip)
 ifilter = getattr(itertools, 'ifilter', filter)
 
-if sys.version_info < (3, 0):
+if sys.version_info >= (3, 0):
     xrange = range
 
 try:
