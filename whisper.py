@@ -422,11 +422,11 @@ aggregationMethod specifies the function to use when propagating data (see ``whi
     else:
       remaining = archiveOffsetPointer - headerSize
       chunksize = 16384
-      zeroes = '\x00' * chunksize
+      zeroes = b'\x00' * chunksize
       while remaining > chunksize:
         fh.write(zeroes)
         remaining -= chunksize
-      fh.write(zeroes[:remaining].encode('utf-8'))
+      fh.write(zeroes[:remaining])
 
     if AUTOFLUSH:
       fh.flush()
@@ -637,7 +637,7 @@ def file_update_many(fh, points):
         __archive_update_many(fh,header,currentArchive,currentPoints)
         currentPoints = []
       try:
-        currentArchive = archives.next()
+        currentArchive = next(archives)
       except StopIteration:
         currentArchive = None
         break
