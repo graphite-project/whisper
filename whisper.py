@@ -845,6 +845,51 @@ archive on a read and request data older than the archive's retention
   timeInfo = (fromInterval,untilInterval,step)
   return (timeInfo,valueList)
 
+def fetch_lastupdate(path, now = None):
+  """fetch_lastupdate(path)
+
+path is a string
+now is epoch time upper bound for acceptable metric timestamps
+
+Returns a tuple (timeStamp, value) which represents the most recent
+point in the finest-precision archive where timeStamp is no later than
+now.
+
+Returns None if the finest-precision archive has no data, or its most
+recent data is more than its retention time earlier than now.
+"""
+  fh = None
+  try:
+    fh = open(path,'rb')
+    header = __readHeader(fh)
+    archive = header['archives'][0]
+    fh.seek(archive['offset'])
+    packedPoint = fh.read(pointSize)
+    if now is None:
+      now = int( time.time() )
+    myInterval = now - (now % archive['secondsPerPoint'])
+    (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
+    if 0 == baseInterval:
+      return None
+    timeDistance = myInterval - baseInterval
+    pointDistance = timeDistance / archive['secondsPerPoint']
+    byteDistance = pointDistance * pointSize
+    firstOffset = myOffset = archive['offset'] + (byteDistance % archive['size'])
+    while True:
+      fh.seek(myOffset)
+      (lastInterval, lastValue) = struct.unpack(pointFormat, fh.read(pointSize))
+      if lastInterval == myInterval:
+        return (lastInterval, lastValue)
+      myInterval -= archive['secondsPerPoint']
+      myOffset -= pointSize
+      if myOffset < archive['offset']:
+        myOffset = archive['offset'] + (archive['points'] - 1) * pointSize
+      if myOffset == firstOffset:
+        return None
+  finally:
+    if fh:
+      fh.close()
+
 def merge(path_from, path_to):
   """ Merges the data from one whisper file into another. Each file must have
   the same archive configuration
