@@ -38,7 +38,7 @@ if os.path.isdir(path_from) and os.path.isdir(path_to):
       fullname = os.path.join(root, file)
       relpath = os.path.relpath(fullname, path_from)
       other_file = os.path.join(path_to, relpath)
-      
+
       if os.path.exists(other_file):
         print 'Merging', relpath
         whisper.merge(fullname, other_file)
