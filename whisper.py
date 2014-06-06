@@ -708,7 +708,7 @@ where timeInfo is itself a tuple of (fromTime, untilTime, step)
 Returns None if no data can be returned
 """
   fh = open(path,'rb')
-  return file_fetch(fh, fromTime, untilTime,now)
+  return file_fetch(fh, fromTime, untilTime, now)
 
 
 def file_fetch(fh, fromTime, untilTime, now = None):
