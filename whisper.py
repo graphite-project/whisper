@@ -650,12 +650,15 @@ def __archive_update_many(fh,header,archive,points):
   step = archive['secondsPerPoint']
   alignedPoints = [ (timestamp - (timestamp % step), value)
                     for (timestamp,value) in points ]
-  alignedPoints = dict(alignedPoints).items() # Take the last val of duplicates
   #Create a packed string for each contiguous sequence of points
   packedStrings = []
   previousInterval = None
   currentString = ""
-  for (interval,value) in alignedPoints:
+  for i in xrange(0,len(alignedPoints)):
+    #take last point in run of points with duplicate intervals
+    if i+1 < len(alignedPoints) and alignedPoints[i][0] == alignedPoints[i+1][0]:
+      continue
+    (interval,value) = alignedPoints[i]
     if (not previousInterval) or (interval == previousInterval + step):
       currentString += struct.pack(pointFormat,interval,value)
       previousInterval = interval
