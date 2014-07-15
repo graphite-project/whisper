@@ -188,14 +188,18 @@ class TestWhisper(WhisperTestBase):
         self.assertEqual(whisper.aggregate('average', [1, 2, 3, 4]), 2.5)
         avg_zero = [1, 2, 3, 4, None, None, None, None]
         non_null = [i for i in avg_zero if i is not None]
-        # avg_zero without neighborValues
         self.assertEqual(whisper.aggregate('avg_zero', non_null, avg_zero), 1.25)
+        # avg_zero without neighborValues
+        with self.assertRaises(whisper.InvalidAggregationMethod):
+            whisper.aggregate('avg_zero', non_null)
         # absmax with negative max
         self.assertEqual(whisper.aggregate('absmax', [-3, -2, 1, 2]), -3)
         # absmax with positive max
         self.assertEqual(whisper.aggregate('absmax', [-2, -1, 2, 3]), 3)
-        with self.assertRaises(whisper.InvalidAggregationMethod):
-            whisper.aggregate('avg_zero', non_null)
+        # absmin with positive min
+        self.assertEqual(whisper.aggregate('absmin', [-3, -2, 1, 2]), 1)
+        # absmin with negative min
+        self.assertEqual(whisper.aggregate('absmin', [-2, -1, 2, 3]), -1)
 
         with AssertRaisesException(whisper.InvalidAggregationMethod('Unrecognized aggregation method derp')):
             whisper.aggregate('derp', [12, 2, 3123, 1])

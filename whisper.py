@@ -113,7 +113,8 @@ aggregationTypeToMethod = dict({
   4: 'max',
   5: 'min',
   6: 'avg_zero',
-  7: 'absmax'
+  7: 'absmax',
+  8: 'absmin'
 })
 aggregationMethodToType = dict([[v, k] for k, v in aggregationTypeToMethod.items()])
 aggregationMethods = aggregationTypeToMethod.values()
@@ -470,12 +471,9 @@ def aggregate(aggregationMethod, knownValues, neighborValues=None):
     values = [x or 0 for x in neighborValues]
     return float(sum(values)) / float(len(values))
   elif aggregationMethod == 'absmax':
-    maxValue = max(knownValues)
-    minValue = min(knownValues)
-    if abs(minValue) > maxValue:
-      return minValue
-    else:
-      return maxValue
+    return max(knownValues, key=abs)
+  elif aggregationMethod == 'absmin':
+    return min(knownValues, key=abs)
   else:
     raise InvalidAggregationMethod("Unrecognized aggregation method %s" %
             aggregationMethod)
