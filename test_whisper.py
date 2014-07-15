@@ -77,6 +77,10 @@ class TestWhisper(unittest.TestCase):
         self.assertEqual(whisper.aggregate('absmax', [-3, -2, 1, 2]), -3)
         # absmax with positive max
         self.assertEqual(whisper.aggregate('absmax', [-2, -1, 2, 3]), 3)
+        # absmin with positive min
+        self.assertEqual(whisper.aggregate('absmin', [-3, -2, 1, 2]), 1)
+        # absmin with negative min
+        self.assertEqual(whisper.aggregate('absmin', [-2, -1, 2, 3]), -1)
         with self.assertRaises(whisper.InvalidAggregationMethod):
             whisper.aggregate('derp', [12, 2, 3123, 1])
 
