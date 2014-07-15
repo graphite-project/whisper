@@ -35,11 +35,10 @@ option_parser.add_option('--pretty', default=False, action='store_true',
   help="Show human-readable timestamps instead of unix times")
 option_parser.add_option('--drop',
                          choices=_DROP_FUNCTIONS.keys(),
-                         action='append',
+                         action='store',
                          help="Specify 'nulls' to drop all null values. \
 Specify 'zeroes' to drop all zero values. \
-Specify 'empty' to drop both null and zero values. \
-This option may be used more than once.")
+Specify 'empty' to drop both null and zero values")
 
 (options, args) = option_parser.parse_args()
 
@@ -52,21 +51,16 @@ path = args[0]
 from_time = int( options._from )
 until_time = int( options.until )
 
-
 try:
   (timeInfo, values) = whisper.fetch(path, from_time, until_time)
 except whisper.WhisperException, exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 if options.drop:
-    vals = values
-    for key in options.drop:
-        assert key in _DROP_FUNCTIONS
+    assert options.drop in _DROP_FUNCTIONS
 
-        fcn = _DROP_FUNCTIONS.get(key)
-        vals = itertools.ifilter(fcn, vals)
-
-    values = list(vals)
+    fcn = _DROP_FUNCTIONS.get(options.drop)
+    values = itertools.ifilter(fcn, values)
 
 (start,end,step) = timeInfo
 

@@ -60,7 +60,7 @@ Options:
   --aggregationMethod=AGGREGATIONMETHOD
                         Function to use when aggregating values (average, sum,
                         last, max, min)
-  --overwrite           
+  --overwrite
 ```
 
 whisper-dump.py
@@ -91,7 +91,7 @@ Options:
   --pretty       Show human-readable timestamps instead of unix times
   --drop=DROP    Specify 'nulls' to drop all null values. Specify 'zeroes' to
                  drop all zero values. Specify 'empty' to drop both null and
-                 zero values. This option may be used more than once.
+                 zero values.
 ```
 
 whisper-info.py
