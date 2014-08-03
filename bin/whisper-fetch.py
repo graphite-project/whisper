@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import itertools
 import sys
 import time
 import signal
@@ -57,10 +56,8 @@ except whisper.WhisperException, exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 if options.drop:
-    assert options.drop in _DROP_FUNCTIONS
-
     fcn = _DROP_FUNCTIONS.get(options.drop)
-    values = itertools.ifilter(fcn, values)
+    values = [ fcn(x) for x in values ]
 
 (start,end,step) = timeInfo
 
