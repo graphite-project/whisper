@@ -10,6 +10,12 @@ try:
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
+_DROP_FUNCTIONS = {
+    'zeroes': lambda x: x != 0,
+    'nulls': lambda x: x is not None,
+    'empty': lambda x: x != 0 and x is not None
+}
+
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
@@ -26,6 +32,12 @@ option_parser.add_option('--json', default=False, action='store_true',
   help="Output results in JSON form")
 option_parser.add_option('--pretty', default=False, action='store_true',
   help="Show human-readable timestamps instead of unix times")
+option_parser.add_option('--drop',
+                         choices=_DROP_FUNCTIONS.keys(),
+                         action='store',
+                         help="Specify 'nulls' to drop all null values. \
+Specify 'zeroes' to drop all zero values. \
+Specify 'empty' to drop both null and zero values")
 
 (options, args) = option_parser.parse_args()
 
@@ -38,12 +50,14 @@ path = args[0]
 from_time = int( options._from )
 until_time = int( options.until )
 
-
 try:
   (timeInfo, values) = whisper.fetch(path, from_time, until_time)
 except whisper.WhisperException, exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
+if options.drop:
+    fcn = _DROP_FUNCTIONS.get(options.drop)
+    values = [ fcn(x) for x in values ]
 
 (start,end,step) = timeInfo
 
