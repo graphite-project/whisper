@@ -625,9 +625,10 @@ def __archive_update_many(fh,header,archive,points):
   packedStrings = []
   previousInterval = None
   currentString = ""
-  for i in xrange(0,len(alignedPoints)):
+  lenAlignedPoints = len(alignedPoints)
+  for i in xrange(0,lenAlignedPoints):
     #take last point in run of points with duplicate intervals
-    if i+1 < len(alignedPoints) and alignedPoints[i][0] == alignedPoints[i+1][0]:
+    if i+1 < lenAlignedPoints and alignedPoints[i][0] == alignedPoints[i+1][0]:
       continue
     (interval,value) = alignedPoints[i]
     if (not previousInterval) or (interval == previousInterval + step):
