@@ -92,7 +92,8 @@ aggregationTypeToMethod = dict({
   2: 'sum',
   3: 'last',
   4: 'max',
-  5: 'min'
+  5: 'min',
+  6: 'avg_zero'
 })
 aggregationMethodToType = dict([[v,k] for k,v in aggregationTypeToMethod.items()])
 aggregationMethods = aggregationTypeToMethod.values()
@@ -424,7 +425,7 @@ aggregationMethod specifies the function to use when propagating data (see ``whi
     if fh:
       fh.close()
 
-def aggregate(aggregationMethod, knownValues):
+def aggregate(aggregationMethod, knownValues, neighborValues):
   if aggregationMethod == 'average':
     return float(sum(knownValues)) / float(len(knownValues))
   elif aggregationMethod == 'sum':
@@ -435,6 +436,9 @@ def aggregate(aggregationMethod, knownValues):
     return max(knownValues)
   elif aggregationMethod == 'min':
     return min(knownValues)
+  elif aggregationMethod == 'avg_zero':
+    values = map(lambda x: x or 0, neighborValues)
+    return float(sum(values)) / float(len(values))
   else:
     raise InvalidAggregationMethod("Unrecognized aggregation method %s" %
             aggregationMethod)
@@ -498,7 +502,7 @@ def __propagate(fh,header,timestamp,higher,lower):
 
   knownPercent = float(len(knownValues)) / float(len(neighborValues))
   if knownPercent >= xff: #we have enough data to propagate a value!
-    aggregateValue = aggregate(aggregationMethod, knownValues)
+    aggregateValue = aggregate(aggregationMethod, knownValues, neighborValues)
     myPackedPoint = struct.pack(pointFormat,lowerIntervalStart,aggregateValue)
     fh.seek(lower['offset'])
     packedPoint = fh.read(pointSize)

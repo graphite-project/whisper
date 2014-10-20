@@ -153,7 +153,7 @@ if options.aggregate:
         if 1.0*len(non_none)/len(newvalues) >= xff:
           newdatapoints.append([tinterval[0],
                                 whisper.aggregate(aggregationMethod,
-                                                  non_none)])
+                                                  non_none, newvalues)])
     whisper.update_many(newfile, newdatapoints)
 else:
   print 'Migrating data without aggregation...'
