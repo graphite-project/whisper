@@ -166,7 +166,7 @@ def processMetric(fullPath, schemas, agg_schemas):
              (str(info['xFilesFactor']), str(xFilesFactor)))
 
     # set xFilesFactor to the wsp files setting if there is nothing configured in storage-aggregation.conf
-    if xFilesFactor is not None:
+    if xFilesFactor is None:
         xFilesFactor = info['xFilesFactor']
         log.warn('no configuration for xFilesFactor found, using xFilesFactor from wsp file')
 
