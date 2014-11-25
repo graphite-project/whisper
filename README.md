@@ -60,7 +60,7 @@ Options:
   --aggregationMethod=AGGREGATIONMETHOD
                         Function to use when aggregating values (average, sum,
                         last, max, min)
-  --overwrite           
+  --overwrite
 ```
 
 whisper-dump.py
@@ -89,6 +89,9 @@ Options:
                  (default: now)
   --json         Output results in JSON form
   --pretty       Show human-readable timestamps instead of unix times
+  --drop=DROP    Specify 'nulls' to drop all null values. Specify 'zeroes' to
+                 drop all zero values. Specify 'empty' to drop both null and
+                 zero values.
 ```
 
 whisper-info.py
@@ -107,6 +110,23 @@ Join two existing whisper files together.
 
 ```
 Usage: whisper-merge.py [options] from_path to_path
+
+Options:
+  -h, --help  show this help message and exit
+```
+
+whisper-fill.py
+----------------
+Copies data from src in dst, if missing.
+Unlike whisper-merge, don't overwrite data that's
+already present in the target file, but instead, only add the missing
+data (e.g. where the gaps in the target file are).  Because no values
+are overwritten, no data or precision gets lost.  Also, unlike
+whisper-merge, try to take the highest-precision archive to provide
+the data, instead of the one with the largest retention.
+
+```
+Usage: whisper-fill.py [options] src_path dst_path
 
 Options:
   -h, --help  show this help message and exit
