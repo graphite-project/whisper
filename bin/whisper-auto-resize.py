@@ -1,7 +1,13 @@
 #!/usr/bin/env python
-import sys, os, fnmatch
+import sys, os, fnmatch, logging
 from subprocess import call
 from optparse import OptionParser
+
+try:
+    import whisper
+    from whisper import log
+except ImportError:
+    raise SystemExit('[ERROR] Can\'t find the whisper module, try using --whisperlib to explicitly include the path')
 
 option_parser = OptionParser(
     usage='''%prog storagePath configPath
@@ -15,7 +21,7 @@ option_parser.add_option(
     help="This is not a drill, lets do it")
 option_parser.add_option(
     '-q', '--quiet', default=False, action='store_true',
-    help="Display extra debugging info")
+    help='Run in quiet mode. Only error messages are displayed.')
 option_parser.add_option(
     '--subdir', default=None,
     type='string', help="only process a subdir of whisper files")
@@ -31,15 +37,21 @@ option_parser.add_option(
 option_parser.add_option(
     '-x', '--extra_args', default='',
     type='string', help="pass any additional arguments to the whisper-resize.py script")
+option_parser.add_option(
+    '-s', '--statistics', default=False, action='store_true',
+    help='Print some statistics')
 
 (options, args) = option_parser.parse_args()
+
+if options.quiet:
+    log.set_log_level(logging.ERROR)
 
 if len(args) < 2:
     option_parser.print_help()
     sys.exit(1)
 
 storagePath = args[0]
-configPath  = args[1]
+configPath = args[1]
 
 #check to see if we are processing a subfolder
 # we need to have a seperate config option for this since
@@ -53,11 +65,6 @@ else:
 # Injecting the Whisper Lib Path if needed
 if options.whisperlib is not None:
     sys.path.insert(0, options.whisperlib)
-
-try:
-    import whisper
-except ImportError:
-    raise SystemExit('[ERROR] Can\'t find the whisper module, try using --whisperlib to explicitly include the path')
 
 # Injecting the Carbon Lib Path if needed
 if options.carbonlib is not None:
@@ -80,7 +87,32 @@ from carbon.storage import loadStorageSchemas, loadAggregationSchemas
 schemas = loadStorageSchemas()
 agg_schemas = loadAggregationSchemas()
 
+
 # check to see if a metric needs to be resized based on the current config
+def rebuild_metric(aggregationMethod, fullPath, messages, schema_config_args, xFilesFactor):
+    do_it = options.doit
+    cmd = 'whisper-resize.py %s %s %s --xFilesFactor=%s --aggregationMethod=%s %s' % \
+          (['', '-q'][options.quiet], fullPath, options.extra_args, xFilesFactor, aggregationMethod,
+           schema_config_args)
+
+    if options.confirm:
+        print messages
+        print cmd
+        do_it = confirm("Would you like to run this command? [y/n]: ")
+        if not do_it:
+            print "Skipping command \n"
+
+    if do_it:
+        if call(cmd, shell=True) != 0:
+            log.error('Error running: %s' % (cmd))
+            return StatisticsCollector.REBUILD_ERROR
+        else:
+            return StatisticsCollector.REBUILD_DONE
+    else:
+        log.info("Would have resized %s but didn't." % fullPath)
+        return StatisticsCollector.REBUILD_REQUIRED
+
+
 def processMetric(fullPath, schemas, agg_schemas):
     """
         method to process a given metric, and resize it if necessary
@@ -92,7 +124,7 @@ def processMetric(fullPath, schemas, agg_schemas):
 
     """
     schema_config_args = ''
-    schema_file_args   = ''
+    schema_file_args = ''
     rebuild = False
     messages = ''
 
@@ -122,7 +154,7 @@ def processMetric(fullPath, schemas, agg_schemas):
 
     # loop through the current files bucket sizes and convert to string format to compare for resizing
     for fileRetention in info['archives']:
-        current_schema  = '%s:%s ' % (fileRetention['secondsPerPoint'], fileRetention['points'])
+        current_schema = '%s:%s ' % (fileRetention['secondsPerPoint'], fileRetention['points'])
         schema_file_args += current_schema
 
     # check to see if the current and configured schemas are the same or rebuild
@@ -130,41 +162,34 @@ def processMetric(fullPath, schemas, agg_schemas):
         rebuild = True
         messages += 'updating Retentions from: %s to: %s \n' % (schema_file_args, schema_config_args)
 
+    log.info("xFilesFactor: %s (wsp file) / %s (storage-aggregation.cfg)" %
+             (str(info['xFilesFactor']), str(xFilesFactor)))
+
+    # set xFilesFactor to the wsp files setting if there is nothing configured in storage-aggregation.conf
+    if xFilesFactor is None:
+        xFilesFactor = info['xFilesFactor']
+        log.warn('no configuration for xFilesFactor found, using xFilesFactor from wsp file')
+
     # only care about the first two decimals in the comparison since there is floaty stuff going on.
     info_xFilesFactor = "{0:.2f}".format(info['xFilesFactor'])
-    str_xFilesFactor =  "{0:.2f}".format(xFilesFactor)
+    str_xFilesFactor = "{0:.2f}".format(xFilesFactor)
 
     # check to see if the current and configured aggregationMethods are the same
     if (str_xFilesFactor != info_xFilesFactor):
         rebuild = True
-        messages += '%s xFilesFactor differs real: %s should be: %s \n' % (metric, info_xFilesFactor, str_xFilesFactor)
+        messages += '%s xFilesFactor differs real: %s should be: %s \n' % \
+                    (metric, info_xFilesFactor, str_xFilesFactor)
     if (aggregationMethod != info['aggregationMethod']):
         rebuild = True
-        messages += '%s aggregation schema differs real: %s should be: %s \n' % (metric, info['aggregationMethod'], aggregationMethod)
-
-    # check to see if the current and configured xFilesFactor are the same
-    if (xFilesFactor != info['xFilesFactor']):
-        rebuild = True
-        messages += '%s xFilesFactor differs real: %s should be: %s \n' % (metric, info['xFilesFactor'], xFilesFactor)
+        messages += '%s aggregation schema differs real: %s should be: %s \n' % \
+                    (metric, info['aggregationMethod'], aggregationMethod)
 
     # if we need to rebuild, lets do it.
-    if (rebuild == True):
-        cmd = 'whisper-resize.py %s %s --xFilesFactor=%s --aggregationMethod=%s %s' % (fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
-        if (options.quiet != True or options.confirm == True):
-            print messages
-            print cmd
+    if rebuild:
+        return rebuild_metric(aggregationMethod, fullPath, messages, schema_config_args, xFilesFactor)
+    else:
+        return StatisticsCollector.REBUILD_NOT_REQUIRED
 
-        if (options.confirm == True):
-            options.doit = confirm("Would you like to run this command? [y/n]: ")
-            if (options.doit == False):
-                print "Skipping command \n"
-
-        if (options.doit == True):
-            exitcode = call(cmd, shell=True)
-            # if the command failed lets bail so we can take a look before proceeding
-            if (exitcode > 0):
-                print 'Error running: %s' % (cmd)
-                sys.exit(1)
 
 def getMetricFromPath(filePath):
     """
@@ -182,7 +207,9 @@ def getMetricFromPath(filePath):
     metric_name = filePath.replace(data_dir, '')
     metric_name = metric_name.replace('.wsp', '')
     metric_name = metric_name.replace('/', '.')
+    log.info("WORKING ON: " + metric_name)
     return metric_name
+
 
 def confirm(question, error_response='Valid options : yes or no'):
     """
@@ -196,13 +223,47 @@ def confirm(question, error_response='Valid options : yes or no'):
         answer = raw_input(question).lower()
         if answer in ('y', 'yes'):
             return True
-        if answer in ('n', 'no' ):
+        if answer in ('n', 'no'):
             return False
         print error_response
 
+
+class StatisticsCollector(object):
+    REBUILD_NOT_REQUIRED = 0
+    REBUILD_DONE = 1
+    REBUILD_ERROR = 2
+    REBUILD_REQUIRED = 3
+
+    def __init__(self):
+        self.statistics = {self.REBUILD_DONE: 0,
+                           self.REBUILD_ERROR: 0,
+                           self.REBUILD_NOT_REQUIRED: 0,
+                           self.REBUILD_REQUIRED: 0}
+
+    def update_counters(self, status_code):
+        self.statistics[status_code] += 1
+
+    def has_errors(self):
+        return self.statistics[self.REBUILD_ERROR]
+
+    def as_string(self):
+        total = sum(self.statistics.values())
+        return 'Metrics processed: %s, ok: %s, error: %s, not changed: %s, required but not done %s' % \
+               (total,
+                self.statistics[self.REBUILD_DONE],
+                self.statistics[self.REBUILD_ERROR],
+                self.statistics[self.REBUILD_NOT_REQUIRED],
+                self.statistics[self.REBUILD_REQUIRED])
+
+statistics_collector = StatisticsCollector()
 for root, _, files in os.walk(processPath):
     # we only want to deal with non-hidden whisper files
     for f in fnmatch.filter(files, '*.wsp'):
         fullpath = os.path.join(root, f)
-        processMetric(fullpath, schemas, agg_schemas)
+        status = processMetric(fullpath, schemas, agg_schemas)
+        statistics_collector.update_counters(status)
 
+if options.statistics:
+    print statistics_collector.as_string()
+
+sys.exit(0 if not statistics_collector.has_errors() else 1)
