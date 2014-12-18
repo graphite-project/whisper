@@ -115,6 +115,23 @@ Options:
   -h, --help  show this help message and exit
 ```
 
+whisper-fill.py
+----------------
+Copies data from src in dst, if missing.
+Unlike whisper-merge, don't overwrite data that's
+already present in the target file, but instead, only add the missing
+data (e.g. where the gaps in the target file are).  Because no values
+are overwritten, no data or precision gets lost.  Also, unlike
+whisper-merge, try to take the highest-precision archive to provide
+the data, instead of the one with the largest retention.
+
+```
+Usage: whisper-fill.py [options] src_path dst_path
+
+Options:
+  -h, --help  show this help message and exit
+```
+
 whisper-resize.py
 -----------------
 Change the retention rates of an existing whisper file.
