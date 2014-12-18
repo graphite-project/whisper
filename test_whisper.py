@@ -27,6 +27,7 @@ class TestWhisper(unittest.TestCase):
     def _removedb(cls):
         """Remove the whisper database file"""
         try:
+            whisper.close(cls.db)
             if os.path.exists(cls.db):
                 os.unlink(cls.db)
         except (IOError, OSError):
