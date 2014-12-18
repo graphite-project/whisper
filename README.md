@@ -40,8 +40,8 @@ Options:
 ```
 
 whisper-create.py
---------------
-Create a new whisper database file
+-----------------
+Create a new whisper database file.
 
 ```
 Usage: whisper-create.py path timePerPoint:timeToStore [timePerPoint:timeToStore]*
@@ -60,12 +60,12 @@ Options:
   --aggregationMethod=AGGREGATIONMETHOD
                         Function to use when aggregating values (average, sum,
                         last, max, min)
-  --overwrite           
+  --overwrite
 ```
 
 whisper-dump.py
---------------
-Dump the metadata about a whisper file to stdout
+---------------
+Dump the metadata about a whisper file to stdout.
 
 ```
 Usage: whisper-dump.py path
@@ -75,7 +75,7 @@ Options:
 ```
 
 whisper-fetch.py
---------------
+----------------
 Fetch all the metrics stored in a whisper file to stdout.
 
 ```
@@ -89,10 +89,13 @@ Options:
                  (default: now)
   --json         Output results in JSON form
   --pretty       Show human-readable timestamps instead of unix times
+  --drop=DROP    Specify 'nulls' to drop all null values. Specify 'zeroes' to
+                 drop all zero values. Specify 'empty' to drop both null and
+                 zero values.
 ```
 
 whisper-info.py
---------------
+---------------
 
 ```
 Usage: whisper-info.py path [field]
@@ -102,8 +105,8 @@ Options:
 ```
 
 whisper-merge.py
---------------
-Join to existing whisper files together.
+----------------
+Join two existing whisper files together.
 
 ```
 Usage: whisper-merge.py [options] from_path to_path
@@ -112,8 +115,25 @@ Options:
   -h, --help  show this help message and exit
 ```
 
+whisper-fill.py
+----------------
+Copies data from src in dst, if missing.
+Unlike whisper-merge, don't overwrite data that's
+already present in the target file, but instead, only add the missing
+data (e.g. where the gaps in the target file are).  Because no values
+are overwritten, no data or precision gets lost.  Also, unlike
+whisper-merge, try to take the highest-precision archive to provide
+the data, instead of the one with the largest retention.
+
+```
+Usage: whisper-fill.py [options] src_path dst_path
+
+Options:
+  -h, --help  show this help message and exit
+```
+
 whisper-resize.py
---------------
+-----------------
 Change the retention rates of an existing whisper file.
 
 ```
@@ -144,7 +164,7 @@ Options:
 ```
 
 whisper-set-aggregation-method.py
---------------
+---------------------------------
 Change the aggregation method of an existing whisper file.
 
 ```
@@ -155,7 +175,7 @@ Options:
 ```
 
 whisper-update.py
---------------
+-----------------
 Update a whisper file with 1 or many values, must provide a time stamp with the value.
 
 ```
@@ -166,8 +186,9 @@ Options:
 ```
 
 whisper-diff.py
---------------
+---------------
 Check the differences between whisper files.  Use sanity check before merging.
+
 ```
 Usage: whisper-diff.py [options] path_a path_b
 

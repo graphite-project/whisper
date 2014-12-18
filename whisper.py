@@ -287,7 +287,7 @@ def setAggregationMethod(path, aggregationMethod, xFilesFactor=None):
   """setAggregationMethod(path,aggregationMethod,xFilesFactor=None)
 
 path is a string
-aggregationMethod specifies the method to use when propogating data (see ``whisper.aggregationMethods``)
+aggregationMethod specifies the method to use when propagating data (see ``whisper.aggregationMethods``)
 xFilesFactor specifies the fraction of data points in a propagation interval that must have known values for a propagation to occur.  If None, the existing xFilesFactor in path will not be changed
 """
   fm = map_path(path, 'w')
@@ -393,7 +393,7 @@ def create(path,archiveList,xFilesFactor=None,aggregationMethod=None,sparse=Fals
 path is a string
 archiveList is a list of archives, each of which is of the form (secondsPerPoint,numberOfPoints)
 xFilesFactor specifies the fraction of data points in a propagation interval that must have known values for a propagation to occur
-aggregationMethod specifies the function to use when propogating data (see ``whisper.aggregationMethods``)
+aggregationMethod specifies the function to use when propagating data (see ``whisper.aggregationMethods``)
 """
   # Set default params
   if xFilesFactor is None:
@@ -659,12 +659,16 @@ def __archive_update_many(fm,header,archive,points):
   step = archive['secondsPerPoint']
   alignedPoints = [ (timestamp - (timestamp % step), value)
                     for (timestamp,value) in points ]
-  alignedPoints = dict(alignedPoints).items() # Take the last val of duplicates
   #Create a packed string for each contiguous sequence of points
   packedStrings = []
   previousInterval = None
   currentString = ""
-  for (interval,value) in alignedPoints:
+  lenAlignedPoints = len(alignedPoints)
+  for i in xrange(0,lenAlignedPoints):
+    #take last point in run of points with duplicate intervals
+    if i+1 < lenAlignedPoints and alignedPoints[i][0] == alignedPoints[i+1][0]:
+      continue
+    (interval,value) = alignedPoints[i]
     if (not previousInterval) or (interval == previousInterval + step):
       currentString += struct.pack(pointFormat,interval,value)
       previousInterval = interval
@@ -731,7 +735,7 @@ path is a string
   info = __readHeader(fm)
   return info
 
-def fetch(path,fromTime,untilTime=None):
+def fetch(path,fromTime,untilTime=None,now=None):
   """fetch(path,fromTime,untilTime=None)
 
 path is a string
@@ -743,20 +747,18 @@ where timeInfo is itself a tuple of (fromTime, untilTime, step)
 
 Returns None if no data can be returned
 """
+  fh = None
+  try:
+    fh = open(path,'rb')
+    return file_fetch(fh, fromTime, untilTime, now)
+  finally:
+    if fh:
+      fh.close()
 
-  fm = map_path(path, 'r')
-  return file_fetch(fm, fromTime, untilTime)
-
-
-def close(path):
-  if (path in filemaps):
-    filemaps[path]['map'].close
-    del filemaps[path]
-    
-
-def file_fetch(fm, fromTime, untilTime):
-  header = __readHeader(fm)
-  now = int( time.time() )
+def file_fetch(fh, fromTime, untilTime, now = None):
+  header = __readHeader(fh)
+  if now is None:
+    now = int( time.time() )
   if untilTime is None:
     untilTime = now
   fromTime = int(fromTime)
@@ -885,6 +887,8 @@ def file_merge(from_fm, to_fm):
       itertools.izip(xrange(start, end, archive_step), values)))
     __archive_update_many(to_fm, headerTo, archive, pointsToWrite)
     untilTime = fromTime
+  fh_from.close()
+  fh_to.close()
 
 def diff(path_from, path_to, ignore_empty = False):
   """ Compare two whisper databases. Each file must have the same archive configuration """
