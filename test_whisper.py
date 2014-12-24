@@ -20,55 +20,69 @@ except NameError:
 import whisper
 
 
-class TestWhisper(unittest.TestCase):
-    """
-    Testing functions for whisper.
-    """
-    db = "db.wsp"
+class WhisperTestBase(unittest.TestCase):
+    def setUp(self):
+        self.filename = 'db.wsp'
+        self.retention = [(1, 60), (60, 60)]
 
-    @classmethod
-    def setUpClass(cls):
-        cls._removedb()
+    def tearDown(self):
+        self._remove(self.filename)
 
-    @classmethod
-    def _removedb(cls):
-        """Remove the whisper database file"""
+    @staticmethod
+    def _remove(wsp_file):
         try:
-            os.unlink(cls.db)
+            os.unlink(wsp_file)
         except (IOError, OSError, FileNotFoundError):
             pass
 
+
+class TestWhisper(WhisperTestBase):
+    """
+    Testing functions for whisper.
+    """
     def test_validate_archive_list(self):
-        """blank archive config"""
+        """
+        blank archive config
+        """
         with self.assertRaises(whisper.InvalidConfiguration):
             whisper.validateArchiveList([])
 
     def test_duplicate(self):
-        """Checking duplicates"""
-        whisper.validateArchiveList([(1, 60), (60, 60)])
+        """
+        Checking duplicates
+        """
+        whisper.validateArchiveList(self.retention)
         with self.assertRaises(whisper.InvalidConfiguration):
             whisper.validateArchiveList([(1, 60), (60, 60), (1, 60)])
 
     def test_even_precision_division(self):
-        """even precision division"""
+        """
+        even precision division
+        """
         whisper.validateArchiveList([(60, 60), (6, 60)])
         with self.assertRaises(whisper.InvalidConfiguration):
             whisper.validateArchiveList([(60, 60), (7, 60)])
 
     def test_timespan_coverage(self):
-        """timespan coverage"""
-        whisper.validateArchiveList([(1, 60), (60, 60)])
+        """
+        timespan coverage
+        """
+        whisper.validateArchiveList(self.retention)
         with self.assertRaises(whisper.InvalidConfiguration):
             whisper.validateArchiveList([(1, 60), (10, 1)])
 
     def test_number_of_points(self):
-        """number of points"""
-        whisper.validateArchiveList([(1, 60), (60, 60)])
+        """
+        number of points
+        """
+        whisper.validateArchiveList(self.retention)
         with self.assertRaises(whisper.InvalidConfiguration):
             whisper.validateArchiveList([(1, 30), (60, 60)])
 
     def test_aggregate(self):
-        """aggregate functions"""
+        """
+        aggregate functions
+        """
         # min of 1-4
         self.assertEqual(whisper.aggregate('min', [1, 2, 3, 4]), 1)
         # max of 1-4
@@ -83,48 +97,47 @@ class TestWhisper(unittest.TestCase):
             whisper.aggregate('derp', [12, 2, 3123, 1])
 
     def test_create(self):
-        """Create a db and use info() to validate"""
-        retention = [(1, 60), (60, 60)]
-
+        """
+        Create a db and use info() to validate
+        """
         # check if invalid configuration fails successfully
         with self.assertRaises(whisper.InvalidConfiguration):
-            whisper.create(self.db, [])
+            whisper.create(self.filename, [])
 
         # create a new db with a valid configuration
-        whisper.create(self.db, retention)
+        whisper.create(self.filename, self.retention)
 
         # attempt to create another db in the same file, this should fail
         with self.assertRaises(whisper.InvalidConfiguration):
-            whisper.create(self.db, 0)
+            whisper.create(self.filename, 0)
 
-        info = whisper.info(self.db)
+        info = whisper.info(self.filename)
 
         # check header information
         self.assertEqual(info['maxRetention'],
-                         max([a[0] * a[1] for a in retention]))
+                         max([a[0] * a[1] for a in self.retention]))
         self.assertEqual(info['aggregationMethod'], 'average')
         self.assertEqual(info['xFilesFactor'], 0.5)
 
         # check archive information
-        self.assertEqual(len(info['archives']), len(retention))
-        self.assertEqual(info['archives'][0]['points'], retention[0][1])
+        self.assertEqual(len(info['archives']), len(self.retention))
+        self.assertEqual(info['archives'][0]['points'], self.retention[0][1])
         self.assertEqual(info['archives'][0]['secondsPerPoint'],
-                         retention[0][0])
+                         self.retention[0][0])
         self.assertEqual(info['archives'][0]['retention'],
-                         retention[0][0] * retention[0][1])
+                         self.retention[0][0] * self.retention[0][1])
         self.assertEqual(info['archives'][1]['retention'],
-                         retention[1][0] * retention[1][1])
+                         self.retention[1][0] * self.retention[1][1])
 
         with self.assertRaises(whisper.InvalidConfiguration):
-            whisper.create(self.db, retention)
-
-        # remove database
-        self._removedb()
+            whisper.create(self.filename, self.retention)
 
     def test_merge(self):
-        """test merging two databases"""
-        testdb = "test-%s" % self.db
-        self._removedb()
+        """
+        test merging two databases
+        """
+        testdb = "test-%s" % self.filename
+        self.tearDown()
 
         try:
             os.unlink(testdb)
@@ -135,16 +148,14 @@ class TestWhisper(unittest.TestCase):
         self._update()
         self._update(testdb)
 
-        whisper.merge(self.db, testdb)
+        whisper.merge(self.filename, testdb)
 
-        self._removedb()
-        try:
-            os.unlink(testdb)
-        except (IOError, OSError, FileNotFoundError):
-            pass
+        self._remove(testdb)
 
     def test_fetch(self):
-        """fetch info from database """
+        """
+        fetch info from database
+        """
 
         # check a db that doesnt exist
         with self.assertRaises(Exception):
@@ -152,13 +163,13 @@ class TestWhisper(unittest.TestCase):
 
         # SECOND MINUTE HOUR DAY
         retention = [(1, 60), (60, 60), (3600, 24), (86400, 365)]
-        whisper.create(self.db, retention)
+        whisper.create(self.filename, retention)
 
         # check a db with an invalid time range
         with self.assertRaises(whisper.InvalidTimeInterval):
-            whisper.fetch(self.db, time.time(), time.time()-6000)
+            whisper.fetch(self.filename, time.time(), time.time()-6000)
 
-        fetch = whisper.fetch(self.db, 0)
+        fetch = whisper.fetch(self.filename, 0)
 
         # check time range
         self.assertEqual(fetch[0][1] - fetch[0][0],
@@ -170,10 +181,8 @@ class TestWhisper(unittest.TestCase):
         # check step size
         self.assertEqual(fetch[0][2], retention[-1][0])
 
-        self._removedb()
-
     def _update(self, wsp=None, schema=None):
-        wsp = wsp or self.db
+        wsp = wsp or self.filename
         schema = schema or [(1, 20)]
         num_data_points = 20
 
@@ -193,11 +202,13 @@ class TestWhisper(unittest.TestCase):
         return data
 
     def test_update_single_archive(self):
-        """Update with a single leveled archive"""
+        """
+        Update with a single leveled archive
+        """
         retention_schema = [(1, 20)]
         data = self._update(schema=retention_schema)
         # fetch the data
-        fetch = whisper.fetch(self.db, 0)   # all data
+        fetch = whisper.fetch(self.filename, 0)   # all data
         fetch_data = fetch[1]
 
         for i, (timestamp, value) in enumerate(data):
@@ -207,39 +218,37 @@ class TestWhisper(unittest.TestCase):
         # check TimestampNotCovered
         with self.assertRaises(whisper.TimestampNotCovered):
             # in the future
-            whisper.update(self.db, 1.337, time.time() + 1)
+            whisper.update(self.filename, 1.337, time.time() + 1)
         with self.assertRaises(whisper.TimestampNotCovered):
             # before the past
-            whisper.update(self.db, 1.337,
+            whisper.update(self.filename, 1.337,
                            time.time() - retention_schema[0][1] - 1)
-
-        self._removedb()
         
     def test_setAggregation(self):
-        """Create a db, change aggregation, xFilesFactor, then use info() to validate"""
-        retention = [(1, 60), (60, 60)]
-
+        """
+        Create a db, change aggregation, xFilesFactor, then use info() to validate
+        """
         # create a new db with a valid configuration
-        whisper.create(self.db, retention)
+        whisper.create(self.filename, self.retention)
 
         #set setting every AggregationMethod available
         for ag in whisper.aggregationMethods:
           for xff in 0.0,0.2,0.4,0.7,0.75,1.0:
             #original xFilesFactor
-            info0 = whisper.info(self.db)
+            info0 = whisper.info(self.filename)
             #optional xFilesFactor not passed
-            whisper.setAggregationMethod(self.db, ag)
+            whisper.setAggregationMethod(self.filename, ag)
 
             #original value should not change
-            info1 = whisper.info(self.db)
+            info1 = whisper.info(self.filename)
             self.assertEqual(info0['xFilesFactor'],info1['xFilesFactor'])
             #the selected aggregation method should have applied
             self.assertEqual(ag,info1['aggregationMethod'])
 
             #optional xFilesFactor used
-            whisper.setAggregationMethod(self.db, ag, xff)
+            whisper.setAggregationMethod(self.filename, ag, xff)
             #new info should match what we just set it to
-            info2 = whisper.info(self.db)
+            info2 = whisper.info(self.filename)
             #packing and unpacking because
             #AssertionError: 0.20000000298023224 != 0.2
             target_xff = struct.unpack("!f", struct.pack("!f",xff))[0]
@@ -248,13 +257,6 @@ class TestWhisper(unittest.TestCase):
             #same aggregationMethod asssertion again, but double-checking since
             #we are playing with packed values and seek()
             self.assertEqual(ag,info2['aggregationMethod'])
-
-        self._removedb()
-
-
-    @classmethod
-    def tearDownClass(cls):
-        cls._removedb()
 
 
 class TestgetUnitString(unittest.TestCase):
