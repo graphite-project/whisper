@@ -267,5 +267,18 @@ class TestgetUnitString(unittest.TestCase):
         with self.assertRaises(ValueError):
             whisper.getUnitString('z')
 
+
+# If you send an invalid file, this deadlocks my Fedora 21 / Linux 3.17 laptop
+# TODO: Find a way to pass in corrupt whisper files that don't deadlock the testing box
+class TestReadHeader(WhisperTestBase):
+    def test_normal(self):
+        whisper.create(self.filename, [(1, 60), (60, 60)])
+
+        whisper.CACHE_HEADERS = True
+        whisper.info(self.filename)
+        whisper.info(self.filename)
+        whisper.CACHE_HEADERS = False
+
+
 if __name__ == '__main__':
     unittest.main()
