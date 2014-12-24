@@ -184,11 +184,11 @@ class TestWhisper(WhisperTestBase):
     def _update(self, wsp=None, schema=None):
         wsp = wsp or self.filename
         schema = schema or [(1, 20)]
+
         num_data_points = 20
 
-        whisper.create(wsp, schema)
-
         # create sample data
+        whisper.create(wsp, schema)
         tn = time.time() - num_data_points
         data = []
         for i in range(num_data_points):
@@ -219,10 +219,20 @@ class TestWhisper(WhisperTestBase):
         with self.assertRaises(whisper.TimestampNotCovered):
             # in the future
             whisper.update(self.filename, 1.337, time.time() + 1)
+
         with self.assertRaises(whisper.TimestampNotCovered):
             # before the past
             whisper.update(self.filename, 1.337,
                            time.time() - retention_schema[0][1] - 1)
+
+        # When no timestamp is passed in, it should use the current time
+        original_lock = whisper.LOCK
+        whisper.LOCK = True
+        whisper.update(self.filename, 3.7337, None)
+        fetched = whisper.fetch(self.filename, 0)[1]
+        self.assertEqual(fetched[-1], 3.7337)
+
+        whisper.LOCK = original_lock
         
     def test_setAggregation(self):
         """
