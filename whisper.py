@@ -110,12 +110,9 @@ UnitMultipliers = {
 
 
 def getUnitString(s):
-  if 'seconds'.startswith(s): return 'seconds'
-  if 'minutes'.startswith(s): return 'minutes'
-  if 'hours'.startswith(s): return 'hours'
-  if 'days'.startswith(s): return 'days'
-  if 'weeks'.startswith(s): return 'weeks'
-  if 'years'.startswith(s): return 'years'
+  for value in ('seconds', 'minutes', 'hours', 'days', 'weeks', 'years'):
+      if value.startswith(s):
+          return value
   raise ValueError("Invalid unit '%s'" % s)
 
 def parseRetentionDef(retentionDef):
