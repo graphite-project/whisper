@@ -137,18 +137,23 @@ class TestWhisper(WhisperTestBase):
         test merging two databases
         """
         testdb = "test-%s" % self.filename
-        self.tearDown()
-
-        try:
-            os.unlink(testdb)
-        except (IOError, OSError, FileNotFoundError):
-            pass
 
         # Create 2 whisper databases and merge one into the other
         self._update()
         self._update(testdb)
 
         whisper.merge(self.filename, testdb)
+        self._remove(testdb)
+
+    def test_merge_bad_archive_config(self):
+        testdb = "test-%s" % self.filename
+
+        # Create 2 whisper databases with different schema
+        self._update()
+        whisper.create(testdb, [(100, 1)])
+
+        with self.assertRaises(NotImplementedError):
+            whisper.merge(self.filename, testdb)
 
         self._remove(testdb)
 
