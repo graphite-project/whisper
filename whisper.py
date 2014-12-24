@@ -25,7 +25,11 @@
 #		Archive = Point+
 #			Point = timestamp,value
 
-import os, struct, time, operator, itertools
+import re
+import os
+import time
+import struct
+import operator
 
 try:
   import fcntl
@@ -116,8 +120,7 @@ def getUnitString(s):
   raise ValueError("Invalid unit '%s'" % s)
 
 def parseRetentionDef(retentionDef):
-  import re
-  (precision, points) = retentionDef.strip().split(':')
+  (precision, points) = retentionDef.strip().split(':', 1)
 
   if precision.isdigit():
     precision = int(precision) * UnitMultipliers[getUnitString('s')]
