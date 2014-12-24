@@ -11,6 +11,12 @@ try:
 except ImportError:
     import unittest
 
+# For py3k in TestWhisper.test_merge
+try:
+    FileNotFoundError  # noqa
+except NameError:
+    class FileNotFoundError(Exception):
+        pass
 import whisper
 
 
@@ -28,9 +34,8 @@ class TestWhisper(unittest.TestCase):
     def _removedb(cls):
         """Remove the whisper database file"""
         try:
-            if os.path.exists(cls.db):
-                os.unlink(cls.db)
-        except (IOError, OSError):
+            os.unlink(cls.db)
+        except (IOError, OSError, FileNotFoundError):
             pass
 
     def test_validate_archive_list(self):
@@ -122,9 +127,9 @@ class TestWhisper(unittest.TestCase):
         self._removedb()
 
         try:
-          os.unlink(testdb)
-        except Exception:
-          pass
+            os.unlink(testdb)
+        except (IOError, OSError, FileNotFoundError):
+            pass
 
         # Create 2 whisper databases and merge one into the other
         self._update()
@@ -134,9 +139,9 @@ class TestWhisper(unittest.TestCase):
 
         self._removedb()
         try:
-          os.unlink(testdb)
-        except Exception:
-          pass
+            os.unlink(testdb)
+        except (IOError, OSError, FileNotFoundError):
+            pass
 
     def test_fetch(self):
         """fetch info from database """
