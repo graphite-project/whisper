@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import time
 import random
 import struct
@@ -108,6 +109,9 @@ class TestWhisper(unittest.TestCase):
                          retention[0][0] * retention[0][1])
         self.assertEqual(info['archives'][1]['retention'],
                          retention[1][0] * retention[1][1])
+
+        with self.assertRaises(whisper.InvalidConfiguration):
+            whisper.create(self.db, retention)
 
         # remove database
         self._removedb()
@@ -246,6 +250,17 @@ class TestWhisper(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls._removedb()
+
+
+class TestgetUnitString(unittest.TestCase):
+    def test_function(self):
+        for unit in ('seconds', 'minutes', 'hours', 'days', 'weeks'):
+            value = whisper.getUnitString(unit[0])
+            self.assertEqual(value, unit)
+
+    def test_invalid_unit(self):
+        with self.assertRaises(ValueError):
+            whisper.getUnitString('z')
 
 if __name__ == '__main__':
     unittest.main()
