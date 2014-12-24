@@ -204,9 +204,10 @@ def enableDebug():
 
 
 def __readHeader(fh):
-  info = __headerCache.get(fh.name)
-  if info:
-    return info
+  if CACHE_HEADERS:
+    info = __headerCache.get(fh.name)
+    if info:
+      return info
 
   originalOffset = fh.tell()
   fh.seek(0)
