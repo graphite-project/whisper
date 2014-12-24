@@ -228,35 +228,50 @@ class TestWhisper(WhisperTestBase):
         """
         Create a db, change aggregation, xFilesFactor, then use info() to validate
         """
+        original_lock = whisper.LOCK
+        original_caching = whisper.CACHE_HEADERS
+        original_autoflush = whisper.AUTOFLUSH
+
+        whisper.LOCK = True
+        whisper.AUTOFLUSH = True
+        whisper.CACHE_HEADERS = True
         # create a new db with a valid configuration
         whisper.create(self.filename, self.retention)
 
+        with self.assertRaises(whisper.InvalidAggregationMethod):
+            whisper.setAggregationMethod(self.filename, 'yummy beer')
+
         #set setting every AggregationMethod available
         for ag in whisper.aggregationMethods:
-          for xff in 0.0,0.2,0.4,0.7,0.75,1.0:
-            #original xFilesFactor
+          for xff in 0.0, 0.2, 0.4, 0.7, 0.75, 1.0:
+            # original xFilesFactor
             info0 = whisper.info(self.filename)
-            #optional xFilesFactor not passed
+            # optional xFilesFactor not passed
             whisper.setAggregationMethod(self.filename, ag)
 
-            #original value should not change
+            # original value should not change
             info1 = whisper.info(self.filename)
-            self.assertEqual(info0['xFilesFactor'],info1['xFilesFactor'])
-            #the selected aggregation method should have applied
-            self.assertEqual(ag,info1['aggregationMethod'])
+            self.assertEqual(info0['xFilesFactor'], info1['xFilesFactor'])
 
-            #optional xFilesFactor used
+            # the selected aggregation method should have applied
+            self.assertEqual(ag, info1['aggregationMethod'])
+
+            # optional xFilesFactor used
             whisper.setAggregationMethod(self.filename, ag, xff)
-            #new info should match what we just set it to
+            # new info should match what we just set it to
             info2 = whisper.info(self.filename)
-            #packing and unpacking because
-            #AssertionError: 0.20000000298023224 != 0.2
-            target_xff = struct.unpack("!f", struct.pack("!f",xff))[0]
+            # packing and unpacking because
+            # AssertionError: 0.20000000298023224 != 0.2
+            target_xff = struct.unpack("!f", struct.pack("!f", xff))[0]
             self.assertEqual(info2['xFilesFactor'], target_xff)
 
-            #same aggregationMethod asssertion again, but double-checking since
-            #we are playing with packed values and seek()
-            self.assertEqual(ag,info2['aggregationMethod'])
+            # same aggregationMethod asssertion again, but double-checking since
+            # we are playing with packed values and seek()
+            self.assertEqual(ag, info2['aggregationMethod'])
+
+        whisper.LOCK = original_lock
+        whisper.AUTOFLUSH = original_autoflush
+        whisper.CACHE_HEADERS = original_caching
 
 
 class TestgetUnitString(unittest.TestCase):
