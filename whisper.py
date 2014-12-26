@@ -269,10 +269,7 @@ path is a string
 aggregationMethod specifies the method to use when propagating data (see ``whisper.aggregationMethods``)
 xFilesFactor specifies the fraction of data points in a propagation interval that must have known values for a propagation to occur.  If None, the existing xFilesFactor in path will not be changed
 """
-  fh = None
-  try:
-
-    fh = open(path,'r+b')
+  with open(path,'r+b') as fh:
     if LOCK:
       fcntl.flock( fh.fileno(), fcntl.LOCK_EX )
 
@@ -311,10 +308,6 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
 
       if CACHE_HEADERS and fh.name in __headerCache:
         del __headerCache[fh.name]
-
-  finally:
-    if fh:
-      fh.close()
 
   return aggregationTypeToMethod.get(aggregationType, 'average')
 
@@ -390,9 +383,8 @@ aggregationMethod specifies the function to use when propagating data (see ``whi
   #Looks good, now we create the file and write the header
   if os.path.exists(path):
     raise InvalidConfiguration("File %s already exists!" % path)
-  fh = None
-  try:
-    fh = open(path,'wb')
+
+  with open(path,'wb') as fh:
     if LOCK:
       fcntl.flock( fh.fileno(), fcntl.LOCK_EX )
 
@@ -431,9 +423,7 @@ aggregationMethod specifies the function to use when propagating data (see ``whi
     if AUTOFLUSH:
       fh.flush()
       os.fsync(fh.fileno())
-  finally:
-    if fh:
-      fh.close()
+
 
 def aggregate(aggregationMethod, knownValues):
   if aggregationMethod == 'average':
@@ -540,13 +530,9 @@ value is a float
 timestamp is either an int or float
 """
   value = float(value)
-  fh = None
-  try:
-    fh = open(path,'r+b')
+  with open(path,'r+b') as fh:
     return file_update(fh, value, timestamp)
-  finally:
-    if fh:
-      fh.close()
+
 
 def file_update(fh, value, timestamp):
   if LOCK:
@@ -609,13 +595,8 @@ points is a list of (timestamp,value) points
   if not points: return
   points = [ (int(t),float(v)) for (t,v) in points]
   points.sort(key=lambda p: p[0],reverse=True) #order points by timestamp, newest first
-  fh = None
-  try:
-    fh = open(path,'r+b')
+  with open(path,'r+b') as fh:
     return file_update_many(fh, points)
-  finally:
-    if fh:
-      fh.close()
 
 
 def file_update_many(fh, points):
@@ -661,12 +642,16 @@ def __archive_update_many(fh,header,archive,points):
   step = archive['secondsPerPoint']
   alignedPoints = [ (timestamp - (timestamp % step), value)
                     for (timestamp,value) in points ]
-  alignedPoints = dict(alignedPoints).items() # Take the last val of duplicates
   #Create a packed string for each contiguous sequence of points
   packedStrings = []
   previousInterval = None
   currentString = b""
-  for (interval,value) in alignedPoints:
+  lenAlignedPoints = len(alignedPoints)
+  for i in xrange(0,lenAlignedPoints):
+    #take last point in run of points with duplicate intervals
+    if i+1 < lenAlignedPoints and alignedPoints[i][0] == alignedPoints[i+1][0]:
+      continue
+    (interval,value) = alignedPoints[i]
     if (not previousInterval) or (interval == previousInterval + step):
       currentString += struct.pack(pointFormat,interval,value)
       previousInterval = interval
@@ -729,13 +714,9 @@ def info(path):
 
 path is a string
 """
-  fh = None
-  try:
-    fh = open(path,'rb')
+  with open(path,'rb') as fh:
     return __readHeader(fh)
-  finally:
-    if fh:
-      fh.close()
+
   return None
 
 def fetch(path,fromTime,untilTime=None,now=None):
@@ -750,13 +731,9 @@ where timeInfo is itself a tuple of (fromTime, untilTime, step)
 
 Returns None if no data can be returned
 """
-  fh = None
-  try:
-    fh = open(path,'rb')
+  with open(path,'rb') as fh:
     return file_fetch(fh, fromTime, untilTime, now)
-  finally:
-    if fh:
-      fh.close()
+
 
 def file_fetch(fh, fromTime, untilTime, now = None):
   header = __readHeader(fh)
@@ -860,9 +837,14 @@ def merge(path_from, path_to):
   """ Merges the data from one whisper file into another. Each file must have
   the same archive configuration
 """
-  fh_from = open(path_from, 'rb')
-  fh_to = open(path_to, 'rb+')
-  return file_merge(fh_from, fh_to)
+  # Python 2.7 will allow the following commented line
+  #with open(path_from, 'rb') as fh_from, open(path_to, 'rb+') as fh_to:
+  # But with Python 2.6 we need to use this (I prefer not to introduce
+  # contextlib.nested just for this):
+  with open(path_from, 'rb') as fh_from:
+    with open(path_to, 'rb+') as fh_to:
+      return file_merge(fh_from, fh_to)
+
 
 def file_merge(fh_from, fh_to):
   headerFrom = __readHeader(fh_from)
@@ -886,17 +868,14 @@ def file_merge(fh_from, fh_to):
       izip(xrange(start, end, archive_step), values)))
     __archive_update_many(fh_to, headerTo, archive, pointsToWrite)
     untilTime = fromTime
-  fh_from.close()
-  fh_to.close()
+
 
 def diff(path_from, path_to, ignore_empty = False):
   """ Compare two whisper databases. Each file must have the same archive configuration """
-  fh_from = open(path_from, 'rb')
-  fh_to = open(path_to, 'rb')
-  diffs = file_diff(fh_from, fh_to, ignore_empty)
-  fh_to.close()
-  fh_from.close()
-  return diffs
+  with open(path_from, 'rb') as fh_from:
+    with open(path_to, 'rb+') as fh_to:
+      return file_diff(fh_from, fh_to, ignore_empty)
+
 
 def file_diff(fh_from, fh_to, ignore_empty = False):
   headerFrom = __readHeader(fh_from)
