@@ -33,7 +33,7 @@ option_parser.add_option('--json', default=False, action='store_true',
 option_parser.add_option('--pretty', default=False, action='store_true',
   help="Show human-readable timestamps instead of unix times")
 option_parser.add_option('--drop',
-                         choices=_DROP_FUNCTIONS.keys(),
+                         choices=list(_DROP_FUNCTIONS.keys()),
                          action='store',
                          help="Specify 'nulls' to drop all null values. \
 Specify 'zeroes' to drop all zero values. \
