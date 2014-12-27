@@ -157,6 +157,56 @@ class TestWhisper(WhisperTestBase):
 
         self._remove(testdb)
 
+    def test_diff(self):
+        testdb = "test-%s" % self.filename
+
+        now = time.time()
+
+        whisper.create(testdb, self.retention)
+        whisper.create(self.filename, self.retention)
+        whisper.update(testdb, 1.0, now)
+        whisper.update(self.filename, 2.0, now)
+
+        results = whisper.diff(testdb, self.filename)
+        self._remove(testdb)
+
+        expected = [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)]
+
+        self.assertEqual(results, expected)
+
+    def test_file_diff(self):
+        testdb = "test-%s" % self.filename
+
+        now = time.time()
+
+        whisper.create(testdb, self.retention)
+        whisper.create(self.filename, self.retention)
+        whisper.update(testdb, 1.0, now)
+        whisper.update(self.filename, 2.0, now)
+
+        # Merging 2 archives with different retentions should fail
+        with open(testdb, 'rb') as fh_1:
+            with open(self.filename, 'rb+') as fh_2:
+                results = whisper.file_diff(fh_1, fh_2)
+        self._remove(testdb)
+
+        expected = [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)]
+
+        self.assertEqual(results, expected)
+
+    def test_file_diff_invalid(self):
+        testdb = "test-%s" % self.filename
+
+        whisper.create(testdb, [(120, 10)])
+        whisper.create(self.filename, self.retention)
+
+        # Merging 2 archives with different retentions should fail
+        with open(testdb, 'rb') as fh_1:
+            with open(self.filename, 'rb+') as fh_2:
+                with self.assertRaises(NotImplementedError):
+                    whisper.file_diff(fh_1, fh_2)
+        self._remove(testdb)
+
     def test_fetch(self):
         """
         fetch info from database
