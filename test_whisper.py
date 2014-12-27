@@ -3,6 +3,7 @@
 import os
 import sys
 import time
+import math
 import random
 import struct
 
@@ -173,6 +174,51 @@ class TestWhisper(WhisperTestBase):
         expected = [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)]
 
         self.assertEqual(results, expected)
+
+    def test_diff_with_empty(self):
+        testdb = "test-%s" % self.filename
+
+        now = time.time()
+
+        whisper.create(testdb, self.retention)
+        whisper.create(self.filename, self.retention)
+        whisper.update(testdb, 1.0, now)
+        whisper.update(self.filename, 2.0, now)
+
+        ## Purposefully insert nulls to strip out
+        #with self.assertRaises(whisper.TimestampNotCovered):
+        #    whisper.update(testdb, float('NaN'), now + 1)
+
+        #with self.assertRaises(whisper.TimestampNotCovered):
+        #    whisper.update(self.filename, float('NaN'), now + 1)
+
+        previous = now - self.retention[0][0]
+        whisper.update(testdb, float('NaN'), previous)
+
+        results = whisper.diff(testdb, self.filename, ignore_empty=True)
+        self.assertEqual(
+            results,
+            [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)],
+        )
+
+        results_empties = whisper.diff(testdb, self.filename, ignore_empty=False)
+        expected = [(0, [(int(previous), float('NaN'), None), (int(now), 1.0, 2.0)], 2), (1, [], 0)]
+
+        # Stupidly, float('NaN') != float('NaN'), so assert that the
+        # repr() results are the same :/
+        #
+        # See this thread:
+        #    https://mail.python.org/pipermail/python-ideas/2010-March/006945.html
+        self.assertEqual(
+            repr(results_empties),
+            repr(expected),
+        )
+        # Since the above test is somewhat of a sham, ensure that there
+        # is a nan where there should be.
+        self.assertTrue(
+            math.isnan(results_empties[0][1][0][1])
+        )
+        self._remove(testdb)
 
     def test_file_diff(self):
         testdb = "test-%s" % self.filename
