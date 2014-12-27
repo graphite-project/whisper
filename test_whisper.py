@@ -345,6 +345,8 @@ class TestParseRetentionDef(unittest.TestCase):
                     expected_exc.__class__,
                     exc.__class__,
                 )
+            else:
+                raise AssertionError('Test should raise an exc of type: {}'.format(expected_exc.__name__))
 
 
 if __name__ == '__main__':
