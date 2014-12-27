@@ -346,6 +346,23 @@ class TestParseRetentionDef(unittest.TestCase):
                     exc.__class__,
                 )
 
+class TestCorruptWhisperFile(unittest.TestCase):
+    def setUp(self):
+        self.path = '/opt/graphite/storage/whisper/moolah.wsp'
+        self.message = 'What is the average velocity of an unladen swallow?'
+
+    def test_message(self):
+        try:
+            raise whisper.CorruptWhisperFile(self.message, self.path)
+        except whisper.CorruptWhisperFile as exc:
+            self.assertEqual(exc.message, self.message)
+
+    def test_path(self):
+        try:
+            raise whisper.CorruptWhisperFile(self.message, self.path)
+        except whisper.CorruptWhisperFile as exc:
+            self.assertEqual(exc.path, self.path)
+
 
 if __name__ == '__main__':
     unittest.main()
