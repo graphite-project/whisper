@@ -427,11 +427,12 @@ class TestParseRetentionDef(unittest.TestCase):
 
             # From parseRetentionDef
             ('10X:10', ValueError("Invalid precision specification '10X'")),
-            ('60:10X', ValueError("Invalid retention specification '10X'")),
+            ('60:10', (60, 10)),
         )
         for retention, expected_exc in retention_map:
             try:
                 results = whisper.parseRetentionDef(retention)
+                self.assertEqual(results, expected_exc)
             except expected_exc.__class__ as exc:
                 self.assertEqual(
                     str(expected_exc),
