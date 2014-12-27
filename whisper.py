@@ -25,7 +25,12 @@
 #		Archive = Point+
 #			Point = timestamp,value
 
-import os, struct, time, operator, itertools
+import re
+import os
+import time
+import struct
+import operator
+import itertools
 
 try:
   import fcntl
@@ -110,17 +115,13 @@ UnitMultipliers = {
 
 
 def getUnitString(s):
-  if 'seconds'.startswith(s): return 'seconds'
-  if 'minutes'.startswith(s): return 'minutes'
-  if 'hours'.startswith(s): return 'hours'
-  if 'days'.startswith(s): return 'days'
-  if 'weeks'.startswith(s): return 'weeks'
-  if 'years'.startswith(s): return 'years'
+  for value in ('seconds', 'minutes', 'hours', 'days', 'weeks', 'years'):
+      if value.startswith(s):
+          return value
   raise ValueError("Invalid unit '%s'" % s)
 
 def parseRetentionDef(retentionDef):
-  import re
-  (precision, points) = retentionDef.strip().split(':')
+  (precision, points) = retentionDef.strip().split(':', 1)
 
   if precision.isdigit():
     precision = int(precision) * UnitMultipliers[getUnitString('s')]
@@ -207,16 +208,17 @@ def enableDebug():
 
 
 def __readHeader(fh):
-  info = __headerCache.get(fh.name)
-  if info:
-    return info
+  if CACHE_HEADERS:
+    info = __headerCache.get(fh.name)
+    if info:
+      return info
 
   originalOffset = fh.tell()
   fh.seek(0)
   packedMetadata = fh.read(metadataSize)
 
   try:
-    (aggregationType,maxRetention,xff,archiveCount) = struct.unpack(metadataFormat,packedMetadata)
+    (aggregationType, maxRetention, xff, archiveCount) = struct.unpack(metadataFormat, packedMetadata)
   except:
     raise CorruptWhisperFile("Unable to read header", fh.name)
 
@@ -225,8 +227,8 @@ def __readHeader(fh):
   for i in xrange(archiveCount):
     packedArchiveInfo = fh.read(archiveInfoSize)
     try:
-      (offset,secondsPerPoint,points) = struct.unpack(archiveInfoFormat,packedArchiveInfo)
-    except:
+      (offset, secondsPerPoint, points) = struct.unpack(archiveInfoFormat, packedArchiveInfo)
+    except (struct.error, ValueError, TypeError):
       raise CorruptWhisperFile("Unable to read archive%d metadata" % i, fh.name)
 
     archiveInfo = {
