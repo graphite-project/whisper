@@ -30,6 +30,7 @@ import os
 import time
 import struct
 import operator
+import itertools
 
 try:
   import fcntl
