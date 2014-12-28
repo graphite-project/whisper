@@ -21,6 +21,29 @@ except NameError:
 import whisper
 
 
+class SimulatedCorruptWhisperFile(object):
+    """
+    Simple context manager to be used as a decorator for simulating a
+    corrupt whisper file for testing purposes.
+
+    Example:
+
+        >>> whisper.create('test.wsp', [(60, 10)])
+        >>> with SimulatedCorruptWhisperFile():
+        ...     whisper.info('test.wsp')
+    """
+    def __init__(self):
+        self.metadataFormat = whisper.metadataFormat
+
+    def __enter__(self):
+        # Force the struct unpack to fail by changing the metadata
+        # format. This simulates an actual corrupted whisper file
+        whisper.metadataFormat = '!ssss'
+
+    def __exit__(self, *args, **kwargs):
+        whisper.metadataFormat = self.metadataFormat
+
+
 class WhisperTestBase(unittest.TestCase):
     def setUp(self):
         self.filename = 'db.wsp'
@@ -413,14 +436,9 @@ class TestWhisper(WhisperTestBase):
             # we are playing with packed values and seek()
             self.assertEqual(ag, info2['aggregationMethod'])
 
-            # Force the struct unpack to fail by changing the metadata
-            # format. This simulates an actual corrupted whisper file
-            old_format = whisper.metadataFormat
-            whisper.metadataFormat = '!sss'
-            with self.assertRaises(whisper.CorruptWhisperFile):
-                whisper.setAggregationMethod(self.filename, ag)
-            whisper.metadataFormat = old_format
-
+            with SimulatedCorruptWhisperFile():
+                with self.assertRaises(whisper.CorruptWhisperFile):
+                    whisper.setAggregationMethod(self.filename, ag)
 
         whisper.LOCK = original_lock
         whisper.AUTOFLUSH = original_autoflush
