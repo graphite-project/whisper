@@ -133,6 +133,9 @@ class TestWhisper(WhisperTestBase):
         with self.assertRaises(whisper.InvalidConfiguration):
             whisper.create(self.filename, self.retention)
 
+    def test_info_bogus_file(self):
+        self.assertIsNone(whisper.info('bogus-file'))
+
     def test_merge(self):
         """
         test merging two databases
