@@ -701,12 +701,16 @@ def __archive_update_many(fh,header,archive,points):
 
 
 def info(path):
-  """info(path)
+  """
+  info(path)
 
-path is a string
-"""
-  with open(path,'rb') as fh:
-    return __readHeader(fh)
+  path is a string
+  """
+  try:
+    with open(path,'rb') as fh:
+      return __readHeader(fh)
+  except (IOError, OSError):
+    pass
 
   return None
 
