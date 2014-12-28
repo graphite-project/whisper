@@ -136,6 +136,36 @@ class TestWhisper(WhisperTestBase):
     def test_info_bogus_file(self):
         self.assertIsNone(whisper.info('bogus-file'))
 
+    def test_file_fetch_edge_cases(self):
+        """
+        Test some of the edge cases in file_fetch() that should return
+        None or raise an exception
+        """
+        whisper.create(self.filename, [(1, 60)])
+
+        with open(self.filename) as fh:
+            with self.assertRaises(whisper.InvalidTimeInterval):
+                whisper.file_fetch(fh, fromTime=int(time.time()) + 100, untilTime=0)
+
+            # fromTime > now aka metrics from the future
+            self.assertIsNone(
+                whisper.file_fetch(fh, fromTime=int(time.time()) + 100, untilTime=int(time.time()) + 200),
+            )
+
+            # untilTime > oldest time stored in the archive
+            headers = whisper.info(self.filename)
+            the_past = int(time.time()) - headers['maxRetention'] - 200
+            self.assertIsNone(
+                whisper.file_fetch(fh, fromTime=the_past - 1, untilTime=the_past),
+            )
+
+            # untilTime > now, change untilTime to now
+            now = int(time.time())
+            self.assertEqual(
+                whisper.file_fetch(fh, fromTime=now, untilTime=now + 200, now=now),
+                ((now + 1, now + 1, 1), []),
+            )
+
     def test_merge(self):
         """
         test merging two databases
