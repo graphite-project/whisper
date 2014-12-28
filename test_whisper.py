@@ -97,7 +97,7 @@ class TestWhisper(WhisperTestBase):
         with self.assertRaises(whisper.InvalidAggregationMethod):
             whisper.aggregate('derp', [12, 2, 3123, 1])
 
-    def test_create(self):
+    def test_create_and_info(self):
         """
         Create a db and use info() to validate
         """
@@ -435,7 +435,6 @@ class TestParseRetentionDef(unittest.TestCase):
         for retention, expected_exc in retention_map:
             try:
                 results = whisper.parseRetentionDef(retention)
-                self.assertEqual(results, expected_exc)
             except expected_exc.__class__ as exc:
                 self.assertEqual(
                     str(expected_exc),
@@ -445,6 +444,10 @@ class TestParseRetentionDef(unittest.TestCase):
                     expected_exc.__class__,
                     exc.__class__,
                 )
+            else:
+                # When there isn't an exception raised
+                self.assertEqual(results, expected_exc)
+
 
 class TestCorruptWhisperFile(unittest.TestCase):
     def setUp(self):
