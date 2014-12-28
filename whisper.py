@@ -711,7 +711,6 @@ def info(path):
       return __readHeader(fh)
   except (IOError, OSError):
     pass
-
   return None
 
 def fetch(path,fromTime,untilTime=None,now=None):
@@ -730,10 +729,10 @@ Returns None if no data can be returned
     return file_fetch(fh, fromTime, untilTime, now)
 
 
-def file_fetch(fh, fromTime, untilTime, now = None):
+def file_fetch(fh, fromTime, untilTime, now=None):
   header = __readHeader(fh)
   if now is None:
-    now = int( time.time() )
+    now = int(time.time())
   if untilTime is None:
     untilTime = now
   fromTime = int(fromTime)
@@ -742,7 +741,7 @@ def file_fetch(fh, fromTime, untilTime, now = None):
   # Here we try and be flexible and return as much data as we can.
   # If the range of data is from too far in the past or fully in the future, we
   # return nothing
-  if (fromTime > untilTime):
+  if fromTime > untilTime:
     raise InvalidTimeInterval("Invalid time interval: from time '%s' is after until time '%s'" % (fromTime, untilTime))
 
   oldestTime = now - header['maxRetention']
