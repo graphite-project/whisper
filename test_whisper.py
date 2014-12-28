@@ -31,17 +31,78 @@ class SimulatedCorruptWhisperFile(object):
         >>> whisper.create('test.wsp', [(60, 10)])
         >>> with SimulatedCorruptWhisperFile():
         ...     whisper.info('test.wsp')
+
+    When 'corrupt_archive' is passed as True, the metadata will be left
+    intact, but the archive will seem corrupted.
     """
-    def __init__(self):
+    def __init__(self, corrupt_archive=False):
+        self.corrupt_archive = corrupt_archive
+
         self.metadataFormat = whisper.metadataFormat
+        self.archiveInfoFormat = whisper.archiveInfoFormat
 
     def __enter__(self):
         # Force the struct unpack to fail by changing the metadata
         # format. This simulates an actual corrupted whisper file
-        whisper.metadataFormat = '!ssss'
+        if not self.corrupt_archive:
+            whisper.metadataFormat = '!ssss'
+        else:
+            whisper.archiveInfoFormat = '!ssss'
 
     def __exit__(self, *args, **kwargs):
         whisper.metadataFormat = self.metadataFormat
+        whisper.archiveInfoFormat = self.archiveInfoFormat
+
+
+class AssertRaisesException(object):
+    """
+    Context manager to not only assert the type of exception raised,
+    but also the actual value of the exception matches what is expected
+
+
+    >>> with AssertRaisesException(ValueError('beer > wine')):
+    ...     raise ValueError('beer > wine')
+
+    This is better than unittest.TestCase.assertRaises as it also checks
+    the contents of the exception vs just the type raised.
+    """
+    def __init__(self, exc):
+        self.expected_exc = exc
+
+    def __enter__(self):
+        yield
+
+    def __exit__(self, e_type, e_value, tracebck):
+        # Ensure an exception was actually raised
+        if e_type is None:
+            raise AssertionError("Exception of type '{}' was not raised".format(
+                self.expected_exc.__class__.__name__,
+            ))
+        elif not isinstance(self.expected_exc, e_type):
+            raise AssertionError("Exception type '{}' is not of type '{}'".format(
+                getattr(e_type, '__name__', 'None'),
+                self.expected_exc.__class__.__name__,
+            ))
+        # Ensure the actual values are the exact same. Since
+        # two instances of an arbitrary exception will never
+        # be considered equal, use the __dict__ attr to check
+        # that all of the kwargs such as path for exceptions
+        # such as CorruptWhisperFile are the exact same.
+        elif e_value.__dict__ != self.expected_exc.__dict__:
+            raise AssertionError("'{}' != '{}'".format(
+                repr(self.expected_exc.__dict__),
+                repr(e_value.__dict__),
+            ))
+        # Some builtin exceptions such as ValueError return {} for
+        # ValueError.__dict__, so finally, cast those to strings to compare
+        elif str(e_value) != str(self.expected_exc):
+            raise AssertionError("String forms of: '{}' != '{}'".format(
+                str(self.expected_exc),
+                str(e_value),
+            ))
+        # Context managers need to return True in __exit__ to not
+        # re-raise the exception held in the e_value variable
+        return True
 
 
 class WhisperTestBase(unittest.TestCase):
