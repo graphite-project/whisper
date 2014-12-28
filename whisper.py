@@ -268,7 +268,7 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
 
     try:
       (aggregationType,maxRetention,xff,archiveCount) = struct.unpack(metadataFormat,packedMetadata)
-    except:
+    except (struct.error, ValueError):
       raise CorruptWhisperFile("Unable to read header", fh.name)
 
     try:
