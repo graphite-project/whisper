@@ -413,6 +413,15 @@ class TestWhisper(WhisperTestBase):
             # we are playing with packed values and seek()
             self.assertEqual(ag, info2['aggregationMethod'])
 
+            # Force the struct unpack to fail by changing the metadata
+            # format. This simulates an actual corrupted whisper file
+            old_format = whisper.metadataFormat
+            whisper.metadataFormat = '!sss'
+            with self.assertRaises(whisper.CorruptWhisperFile):
+                whisper.setAggregationMethod(self.filename, ag)
+            whisper.metadataFormat = old_format
+
+
         whisper.LOCK = original_lock
         whisper.AUTOFLUSH = original_autoflush
         whisper.CACHE_HEADERS = original_caching
