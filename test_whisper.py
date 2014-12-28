@@ -460,6 +460,7 @@ class TestParseRetentionDef(unittest.TestCase):
 
             # From parseRetentionDef
             ('10X:10', ValueError("Invalid precision specification '10X'")),
+            ('10:10$', ValueError("Invalid retention specification '10$'")),
             ('60:10', (60, 10)),
         )
         for retention, expected_exc in retention_map:
