@@ -220,6 +220,17 @@ class TestWhisper(WhisperTestBase):
     def test_info_bogus_file(self):
         self.assertIsNone(whisper.info('bogus-file'))
 
+        # Validate "corrupt" whisper metadata
+        whisper.create(self.filename, self.retention)
+        with SimulatedCorruptWhisperFile():
+            with AssertRaisesException(whisper.CorruptWhisperFile('Unable to read header', self.filename)):
+                whisper.info(self.filename)
+
+        # Validate "corrupt" whisper archive data
+        with SimulatedCorruptWhisperFile(corrupt_archive=True):
+            with AssertRaisesException(whisper.CorruptWhisperFile('Unable to read archive0 metadata', self.filename)):
+                whisper.info(self.filename)
+
     def test_file_fetch_edge_cases(self):
         """
         Test some of the edge cases in file_fetch() that should return
@@ -451,7 +462,7 @@ class TestWhisper(WhisperTestBase):
         self.assertEqual(fetched[-1], 3.7337)
 
         whisper.LOCK = original_lock
-        
+
     def test_setAggregation(self):
         """
         Create a db, change aggregation, xFilesFactor, then use info() to validate
