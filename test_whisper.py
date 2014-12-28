@@ -497,6 +497,24 @@ class TestCorruptWhisperFile(unittest.TestCase):
         except whisper.CorruptWhisperFile as exc:
             self.assertEqual(exc.path, self.path)
 
+    def test_repr(self):
+        try:
+            raise whisper.CorruptWhisperFile(self.message, self.path)
+        except whisper.CorruptWhisperFile as exc:
+            self.assertEqual(
+                repr(exc),
+                '<CorruptWhisperFile[%s] %s>' % (self.path, self.message),
+            )
+
+    def test_str(self):
+        try:
+            raise whisper.CorruptWhisperFile(self.message, self.path)
+        except whisper.CorruptWhisperFile as exc:
+            self.assertEqual(
+                str(exc),
+                "{0} ({1})".format(self.message, self.path)
+            )
+
 
 if __name__ == '__main__':
     unittest.main()
