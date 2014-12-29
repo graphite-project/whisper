@@ -326,7 +326,7 @@ def validateArchiveList(archiveList):
 
     nextArchive = archiveList[i+1]
     if not archive[0] < nextArchive[0]:
-      raise InvalidConfiguration("A Whisper database may not configured having"
+      raise InvalidConfiguration("A Whisper database may not be configured having "
         "two archives with the same precision (archive%d: %s, archive%d: %s)" %
         (i, archive, i + 1, nextArchive))
 
@@ -513,13 +513,14 @@ def __propagate(fh,header,timestamp,higher,lower):
     return False
 
 
-def update(path,value,timestamp=None):
-  """update(path,value,timestamp=None)
+def update(path, value, timestamp=None):
+  """
+  update(path, value, timestamp=None)
 
-path is a string
-value is a float
-timestamp is either an int or float
-"""
+  path is a string
+  value is a float
+  timestamp is either an int or float
+  """
   value = float(value)
   with open(path,'r+b') as fh:
     return file_update(fh, value, timestamp)
