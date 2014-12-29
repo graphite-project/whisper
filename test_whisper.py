@@ -587,36 +587,36 @@ class TestParseRetentionDef(unittest.TestCase):
 class TestCorruptWhisperFile(unittest.TestCase):
     def setUp(self):
         self.path = '/opt/graphite/storage/whisper/moolah.wsp'
-        self.message = 'What is the average velocity of an unladen swallow?'
+        self.error = 'What is the average velocity of an unladen swallow?'
 
-    def test_message(self):
+    def test_error(self):
         try:
-            raise whisper.CorruptWhisperFile(self.message, self.path)
+            raise whisper.CorruptWhisperFile(self.error, self.path)
         except whisper.CorruptWhisperFile as exc:
-            self.assertEqual(exc.message, self.message)
+            self.assertEqual(exc.error, self.error)
 
     def test_path(self):
         try:
-            raise whisper.CorruptWhisperFile(self.message, self.path)
+            raise whisper.CorruptWhisperFile(self.error, self.path)
         except whisper.CorruptWhisperFile as exc:
             self.assertEqual(exc.path, self.path)
 
     def test_repr(self):
         try:
-            raise whisper.CorruptWhisperFile(self.message, self.path)
+            raise whisper.CorruptWhisperFile(self.error, self.path)
         except whisper.CorruptWhisperFile as exc:
             self.assertEqual(
                 repr(exc),
-                '<CorruptWhisperFile[%s] %s>' % (self.path, self.message),
+                '<CorruptWhisperFile[%s] %s>' % (self.path, self.error),
             )
 
     def test_str(self):
         try:
-            raise whisper.CorruptWhisperFile(self.message, self.path)
+            raise whisper.CorruptWhisperFile(self.error, self.path)
         except whisper.CorruptWhisperFile as exc:
             self.assertEqual(
                 str(exc),
-                "{0} ({1})".format(self.message, self.path)
+                "{0} ({1})".format(self.error, self.path)
             )
 
 
