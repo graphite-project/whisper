@@ -129,15 +129,17 @@ class TestWhisper(WhisperTestBase):
         """
         blank archive config
         """
-        with self.assertRaises(whisper.InvalidConfiguration):
+        with AssertRaisesException(whisper.InvalidConfiguration('You must specify at least one archive configuration!')):
             whisper.validateArchiveList([])
 
     def test_duplicate(self):
         """
         Checking duplicates
         """
-        whisper.validateArchiveList(self.retention)
-        with self.assertRaises(whisper.InvalidConfiguration):
+        # TODO: Fix the lies with whisper.validateArchiveList() saying it returns True/False
+        self.assertIsNone(whisper.validateArchiveList(self.retention))
+
+        with AssertRaisesException(whisper.InvalidConfiguration('A Whisper database may not be configured having two archives with the same precision (archive0: (1, 60), archive1: (1, 60))')):
             whisper.validateArchiveList([(1, 60), (60, 60), (1, 60)])
 
     def test_even_precision_division(self):
@@ -145,7 +147,7 @@ class TestWhisper(WhisperTestBase):
         even precision division
         """
         whisper.validateArchiveList([(60, 60), (6, 60)])
-        with self.assertRaises(whisper.InvalidConfiguration):
+        with AssertRaisesException(whisper.InvalidConfiguration("Higher precision archives' precision must evenly divide all lower precision archives' precision (archive0: 7, archive1: 60)")):
             whisper.validateArchiveList([(60, 60), (7, 60)])
 
     def test_timespan_coverage(self):
@@ -153,7 +155,7 @@ class TestWhisper(WhisperTestBase):
         timespan coverage
         """
         whisper.validateArchiveList(self.retention)
-        with self.assertRaises(whisper.InvalidConfiguration):
+        with AssertRaisesException(whisper.InvalidConfiguration('Lower precision archives must cover larger time intervals than higher precision archives (archive0: 60 seconds, archive1: 10 seconds)')):
             whisper.validateArchiveList([(1, 60), (10, 1)])
 
     def test_number_of_points(self):
@@ -161,7 +163,7 @@ class TestWhisper(WhisperTestBase):
         number of points
         """
         whisper.validateArchiveList(self.retention)
-        with self.assertRaises(whisper.InvalidConfiguration):
+        with AssertRaisesException(whisper.InvalidConfiguration("Each archive must have at least enough points to consolidate to the next archive (archive1 consolidates 60 of archive0's points but it has only 30 total points)")):
             whisper.validateArchiveList([(1, 30), (60, 60)])
 
     def test_aggregate(self):
@@ -178,7 +180,8 @@ class TestWhisper(WhisperTestBase):
         self.assertEqual(whisper.aggregate('sum', [10, 2, 3, 4]), 19)
         # average of the list elements
         self.assertEqual(whisper.aggregate('average', [1, 2, 3, 4]), 2.5)
-        with self.assertRaises(whisper.InvalidAggregationMethod):
+
+        with AssertRaisesException(whisper.InvalidAggregationMethod('Unrecognized aggregation method derp')):
             whisper.aggregate('derp', [12, 2, 3123, 1])
 
     def test_create_and_info(self):
@@ -186,15 +189,16 @@ class TestWhisper(WhisperTestBase):
         Create a db and use info() to validate
         """
         # check if invalid configuration fails successfully
-        with self.assertRaises(whisper.InvalidConfiguration):
-            whisper.create(self.filename, [])
+        for retention in (0, []):
+            with AssertRaisesException(whisper.InvalidConfiguration('You must specify at least one archive configuration!')):
+                whisper.create(self.filename, retention)
 
         # create a new db with a valid configuration
         whisper.create(self.filename, self.retention)
 
-        # attempt to create another db in the same file, this should fail
-        with self.assertRaises(whisper.InvalidConfiguration):
-            whisper.create(self.filename, 0)
+        # Ensure another file can't be created when one exists already
+        with AssertRaisesException(whisper.InvalidConfiguration('File {0} already exists!'.format(self.filename))):
+            whisper.create(self.filename, self.retention)
 
         info = whisper.info(self.filename)
 
@@ -213,9 +217,6 @@ class TestWhisper(WhisperTestBase):
                          self.retention[0][0] * self.retention[0][1])
         self.assertEqual(info['archives'][1]['retention'],
                          self.retention[1][0] * self.retention[1][1])
-
-        with self.assertRaises(whisper.InvalidConfiguration):
-            whisper.create(self.filename, self.retention)
 
     def test_info_bogus_file(self):
         self.assertIsNone(whisper.info('bogus-file'))
@@ -239,8 +240,12 @@ class TestWhisper(WhisperTestBase):
         whisper.create(self.filename, [(1, 60)])
 
         with open(self.filename) as fh:
-            with self.assertRaises(whisper.InvalidTimeInterval):
-                whisper.file_fetch(fh, fromTime=int(time.time()) + 100, untilTime=0)
+            msg = "Invalid time interval: from time '{0}' is after until time '{1}'"
+            until_time = 0
+            from_time = int(time.time()) + 100
+
+            with AssertRaisesException(whisper.InvalidTimeInterval(msg.format(from_time, until_time))):
+                whisper.file_fetch(fh, fromTime=from_time, untilTime=until_time)
 
             # fromTime > now aka metrics from the future
             self.assertIsNone(
@@ -281,7 +286,7 @@ class TestWhisper(WhisperTestBase):
         self._update()
         whisper.create(testdb, [(100, 1)])
 
-        with self.assertRaises(NotImplementedError):
+        with AssertRaisesException(NotImplementedError('db.wsp and test-db.wsp archive configurations are unalike. Resize the input before merging')):
             whisper.merge(self.filename, testdb)
 
         self._remove(testdb)
@@ -313,13 +318,7 @@ class TestWhisper(WhisperTestBase):
         whisper.update(testdb, 1.0, now)
         whisper.update(self.filename, 2.0, now)
 
-        ## Purposefully insert nulls to strip out
-        #with self.assertRaises(whisper.TimestampNotCovered):
-        #    whisper.update(testdb, float('NaN'), now + 1)
-
-        #with self.assertRaises(whisper.TimestampNotCovered):
-        #    whisper.update(self.filename, float('NaN'), now + 1)
-
+        # Purposefully insert nulls to strip out
         previous = now - self.retention[0][0]
         whisper.update(testdb, float('NaN'), previous)
 
@@ -377,7 +376,7 @@ class TestWhisper(WhisperTestBase):
         # Merging 2 archives with different retentions should fail
         with open(testdb, 'rb') as fh_1:
             with open(self.filename, 'rb+') as fh_2:
-                with self.assertRaises(NotImplementedError):
+                with AssertRaisesException(NotImplementedError('test-db.wsp and db.wsp archive configurations are unalike. Resize the input before diffing')):
                     whisper.file_diff(fh_1, fh_2)
         self._remove(testdb)
 
@@ -387,7 +386,7 @@ class TestWhisper(WhisperTestBase):
         """
 
         # check a db that doesnt exist
-        with self.assertRaises(Exception):
+        with AssertRaisesException(IOError("[Errno 2] No such file or directory: 'this_db_does_not_exist'")):
             whisper.fetch("this_db_does_not_exist", 0)
 
         # SECOND MINUTE HOUR DAY
@@ -395,8 +394,12 @@ class TestWhisper(WhisperTestBase):
         whisper.create(self.filename, retention)
 
         # check a db with an invalid time range
-        with self.assertRaises(whisper.InvalidTimeInterval):
-            whisper.fetch(self.filename, time.time(), time.time()-6000)
+        now = int(time.time())
+        past = now - 6000
+
+        msg = "Invalid time interval: from time '{0}' is after until time '{1}'"
+        with AssertRaisesException(whisper.InvalidTimeInterval(msg.format(now, past))):
+            whisper.fetch(self.filename, now, past)
 
         fetch = whisper.fetch(self.filename, 0)
 
@@ -445,14 +448,13 @@ class TestWhisper(WhisperTestBase):
             self.assertEqual(value, fetch_data[i])
 
         # check TimestampNotCovered
-        with self.assertRaises(whisper.TimestampNotCovered):
-            # in the future
+        with AssertRaisesException(whisper.TimestampNotCovered('Timestamp not covered by any archives in this database.')):
+            # in the futur
             whisper.update(self.filename, 1.337, time.time() + 1)
 
-        with self.assertRaises(whisper.TimestampNotCovered):
+        with AssertRaisesException(whisper.TimestampNotCovered('Timestamp not covered by any archives in this database.')):
             # before the past
-            whisper.update(self.filename, 1.337,
-                           time.time() - retention_schema[0][1] - 1)
+            whisper.update(self.filename, 1.337, time.time() - retention_schema[0][1] - 1)
 
         # When no timestamp is passed in, it should use the current time
         original_lock = whisper.LOCK
@@ -463,6 +465,9 @@ class TestWhisper(WhisperTestBase):
 
         whisper.LOCK = original_lock
 
+    # TODO: This test method takes more time than virtually every
+    #       single other test combined. Profile this code and potentially
+    #       fix the underlying reason
     def test_setAggregation(self):
         """
         Create a db, change aggregation, xFilesFactor, then use info() to validate
@@ -477,7 +482,7 @@ class TestWhisper(WhisperTestBase):
         # create a new db with a valid configuration
         whisper.create(self.filename, self.retention)
 
-        with self.assertRaises(whisper.InvalidAggregationMethod):
+        with AssertRaisesException(whisper.InvalidAggregationMethod('Unrecognized aggregation method: yummy beer')):
             whisper.setAggregationMethod(self.filename, 'yummy beer')
 
         #set setting every AggregationMethod available
@@ -509,7 +514,7 @@ class TestWhisper(WhisperTestBase):
             self.assertEqual(ag, info2['aggregationMethod'])
 
             with SimulatedCorruptWhisperFile():
-                with self.assertRaises(whisper.CorruptWhisperFile):
+                with AssertRaisesException(whisper.CorruptWhisperFile('Unable to read header', self.filename)):
                     whisper.setAggregationMethod(self.filename, ag)
 
         whisper.LOCK = original_lock
@@ -524,7 +529,7 @@ class TestgetUnitString(unittest.TestCase):
             self.assertEqual(value, unit)
 
     def test_invalid_unit(self):
-        with self.assertRaises(ValueError):
+        with AssertRaisesException(ValueError("Invalid unit 'z'")):
             whisper.getUnitString('z')
 
 
