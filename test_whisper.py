@@ -384,9 +384,12 @@ class TestWhisper(WhisperTestBase):
         """
         fetch info from database
         """
-
-        # check a db that doesnt exist
-        with AssertRaisesException(IOError("[Errno 2] No such file or directory: 'this_db_does_not_exist'")):
+        # Don't use AssertRaisesException due to a super obscure bug in
+        # python2.6 which returns an IOError in the 2nd argument of __exit__
+        # in a context manager as a tuple. See this for a minimal reproducer:
+        #    http://git.io/cKz30g
+        with self.assertRaises(IOError):
+            # check a db that doesnt exist
             whisper.fetch("this_db_does_not_exist", 0)
 
         # SECOND MINUTE HOUR DAY
