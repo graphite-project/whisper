@@ -18,6 +18,8 @@ class TestWhisper(unittest.TestCase):
     Testing functions for whisper.
     """
     db = "db.wsp"
+    bad_xff = -2.0, 99, 'sofa'
+    bad_methods = 'potato', '\u0CA0_\u0CA0', 0xffffffff, 0
 
     @classmethod
     def setUpClass(cls):
@@ -111,6 +113,22 @@ class TestWhisper(unittest.TestCase):
 
         # remove database
         self._removedb()
+
+        #as written, invlaid aggregation methods default back to 'average'
+        for bad_m in self.bad_methods:
+          whisper.create(self.db, retention, xFilesFactor=None,aggregationMethod=bad_m)
+          info = whisper.info(self.db)
+          self.assertEqual(info['aggregationMethod'], 'average')
+          self._removedb()
+
+        for f in self.bad_xff:
+           with self.assertRaises(ValueError):
+             whisper.create(self.db, retention, xFilesFactor=f)
+           #assure files with bad XFilesFactors are not created
+           with self.assertRaises(IOError):
+             with open(self.db): pass
+
+        
 
     def test_merge(self):
         """test merging two databases"""
@@ -239,6 +257,16 @@ class TestWhisper(unittest.TestCase):
             #same aggregationMethod asssertion again, but double-checking since
             #we are playing with packed values and seek()
             self.assertEqual(ag,info2['aggregationMethod'])
+
+        #confirm InfalidAggregationMethod is raised
+        for bad_m in self.bad_methods:
+          with self.assertRaises(whisper.InvalidAggregationMethod):
+            whisper.setAggregationMethod(self.db, bad_m)
+
+        
+        for f in self.bad_xff:
+          with self.assertRaises(ValueError):
+             whisper.setAggregationMethod(self.db, 'average', f)
 
         self._removedb()
 

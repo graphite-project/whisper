@@ -168,7 +168,7 @@ whisper-set-aggregation-method.py
 Change the aggregation method of an existing whisper file.
 
 ```
-Usage: whisper-set-aggregation-method.py path <average|sum|last|max|min>
+Usage: whisper-set-aggregation-method.py path <average|sum|last|max|min> [xFilesFactor]
 
 Options:
   -h, --help  show this help message and exit
