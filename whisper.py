@@ -25,6 +25,7 @@
 #			Point = timestamp,value
 
 import os, struct, time, operator, itertools
+from errno import ENOSPC
 
 try:
   import fcntl
@@ -400,7 +401,14 @@ aggregationMethod specifies the function to use when propogating data (see ``whi
     fh.flush()
     os.fsync(fh.fileno())
 
-  fh.close()
+  try:
+    fh.close()
+  except IOError, e:
+    # Cleanup after ourself if there's no space left on device
+    if e.errno == ENOSPC:
+      os.unlink(fh.name)
+    raise
+
 
 def aggregate(aggregationMethod, knownValues):
   if aggregationMethod == 'average':
