@@ -362,51 +362,54 @@ aggregationMethod specifies the function to use when propogating data (see ``whi
     raise InvalidConfiguration("File %s already exists!" % path)
 
   fh = open(path,'wb')
-  if LOCK:
-    fcntl.flock( fh.fileno(), fcntl.LOCK_EX )
-
-  aggregationType = struct.pack( longFormat, aggregationMethodToType.get(aggregationMethod, 1) )
-  oldest = max([secondsPerPoint * points for secondsPerPoint,points in archiveList])
-  maxRetention = struct.pack( longFormat, oldest )
-  xFilesFactor = struct.pack( floatFormat, float(xFilesFactor) )
-  archiveCount = struct.pack(longFormat, len(archiveList))
-  packedMetadata = aggregationType + maxRetention + xFilesFactor + archiveCount
-  fh.write(packedMetadata)
-  headerSize = metadataSize + (archiveInfoSize * len(archiveList))
-  archiveOffsetPointer = headerSize
-
-  for secondsPerPoint,points in archiveList:
-    archiveInfo = struct.pack(archiveInfoFormat, archiveOffsetPointer, secondsPerPoint, points)
-    fh.write(archiveInfo)
-    archiveOffsetPointer += (points * pointSize)
-
-  #If configured to use fallocate and capable of fallocate use that, else
-  #attempt sparse if configure or zero pre-allocate if sparse isn't configured.
-  if CAN_FALLOCATE and useFallocate:
-    remaining = archiveOffsetPointer - headerSize
-    fallocate(fh, headerSize, remaining)
-  elif sparse:
-    fh.seek(archiveOffsetPointer - 1)
-    fh.write('\x00')
-  else:
-    remaining = archiveOffsetPointer - headerSize
-    chunksize = 16384
-    zeroes = '\x00' * chunksize
-    while remaining > chunksize:
-      fh.write(zeroes)
-      remaining -= chunksize
-    fh.write(zeroes[:remaining])
-
-  if AUTOFLUSH:
-    fh.flush()
-    os.fsync(fh.fileno())
-
   try:
+    if LOCK:
+      fcntl.flock( fh.fileno(), fcntl.LOCK_EX )
+  
+    aggregationType = struct.pack( longFormat, aggregationMethodToType.get(aggregationMethod, 1) )
+    oldest = max([secondsPerPoint * points for secondsPerPoint,points in archiveList])
+    maxRetention = struct.pack( longFormat, oldest )
+    xFilesFactor = struct.pack( floatFormat, float(xFilesFactor) )
+    archiveCount = struct.pack(longFormat, len(archiveList))
+    packedMetadata = aggregationType + maxRetention + xFilesFactor + archiveCount
+    fh.write(packedMetadata)
+    headerSize = metadataSize + (archiveInfoSize * len(archiveList))
+    archiveOffsetPointer = headerSize
+  
+    for secondsPerPoint,points in archiveList:
+      archiveInfo = struct.pack(archiveInfoFormat, archiveOffsetPointer, secondsPerPoint, points)
+      fh.write(archiveInfo)
+      archiveOffsetPointer += (points * pointSize)
+  
+    #If configured to use fallocate and capable of fallocate use that, else
+    #attempt sparse if configure or zero pre-allocate if sparse isn't configured.
+    if CAN_FALLOCATE and useFallocate:
+      remaining = archiveOffsetPointer - headerSize
+      fallocate(fh, headerSize, remaining)
+    elif sparse:
+      fh.seek(archiveOffsetPointer - 1)
+      fh.write('\x00')
+    else:
+      remaining = archiveOffsetPointer - headerSize
+      chunksize = 16384
+      zeroes = '\x00' * chunksize
+      while remaining > chunksize:
+        fh.write(zeroes)
+        remaining -= chunksize
+      fh.write(zeroes[:remaining])
+  
+    if AUTOFLUSH:
+      fh.flush()
+      os.fsync(fh.fileno())
+  
     fh.close()
   except IOError, e:
     # Cleanup after ourself if there's no space left on device
     if e.errno == ENOSPC:
       os.unlink(fh.name)
+    # double close is ok - the first one is needed to catch ENOSPC on close
+    # This one closes the file if we caught an IOError higher up
+    fh.close()
     raise
 
 
