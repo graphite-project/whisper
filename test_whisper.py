@@ -7,6 +7,9 @@ import math
 import random
 import struct
 
+import errno
+from mock import patch, mock_open
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -184,6 +187,41 @@ class TestWhisper(WhisperTestBase):
         with AssertRaisesException(whisper.InvalidAggregationMethod('Unrecognized aggregation method derp')):
             whisper.aggregate('derp', [12, 2, 3123, 1])
 
+    def _test_create_IOError(self, ioerror_method='write', e=errno.ENOSPC, test_unlink=True):
+        """
+        Behaviour when creating a whisper file on a full filesystem
+        """
+        m_open = mock_open()
+        # Get the mocked file object and override interresting attributes
+        m_file = m_open.return_value
+        m_file.name = self.filename
+        method = getattr(m_file, ioerror_method)
+        method.side_effect = IOError(e, "Mocked IOError - ENOSPC")
+
+        with patch('whisper.open', m_open, create=True), patch('os.unlink') as m_unlink:
+            self.assertRaises(IOError, whisper.create, self.filename, self.retention)
+            if test_unlink:
+                m_unlink.assert_called_with(self.filename)
+
+    def test_create_write_ENOSPC(self):
+        """
+        Behaviour when creating a whisper file on a full filesystem (write)
+        """
+        self._test_create_IOError('write')
+
+    def test_create_close_ENOSPC(self):
+        """
+        Behaviour when creating a whisper file on a full filesystem (close)
+        """
+        self._test_create_IOError('close')
+
+    def test_create_close_EIO(self):
+        """
+        Behaviour when creating a whisper file and getting an I/O error
+        """
+        self._test_create_IOError('close', e=errno.EIO, test_unlink=False)
+
+	    
     def test_create_and_info(self):
         """
         Create a db and use info() to validate
