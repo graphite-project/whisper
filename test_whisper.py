@@ -198,7 +198,8 @@ class TestWhisper(WhisperTestBase):
         method = getattr(m_file, ioerror_method)
         method.side_effect = IOError(e, "Mocked IOError - ENOSPC")
 
-        with patch('whisper.open', m_open, create=True), patch('os.unlink') as m_unlink:
+        with patch('whisper.open', m_open, create=True):
+          with patch('os.unlink') as m_unlink:
             self.assertRaises(IOError, whisper.create, self.filename, self.retention)
             if test_unlink:
                 m_unlink.assert_called_with(self.filename)
