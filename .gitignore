@@ -6,3 +6,5 @@ dist
 .coverage
 htmlcov/*
 ve
+.idea
+*.iml
