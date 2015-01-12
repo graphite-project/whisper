@@ -187,7 +187,7 @@ class TestWhisper(WhisperTestBase):
         with AssertRaisesException(whisper.InvalidAggregationMethod('Unrecognized aggregation method derp')):
             whisper.aggregate('derp', [12, 2, 3123, 1])
 
-    def _test_create_IOError(self, ioerror_method='write', e=errno.ENOSPC, test_unlink=True):
+    def _test_create_IOError(self, ioerror_method='write', e=errno.ENOSPC):
         """
         Behaviour when creating a whisper file on a full filesystem
         """
@@ -201,26 +201,29 @@ class TestWhisper(WhisperTestBase):
         with patch('whisper.open', m_open, create=True):
           with patch('os.unlink') as m_unlink:
             self.assertRaises(IOError, whisper.create, self.filename, self.retention)
-            if test_unlink:
-                m_unlink.assert_called_with(self.filename)
+
+        return (m_file, m_unlink)
 
     def test_create_write_ENOSPC(self):
         """
         Behaviour when creating a whisper file on a full filesystem (write)
         """
-        self._test_create_IOError('write')
+        (m_file, m_unlink) = self._test_create_IOError('write')
+        m_unlink.assert_called_with(self.filename)
 
     def test_create_close_ENOSPC(self):
         """
         Behaviour when creating a whisper file on a full filesystem (close)
         """
-        self._test_create_IOError('close')
+        (m_file, m_unlink) = self._test_create_IOError('close')
+        m_unlink.assert_called_with(self.filename)
 
     def test_create_close_EIO(self):
         """
         Behaviour when creating a whisper file and getting an I/O error
         """
-        self._test_create_IOError('close', e=errno.EIO, test_unlink=False)
+        (m_file, m_unlink) = self._test_create_IOError('close', e=errno.EIO)
+        self.assertFalse(m_unlink.called)
 
 	    
     def test_create_and_info(self):
