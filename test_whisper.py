@@ -108,10 +108,14 @@ class AssertRaisesException(object):
 class WhisperTestBase(unittest.TestCase):
     def setUp(self):
         self.filename = 'db.wsp'
+        self.testdb = 'test-db.wsp'
+        self._remove(self.filename)
+        self._remove(self.testdb)
         self.retention = [(1, 60), (60, 60)]
 
     def tearDown(self):
         self._remove(self.filename)
+        self._remove(self.testdb)
 
     @staticmethod
     def _remove(wsp_file):
@@ -270,65 +274,54 @@ class TestWhisper(WhisperTestBase):
         """
         test merging two databases
         """
-        testdb = "test-%s" % self.filename
-
         # Create 2 whisper databases and merge one into the other
         self._update()
-        self._update(testdb)
+        self._update(self.testdb)
 
-        whisper.merge(self.filename, testdb)
-        self._remove(testdb)
+        whisper.merge(self.filename, self.testdb)
 
     def test_merge_bad_archive_config(self):
-        testdb = "test-%s" % self.filename
 
         # Create 2 whisper databases with different schema
         self._update()
-        whisper.create(testdb, [(100, 1)])
+        whisper.create(self.testdb, [(100, 1)])
 
         with AssertRaisesException(NotImplementedError('db.wsp and test-db.wsp archive configurations are unalike. Resize the input before merging')):
-            whisper.merge(self.filename, testdb)
-
-        self._remove(testdb)
+            whisper.merge(self.filename, self.testdb)
 
     def test_diff(self):
-        testdb = "test-%s" % self.filename
-
         now = time.time()
 
-        whisper.create(testdb, self.retention)
+        whisper.create(self.testdb, self.retention)
         whisper.create(self.filename, self.retention)
-        whisper.update(testdb, 1.0, now)
+        whisper.update(self.testdb, 1.0, now)
         whisper.update(self.filename, 2.0, now)
 
-        results = whisper.diff(testdb, self.filename)
-        self._remove(testdb)
+        results = whisper.diff(self.testdb, self.filename)
 
         expected = [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)]
 
         self.assertEqual(results, expected)
 
     def test_diff_with_empty(self):
-        testdb = "test-%s" % self.filename
-
         now = time.time()
 
-        whisper.create(testdb, self.retention)
+        whisper.create(self.testdb, self.retention)
         whisper.create(self.filename, self.retention)
-        whisper.update(testdb, 1.0, now)
+        whisper.update(self.testdb, 1.0, now)
         whisper.update(self.filename, 2.0, now)
 
         # Purposefully insert nulls to strip out
         previous = now - self.retention[0][0]
-        whisper.update(testdb, float('NaN'), previous)
+        whisper.update(self.testdb, float('NaN'), previous)
 
-        results = whisper.diff(testdb, self.filename, ignore_empty=True)
+        results = whisper.diff(self.testdb, self.filename, ignore_empty=True)
         self.assertEqual(
             results,
             [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)],
         )
 
-        results_empties = whisper.diff(testdb, self.filename, ignore_empty=False)
+        results_empties = whisper.diff(self.testdb, self.filename, ignore_empty=False)
         expected = [(0, [(int(previous), float('NaN'), None), (int(now), 1.0, 2.0)], 2), (1, [], 0)]
 
         # Stupidly, float('NaN') != float('NaN'), so assert that the
@@ -345,40 +338,33 @@ class TestWhisper(WhisperTestBase):
         self.assertTrue(
             math.isnan(results_empties[0][1][0][1])
         )
-        self._remove(testdb)
 
     def test_file_diff(self):
-        testdb = "test-%s" % self.filename
-
         now = time.time()
 
-        whisper.create(testdb, self.retention)
+        whisper.create(self.testdb, self.retention)
         whisper.create(self.filename, self.retention)
-        whisper.update(testdb, 1.0, now)
+        whisper.update(self.testdb, 1.0, now)
         whisper.update(self.filename, 2.0, now)
 
         # Merging 2 archives with different retentions should fail
-        with open(testdb, 'rb') as fh_1:
+        with open(self.testdb, 'rb') as fh_1:
             with open(self.filename, 'rb+') as fh_2:
                 results = whisper.file_diff(fh_1, fh_2)
-        self._remove(testdb)
 
         expected = [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)]
 
         self.assertEqual(results, expected)
 
     def test_file_diff_invalid(self):
-        testdb = "test-%s" % self.filename
-
-        whisper.create(testdb, [(120, 10)])
+        whisper.create(self.testdb, [(120, 10)])
         whisper.create(self.filename, self.retention)
 
         # Merging 2 archives with different retentions should fail
-        with open(testdb, 'rb') as fh_1:
+        with open(self.testdb, 'rb') as fh_1:
             with open(self.filename, 'rb+') as fh_2:
                 with AssertRaisesException(NotImplementedError('test-db.wsp and db.wsp archive configurations are unalike. Resize the input before diffing')):
                     whisper.file_diff(fh_1, fh_2)
-        self._remove(testdb)
 
     def test_fetch(self):
         """
