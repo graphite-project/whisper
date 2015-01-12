@@ -510,6 +510,87 @@ class TestWhisper(WhisperTestBase):
         whisper.AUTOFLUSH = original_autoflush
         whisper.CACHE_HEADERS = original_caching
 
+    def test_fetch_across_retention_boundary(self):
+        """
+        Create a db and validate that fetching data across archive boundaries
+        returns data from the appropriate archive
+        """
+
+        retention = [ (1, 300),    #  1s for 5 minutes
+                      (10, 60),    # 10s for 10 minutes
+                      (60, 30),    # 60s for 30 minutes
+                      (300, 12)]   #  5m for 60 minutes
+        now = int( time.time() )
+        range_len = 3600
+        whisper.create(self.filename, retention)
+        
+        # fetch all data from first archive
+        (timeInfo, points) = whisper.fetch(self.filename, now - (5 * 60), now, now)
+        self.assertEqual(1, timeInfo[2])
+
+        # fetch data across the archive boundary
+        (timeInfo, points) = whisper.fetch(self.filename, now - (5 * 60 + 1), now , now)
+        self.assertEqual(10, timeInfo[2])
+
+        # cross to third archive
+        (timeInfo, points) = whisper.fetch(self.filename, now - (10 * 60 + 1), now , now)
+        self.assertEqual(60, timeInfo[2])
+
+    def test_fetch_coarse_across_retention_boundary(self):
+        """
+        Create a db and validate that fetching data across archive boundaries
+        using the 'coarse' fetch strategy returns data from the appropriate
+        archive.
+        """
+
+        retention = [ (1, 3600),   #  1s for 60m
+                      (10, 361),   # 10s for 60m10s
+                      (60, 61),    # 60s for 61m
+                      (300, 13)]   #  5m for 65m
+        now = int( time.time() )
+        range_len = 3600
+        whisper.create(self.filename, retention)
+
+        whisper.FETCH_STRATEGY_COARSE_THRESHOLD = 15
+        whisper.FETCH_STRATEGY = 'coarse'
+        # fetch 300s worth of data
+        (timeInfo, points) = whisper.fetch(self.filename, now - (5 * 60),
+                                           now, now)
+        # Data will be fetched from 10s resolution archive since it has >15 pts
+        # for requested timerange
+        self.assertEqual(10, timeInfo[2])
+
+        whisper.FETCH_STRATEGY = None
+        # Same fetch
+        (timeInfo, points) = whisper.fetch(self.filename, now - (5 * 60),
+                                           now, now)
+        self.assertEqual(1, timeInfo[2])
+
+        whisper.FETCH_STRATEGY = 'coarse'
+        # fetch 16m worth of data at some point in the past
+        (timeInfo, points) = whisper.fetch(self.filename, now - (26 * 60),
+                                           now - (10 * 60) , now)
+        # data will be fetched from 60s resolution archive
+        self.assertEqual(60, timeInfo[2])
+
+        whisper.FETCH_STRATEGY = None
+        # same fetch
+        (timeInfo, points) = whisper.fetch(self.filename, now - (26 * 60),
+                                           now - (10 * 60) , now)
+        self.assertEqual(1, timeInfo[2])
+
+        whisper.FETCH_STRATEGY = 'coarse'
+        # "zoom" in the data fetched above: fetch 6 minutes of data within the timerange
+        (timeInfo, points) = whisper.fetch(self.filename, now - (26 * 60),
+                                           now - (20 * 60) , now)
+        # data will be fetched from 10s resolution archive
+        self.assertEqual(10, timeInfo[2])
+
+        # "zoom" in the even more to make sure we can still reach the original data
+        (timeInfo, points) = whisper.fetch(self.filename, now - (26 * 60),
+                                           now - (24 * 60) , now)
+        self.assertEqual(1, timeInfo[2])
+
 
 class TestgetUnitString(unittest.TestCase):
     def test_function(self):

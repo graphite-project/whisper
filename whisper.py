@@ -77,6 +77,8 @@ if CAN_FALLOCATE:
 LOCK = False
 CACHE_HEADERS = False
 AUTOFLUSH = False
+FETCH_STRATEGY = None
+FETCH_STRATEGY_COARSE_THRESHOLD = float("inf")
 __headerCache = {}
 
 longFormat = "!L"
@@ -729,6 +731,24 @@ Returns None if no data can be returned
   with open(path,'rb') as fh:
     return file_fetch(fh, fromTime, untilTime, now)
 
+def _coarse_archive(archives, fromTime, untilTime, now, threshold):
+  """
+
+Returns the coarsest archive that has above 'threshold' datapoints
+in the requested timespan. If such an archive is not available,
+it returns the first archive matching the timespan.
+"""
+  best_archive = None
+  diff = now - fromTime
+  timespan = untilTime - fromTime
+  for archive in archives:
+    pts_in_ts = timespan / archive['secondsPerPoint']
+    if archive['retention'] >= diff:
+      if not best_archive:
+        best_archive = archive
+      elif pts_in_ts > threshold:
+        best_archive = archive
+  return best_archive
 
 def file_fetch(fh, fromTime, untilTime, now=None):
   header = __readHeader(fh)
@@ -759,10 +779,14 @@ def file_fetch(fh, fromTime, untilTime, now=None):
   if untilTime > now:
     untilTime = now
 
-  diff = now - fromTime
-  for archive in header['archives']:
-    if archive['retention'] >= diff:
-      break
+  if FETCH_STRATEGY == "coarse":
+    archive = _coarse_archive(header['archives'], fromTime, untilTime, now,
+                              threshold=FETCH_STRATEGY_COARSE_THRESHOLD)
+  else:
+    diff = now - fromTime
+    for archive in header['archives']:
+      if archive['retention'] >= diff:
+        break
 
   return __archive_fetch(fh, archive, fromTime, untilTime)
 
