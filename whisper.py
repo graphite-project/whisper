@@ -420,9 +420,9 @@ aggregationMethod specifies the function to use when propagating data (see ``whi
       # Explicitly close the file to catch IOError on close()
       fh.close()
     except IOError, e:
-      # Cleanup after ourself if there's no space left on device
-      if e.errno == ENOSPC:
-        os.unlink(fh.name)
+      # if we got an IOError above, the file is either empty or half created.
+      # Better off deleting it to avoid surprises later
+      os.unlink(fh.name)
       raise
 
 
