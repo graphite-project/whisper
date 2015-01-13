@@ -564,7 +564,7 @@ class TestWhisper(WhisperTestBase):
             target_xff = struct.unpack("!f", struct.pack("!f", xff))[0]
             self.assertEqual(info2['xFilesFactor'], target_xff)
 
-            # same aggregationMethod asssertion again, but double-checking since
+            # same aggregationMethod assertion again, but double-checking since
             # we are playing with packed values and seek()
             self.assertEqual(ag, info2['aggregationMethod'])
 
