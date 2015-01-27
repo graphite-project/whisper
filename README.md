@@ -35,7 +35,7 @@ Options:
   --aggregationMethod=AGGREGATIONMETHOD
                         The consolidation function to fetch from on input and
                         aggregationMethod to set on output. One of: average,
-                        last, max, min
+                        last, max, min, absmax, absmin
 ```
 
 whisper-create.py
@@ -58,7 +58,7 @@ Options:
   --xFilesFactor=XFILESFACTOR
   --aggregationMethod=AGGREGATIONMETHOD
                         Function to use when aggregating values (average, sum,
-                        last, max, min)
+                        last, max, min, absmax, absmin)
   --overwrite
 ```
 
@@ -152,7 +152,7 @@ Options:
                         Change the xFilesFactor
   --aggregationMethod=AGGREGATIONMETHOD
                         Change the aggregation function (average, sum, last,
-                        max, min)
+                        max, min, absmax, absmin)
   --force               Perform a destructive change
   --newfile=NEWFILE     Create a new database file without removing the
                         existing one
@@ -167,7 +167,7 @@ whisper-set-aggregation-method.py
 Change the aggregation method of an existing whisper file.
 
 ```
-Usage: whisper-set-aggregation-method.py path <average|sum|last|max|min>
+Usage: whisper-set-aggregation-method.py path <average|sum|last|max|min|absmax|absmin>
 
 Options:
   -h, --help  show this help message and exit

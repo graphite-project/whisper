@@ -183,6 +183,16 @@ class TestWhisper(WhisperTestBase):
         self.assertEqual(whisper.aggregate('sum', [10, 2, 3, 4]), 19)
         # average of the list elements
         self.assertEqual(whisper.aggregate('average', [1, 2, 3, 4]), 2.5)
+        # absmax with negative max
+        self.assertEqual(whisper.aggregate('absmax', [-3, -2, 1, 2]), -3)
+        # absmax with positive max
+        self.assertEqual(whisper.aggregate('absmax', [-2, -1, 2, 3]), 3)
+        # absmin with positive min
+        self.assertEqual(whisper.aggregate('absmin', [-3, -2, 1, 2]), 1)
+        # absmin with negative min
+        self.assertEqual(whisper.aggregate('absmin', [-2, -1, 2, 3]), -1)
+        with self.assertRaises(whisper.InvalidAggregationMethod):
+            whisper.aggregate('derp', [12, 2, 3123, 1])
 
         with AssertRaisesException(whisper.InvalidAggregationMethod('Unrecognized aggregation method derp')):
             whisper.aggregate('derp', [12, 2, 3123, 1])
