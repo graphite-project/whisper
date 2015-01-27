@@ -64,19 +64,21 @@ class TestWhisper(unittest.TestCase):
     def test_aggregate(self):
         """aggregate functions"""
         # min of 1-4
-        self.assertEqual(whisper.aggregate('min', [1, 2, 3, 4], []), 1)
+        self.assertEqual(whisper.aggregate('min', [1, 2, 3, 4]), 1)
         # max of 1-4
-        self.assertEqual(whisper.aggregate('max', [1, 2, 3, 4], []), 4)
+        self.assertEqual(whisper.aggregate('max', [1, 2, 3, 4]), 4)
         # last element in the known values
-        self.assertEqual(whisper.aggregate('last', [3, 2, 5, 4], []), 4)
+        self.assertEqual(whisper.aggregate('last', [3, 2, 5, 4]), 4)
         # sum ALL THE VALUES!
-        self.assertEqual(whisper.aggregate('sum', [10, 2, 3, 4], []), 19)
+        self.assertEqual(whisper.aggregate('sum', [10, 2, 3, 4]), 19)
         # average of the list elements
-        self.assertEqual(whisper.aggregate('average', [1, 2, 3, 4], []), 2.5)
+        self.assertEqual(whisper.aggregate('average', [1, 2, 3, 4]), 2.5)
         avg_zero = [1, 2, 3, 4, None, None, None, None]
         non_null = [i for i in avg_zero if i is not None]
         self.assertEqual(whisper.aggregate('avg_zero', non_null, avg_zero), 1.25)
-
+        # avg_zero without neighborValues
+        with self.assertRaises(whisper.InvalidAggregationMethod):
+            whisper.aggregate('avg_zero', non_null)
         with self.assertRaises(whisper.InvalidAggregationMethod):
             whisper.aggregate('derp', [12, 2, 3123, 1], [])
 

@@ -42,7 +42,7 @@ except ImportError:
 
 fallocate = None
 
-if CAN_FALLOCATE: 
+if CAN_FALLOCATE:
   libc_name = ctypes.util.find_library('c')
   libc = ctypes.CDLL(libc_name)
   c_off64_t = ctypes.c_int64
@@ -425,7 +425,7 @@ aggregationMethod specifies the function to use when propagating data (see ``whi
     if fh:
       fh.close()
 
-def aggregate(aggregationMethod, knownValues, neighborValues):
+def aggregate(aggregationMethod, knownValues, neighborValues=None):
   if aggregationMethod == 'average':
     return float(sum(knownValues)) / float(len(knownValues))
   elif aggregationMethod == 'sum':
@@ -437,7 +437,9 @@ def aggregate(aggregationMethod, knownValues, neighborValues):
   elif aggregationMethod == 'min':
     return min(knownValues)
   elif aggregationMethod == 'avg_zero':
-    values = map(lambda x: x or 0, neighborValues)
+    if not neighborValues:
+        raise InvalidAggregationMethod("Using avg_zero without neighborValues")
+    values = [x or 0 for x in neighborValues]
     return float(sum(values)) / float(len(values))
   else:
     raise InvalidAggregationMethod("Unrecognized aggregation method %s" %
