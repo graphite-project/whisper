@@ -73,6 +73,17 @@ Options:
   -h, --help  show this help message and exit
 ```
 
+whisper-estimate.py
+---------------
+Estimate whisper disk requirement based on archive definitions.
+
+```
+Usage: whisper-estimate.py timePerPoint:timeToStore [timePerPoint:timeToStore]*
+
+Options:
+  -h, --help  show this help message and exit
+```
+
 whisper-fetch.py
 ----------------
 Fetch all the metrics stored in a whisper file to stdout.
