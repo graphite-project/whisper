@@ -7,6 +7,8 @@ import time
 import sys
 import signal
 import optparse
+from datetime import datetime
+from datetime import timedelta
 
 try:
   import whisper
@@ -37,9 +39,19 @@ option_parser.add_option('--xFilesFactor', default=0.5, type='float')
 option_parser.add_option('--aggregationMethod', default='average',
         type='string', help="Function to use when aggregating values (%s)" %
         ', '.join(whisper.aggregationMethods))
+option_parser.add_option('--fillmode', default='value', type='string', 
+	help = "indicates the type of data to insert ")
 option_parser.add_option('--overwrite', default=False, action='store_true')
-option_parser.add_option('--fillvalue', default=1.0, type='float', 
-        help = "(default 1.0 ) value to insert for each timestamp values on the whole file. Values are aggregated on each retencion file depending on chosen aggregationMethod ")
+
+option_parser.add_option('--fillvalue', default='1.0', type='string', 
+        help = '''
+	when fillmode=value ( default ) --fillvalue indicates a fix number (default 1.0 ) 
+	when fillmode=date --fillvalue should indicate a changing value depending on the timestamp :
+		m	=month like executing (date -d $TIMESTAMP +%m)
+		d	=day   like executing (date -d $TIMESTAMP +%d)
+		H	=hour  like executing (date -d $TIMESTAMP +%H)
+		M	=minute like executing (date -d %TIMESTAMP +%M) 
+''')
 
 (options, args) = option_parser.parse_args()
 
@@ -68,16 +80,57 @@ old_archives = info['archives']
 # sort by precision, lowest to highest
 old_archives.sort(key=lambda a: a['secondsPerPoint'], reverse=True)
 #creating a unit value from now-retention to now with 
-fromTime = now-old_archives[0]['retention']
+maxRetention = old_archives[0]['retention']
+fromTime = now-maxRetention
 toTime = now
 old_archives.sort(key=lambda a: a['secondsPerPoint'], reverse=False)
 precision = old_archives[0]['secondsPerPoint']
+#fromTime += precision
 
+data_from_pretty = datetime.fromtimestamp(fromTime).strftime('%Y-%m-%d %H:%M:%S')
+data_to_pretty   = datetime.fromtimestamp(toTime).strftime('%Y-%m-%d %H:%M:%S')
+
+print "From : %s | Timestamp: %s " % ( data_from_pretty , fromTime )
+print "To:    %s | Timestamp: %s " % ( data_to_pretty , toTime )
+
+print 'Max precision : %s seconds' % precision
+print 'Max retention : %d seconds : ( %s )' % (maxRetention, timedelta(seconds=maxRetention))
 datapoints = []
-timedata=range(fromTime,toTime,precision)
-datapoints = zip(timedata,[options.fillvalue] * len(timedata)) 
-#print len(datapoints)
-#print datapoints
+timedata=range(fromTime,now,precision)
+if options.fillmode == 'value':
+  staticval = None
+  try:
+    staticval=float(options.fillvalue)
+  except ValueError:
+    print "Error: fillvalue is not a valid number: %s" % options.fillvalue 
+    sys.exit(1)
+
+  print "updating datapoints from static value : %f" % staticval
+  datapoints = zip(timedata,[staticval] * len(timedata))
+else:
+  values = []
+  if options.fillvalue == 'm':
+    print "updating datapoints from the timestamp month "
+    for ts in timedata:
+      values.append(float(datetime.fromtimestamp(ts).strftime('%m')))
+  elif options.fillvalue == 'd':
+    print "updating datapoints from the timestamp day "
+    for ts in timedata:
+      values.append(float(datetime.fromtimestamp(ts).strftime('%d')))
+  elif options.fillvalue == 'H':
+    print "updating datapoints from the timestamp Hour "
+    for ts in timedata:
+      values.append(float(datetime.fromtimestamp(ts).strftime('%H')))
+  elif options.fillvalue == 'M':
+    print "updating datapoints from the timestamp minute "
+    for ts in timedata:
+      values.append(float(datetime.fromtimestamp(ts).strftime('%M')))
+  else:
+    print  "no valid fillvalue value : %s " % options.fillvalue
+    sys.exit(1)
+
+  datapoints = zip(timedata,values)
+print "%d Datapoints updated " %  len(datapoints)
 whisper.update_many(path, datapoints)
 
 
