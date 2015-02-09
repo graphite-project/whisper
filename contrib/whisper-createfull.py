@@ -23,8 +23,6 @@ except AttributeError:
    pass
 
 
-now = int(time.time())
-
 option_parser = optparse.OptionParser(
     usage='''%prog path timePerPoint:timeToStore [timePerPoint:timeToStore]*
 
@@ -35,7 +33,9 @@ timePerPoint and timeToStore specify lengths of time, for example:
 1h:7d        1 hour per datapoint, 7 days of retention
 12h:2y       12 hours per datapoint, 2 years of retention
 ''')
+
 option_parser.add_option('--xFilesFactor', default=0.5, type='float')
+option_parser.add_option('--until',default=0,type='int')
 option_parser.add_option('--aggregationMethod', default='average',
         type='string', help="Function to use when aggregating values (%s)" %
         ', '.join(whisper.aggregationMethods))
@@ -47,10 +47,14 @@ option_parser.add_option('--fillvalue', default='1.0', type='string',
         help = '''
 	when fillmode=value ( default ) --fillvalue indicates a fix number (default 1.0 ) 
 	when fillmode=date --fillvalue should indicate a changing value depending on the timestamp :
-		m	=month like executing (date -d $TIMESTAMP +%m)
-		d	=day   like executing (date -d $TIMESTAMP +%d)
-		H	=hour  like executing (date -d $TIMESTAMP +%H)
-		M	=minute like executing (date -d %TIMESTAMP +%M) 
+		m=month like executing (date -d $TIMESTAMP +%m)
+		d=day   like executing (date -d $TIMESTAMP +%d)
+		H=hour  like executing (date -d $TIMESTAMP +%H)
+		M=minute like executing (date -d %TIMESTAMP +%M)
+                m-odd= 1 on odd months 0 on even
+                d-odd= 1 on odd days 0 on even
+                H-odd= 1 on odd hours 0 on even
+                M-odd= 1 on odd mintes 0 on even
 ''')
 
 (options, args) = option_parser.parse_args()
@@ -81,11 +85,17 @@ old_archives = info['archives']
 old_archives.sort(key=lambda a: a['secondsPerPoint'], reverse=True)
 #creating a unit value from now-retention to now with 
 maxRetention = old_archives[0]['retention']
-fromTime = now-maxRetention
-toTime = now
+
+now = int(time.time())
+if options.until:
+  until=options.until
+else:
+  until=now
+
+fromTime = until-maxRetention
+toTime = until 
 old_archives.sort(key=lambda a: a['secondsPerPoint'], reverse=False)
 precision = old_archives[0]['secondsPerPoint']
-#fromTime += precision
 
 data_from_pretty = datetime.fromtimestamp(fromTime).strftime('%Y-%m-%d %H:%M:%S')
 data_to_pretty   = datetime.fromtimestamp(toTime).strftime('%Y-%m-%d %H:%M:%S')
@@ -96,7 +106,7 @@ print "To:    %s | Timestamp: %s " % ( data_to_pretty , toTime )
 print 'Max precision : %s seconds' % precision
 print 'Max retention : %d seconds : ( %s )' % (maxRetention, timedelta(seconds=maxRetention))
 datapoints = []
-timedata=range(fromTime,now,precision)
+timedata=range(fromTime,toTime,precision)
 if options.fillmode == 'value':
   staticval = None
   try:
@@ -113,24 +123,56 @@ else:
     print "updating datapoints from the timestamp month "
     for ts in timedata:
       values.append(float(datetime.fromtimestamp(ts).strftime('%m')))
+  elif options.fillvalue == 'm-odd':
+    print "updating datapoints with 1 in odd months"
+    for ts in timedata:
+      timeval=int(datetime.fromtimestamp(ts).strftime('%m'))
+      realval=0
+      if timeval % 2:
+        realval=1      
+      values.append(realval)
   elif options.fillvalue == 'd':
     print "updating datapoints from the timestamp day "
     for ts in timedata:
       values.append(float(datetime.fromtimestamp(ts).strftime('%d')))
+  elif options.fillvalue == 'd-odd':
+    print "updating datapoints with 1 in odd days"
+    for ts in timedata:
+      timeval=int(datetime.fromtimestamp(ts).strftime('%d'))
+      realval=0
+      if timeval % 2:
+        realval=1      
+      values.append(realval)
   elif options.fillvalue == 'H':
     print "updating datapoints from the timestamp Hour "
     for ts in timedata:
       values.append(float(datetime.fromtimestamp(ts).strftime('%H')))
+  elif options.fillvalue == 'H-odd':
+    print "updating datapoints with 1 in on Hours"
+    for ts in timedata:
+      timeval=int(datetime.fromtimestamp(ts).strftime('%H'))
+      realval=0
+      if timeval % 2:
+        realval=1      
+      values.append(realval)
   elif options.fillvalue == 'M':
     print "updating datapoints from the timestamp minute "
     for ts in timedata:
       values.append(float(datetime.fromtimestamp(ts).strftime('%M')))
+  elif options.fillvalue == 'M-odd':
+    print "updating datapoints with 1 in odd minutes"
+    for ts in timedata:
+      timeval=int(datetime.fromtimestamp(ts).strftime('%M'))
+      realval=0
+      if timeval % 2:
+        realval=1      
+      values.append(realval)
   else:
     print  "no valid fillvalue value : %s " % options.fillvalue
     sys.exit(1)
-
   datapoints = zip(timedata,values)
 print "%d Datapoints updated " %  len(datapoints)
+#whisper.enableDebug()
 whisper.update_many(path, datapoints)
 
 
