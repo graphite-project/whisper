@@ -283,7 +283,7 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
         # Use specified xFilesFactor
         xff = struct.pack(floatFormat, float(xFilesFactor))
     else:
-    # Retain old value
+        # Retain old value
         xff = struct.pack(floatFormat, xff)
 
     # Repack the remaining header information
