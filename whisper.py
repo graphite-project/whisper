@@ -107,12 +107,12 @@ aggregationMethods = aggregationTypeToMethod.values()
 debug = startBlock = endBlock = lambda *a,**k: None
 
 UnitMultipliers = {
-  'seconds' : 1,
-  'minutes' : 60,
-  'hours' : 3600,
-  'days' : 86400,
-  'weeks' : 86400 * 7,
-  'years' : 86400 * 365
+  'seconds': 1,
+  'minutes': 60,
+  'hours': 3600,
+  'days': 86400,
+  'weeks': 86400 * 7,
+  'years': 86400 * 365
 }
 
 
@@ -234,20 +234,20 @@ def __readHeader(fh):
       raise CorruptWhisperFile("Unable to read archive%d metadata" % i, fh.name)
 
     archiveInfo = {
-      'offset' : offset,
-      'secondsPerPoint' : secondsPerPoint,
-      'points' : points,
-      'retention' : secondsPerPoint * points,
-      'size' : points * pointSize,
+      'offset': offset,
+      'secondsPerPoint': secondsPerPoint,
+      'points': points,
+      'retention': secondsPerPoint * points,
+      'size': points * pointSize,
     }
     archives.append(archiveInfo)
 
   fh.seek(originalOffset)
   info = {
-    'aggregationMethod' : aggregationTypeToMethod.get(aggregationType, 'average'),
-    'maxRetention' : maxRetention,
-    'xFilesFactor' : xff,
-    'archives' : archives,
+    'aggregationMethod': aggregationTypeToMethod.get(aggregationType, 'average'),
+    'maxRetention': maxRetention,
+    'xFilesFactor': xff,
+    'archives': archives,
   }
   if CACHE_HEADERS:
     __headerCache[fh.name] = info
