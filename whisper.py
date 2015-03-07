@@ -122,6 +122,7 @@ def getUnitString(s):
           return value
   raise ValueError("Invalid unit '%s'" % s)
 
+
 def parseRetentionDef(retentionDef):
   (precision, points) = retentionDef.strip().split(':', 1)
 
@@ -167,6 +168,7 @@ class InvalidTimeInterval(WhisperException):
 class TimestampNotCovered(WhisperException):
     """Timestamp not covered by any archives in this database."""
 
+
 class CorruptWhisperFile(WhisperException):
   def __init__(self, error, path):
     Exception.__init__(self, error)
@@ -178,6 +180,7 @@ class CorruptWhisperFile(WhisperException):
 
   def __str__(self):
     return "%s (%s)" % (self.error, self.path)
+
 
 def enableDebug():
   global open, debug, startBlock, endBlock
@@ -724,6 +727,7 @@ def info(path):
     pass
   return None
 
+
 def fetch(path, fromTime, untilTime=None, now=None):
   """fetch(path,fromTime,untilTime=None)
 
@@ -775,6 +779,7 @@ def file_fetch(fh, fromTime, untilTime, now=None):
       break
 
   return __archive_fetch(fh, archive, fromTime, untilTime)
+
 
 def __archive_fetch(fh, archive, fromTime, untilTime):
   """
@@ -837,6 +842,7 @@ archive on a read and request data older than the archive's retention
 
   timeInfo = (fromInterval, untilInterval, step)
   return (timeInfo, valueList)
+
 
 def merge(path_from, path_to):
   """ Merges the data from one whisper file into another. Each file must have
