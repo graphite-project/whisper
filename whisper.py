@@ -598,7 +598,6 @@ def file_update(fh, value, timestamp):
     os.fsync(fh.fileno())
 
 
-
 def update_many(path, points):
   """update_many(path,points)
 
@@ -648,7 +647,6 @@ def file_update_many(fh, points):
   if AUTOFLUSH:
     fh.flush()
     os.fsync(fh.fileno())
-
 
 
 def __archive_update_many(fh, header, archive, points):
