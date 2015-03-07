@@ -150,26 +150,32 @@ def parseRetentionDef(retentionDef):
 
 
 class WhisperException(Exception):
+
     """Base class for whisper exceptions."""
 
 
 class InvalidConfiguration(WhisperException):
+
     """Invalid configuration."""
 
 
 class InvalidAggregationMethod(WhisperException):
+
     """Invalid aggregation method."""
 
 
 class InvalidTimeInterval(WhisperException):
+
     """Invalid time interval."""
 
 
 class TimestampNotCovered(WhisperException):
+
     """Timestamp not covered by any archives in this database."""
 
 
 class CorruptWhisperFile(WhisperException):
+
   def __init__(self, error, path):
     Exception.__init__(self, error)
     self.error = error
@@ -184,7 +190,9 @@ class CorruptWhisperFile(WhisperException):
 
 def enableDebug():
   global open, debug, startBlock, endBlock
+
   class open(file):
+
     def __init__(self, *args, **kwargs):
       file.__init__(self, *args, **kwargs)
       self.writeCount = 0
