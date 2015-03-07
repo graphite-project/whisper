@@ -907,9 +907,9 @@ def file_diff(fh_from, fh_to, ignore_empty=False):
 
     points = map(lambda s: (s * archive_step + start,fromValues[s],toValues[s]), range(0,(end - start) / archive_step))
     if ignore_empty:
-      points = [p for p in points if p[1] != None and p[2] != None]
+      points = [p for p in points if p[1] is not None and p[2] is not None]
     else:
-      points = [p for p in points if p[1] != None or p[2] != None]
+      points = [p for p in points if p[1] is not None or p[2] is not None]
 
     diffs = [p for p in points if p[1] != p[2]]
 
