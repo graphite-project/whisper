@@ -831,4 +831,48 @@ def merge(path_from, path_to, step=1<<12):
       pointsToWrite.sort(key=lambda p: p[0],reverse=True) #order points by timestamp, newest first
       update_many(path_to, pointsToWrite)
       fromTime = untilTime
+
+def diff(path_from, path_to, ignore_empty = False):
+  """ Compare two whisper databases. Each file must have the same archive configuration """
+  fh_from = open(path_from, 'rb')
+  fh_to = open(path_to, 'rb')
+  diffs = file_diff(fh_from, fh_to, ignore_empty)
+  fh_to.close()
+  fh_from.close()
+  return diffs
+
+def file_diff(fh_from, fh_to, ignore_empty = False):
+  headerFrom = __readHeader(fh_from)
+  headerTo = __readHeader(fh_to)
+
+  if headerFrom['archives'] != headerTo['archives']:
+    raise NotImplementedError("%s and %s archive configurations are unalike. " \
+                                "Resize the input before diffing" % (fh_from.name, fh_to.name))
+
+  archives = headerFrom['archives']
+  archives.sort(key=operator.itemgetter('retention'))
+
+  archive_diffs = []
+
+  now = int(time.time())
+  untilTime = now
+  for archive_number, archive in enumerate(archives):
+    diffs = []
+    startTime = now - archive['retention']
+    (fromTimeInfo, fromValues) = __archive_fetch(fh_from, archive, startTime, untilTime)
+    (toTimeInfo, toValues) = __archive_fetch(fh_to, archive, startTime, untilTime)
+    (start, end, archive_step) = ( min(fromTimeInfo[0],toTimeInfo[0]), max(fromTimeInfo[1],toTimeInfo[1]), min(fromTimeInfo[2],toTimeInfo[2]) )
+
+    points = map(lambda s: (s * archive_step + start,fromValues[s],toValues[s]), range(0,(end - start) / archive_step))
+    if ignore_empty:
+      points = [p for p in points if p[1] != None and p[2] != None]
+    else:
+      points = [p for p in points if p[1] != None or p[2] != None]
+
+    diffs = [p for p in points if p[1] != p[2]]
+
+    archive_diffs.append( (archive_number, diffs, points.__len__()) )
+    untilTime = startTime
+  return archive_diffs
+
 #!/usr/bin/env python
