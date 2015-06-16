@@ -44,6 +44,7 @@ Create a new whisper database file.
 
 ```
 Usage: whisper-create.py path timePerPoint:timeToStore [timePerPoint:timeToStore]*
+       whisper-create.py --estimate timePerPoint:timeToStore [timePerPoint:timeToStore]*
 
 timePerPoint and timeToStore specify lengths of time, for example:
 
@@ -60,6 +61,7 @@ Options:
                         Function to use when aggregating values (average, sum,
                         last, max, min)
   --overwrite
+  --estimate            Don't create a whisper file, estimate storage requirements based on archive definitions
 ```
 
 whisper-dump.py
