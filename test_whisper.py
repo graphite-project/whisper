@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import time
 import math
 import random
 import struct
 
 import errno
-from mock import patch, mock_open
+
+try:
+    from unittest.mock import patch, mock_open
+except ImportError:
+    from mock import patch, mock_open
 
 try:
     import unittest2 as unittest
@@ -291,7 +294,7 @@ class TestWhisper(WhisperTestBase):
         """
         whisper.create(self.filename, [(1, 60)])
 
-        with open(self.filename) as fh:
+        with open(self.filename, 'rb') as fh:
             msg = "Invalid time interval: from time '{0}' is after until time '{1}'"
             until_time = 0
             from_time = int(time.time()) + 100

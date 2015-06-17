@@ -33,7 +33,7 @@ option_parser.add_option('--json', default=False, action='store_true',
 option_parser.add_option('--pretty', default=False, action='store_true',
   help="Show human-readable timestamps instead of unix times")
 option_parser.add_option('--drop',
-                         choices=_DROP_FUNCTIONS.keys(),
+                         choices=list(_DROP_FUNCTIONS.keys()),
                          action='store',
                          help="Specify 'nulls' to drop all null values. \
 Specify 'zeroes' to drop all zero values. \
@@ -52,7 +52,7 @@ until_time = int( options.until )
 
 try:
   (timeInfo, values) = whisper.fetch(path, from_time, until_time)
-except whisper.WhisperException, exc:
+except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 if options.drop:
@@ -63,12 +63,12 @@ if options.drop:
 
 if options.json:
   values_json = str(values).replace('None','null')
-  print '''{
+  print('''{
     "start" : %d,
     "end" : %d,
     "step" : %d,
     "values" : %s
-  }''' % (start,end,step,values_json)
+  }''' % (start,end,step,values_json))
   sys.exit(0)
 
 t = start
@@ -81,5 +81,5 @@ for value in values:
     valuestr = "None"
   else:
     valuestr = "%f" % value
-  print "%s\t%s" % (timestr,valuestr)
+  print("%s\t%s" % (timestr,valuestr))
   t += step

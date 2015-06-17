@@ -55,15 +55,15 @@ if options.estimate:
   archives = 0
   total_points = 0
   for (precision, points) in map(whisper.parseRetentionDef, args):
-    print "Archive %s: %s points of %ss precision" % (archives, points, precision)
+    print("Archive %s: %s points of %ss precision" % (archives, points, precision))
     archives += 1
     total_points += points
 
   size = 16 + (archives * 12) + (total_points * 12)
   disk_size = int(math.ceil(size / 4096.0) * 4096)
-  print "\nEstimated Whisper DB Size: %s (%s bytes on disk with 4k blocks)\n" % (byte_format(size), disk_size)
+  print("\nEstimated Whisper DB Size: %s (%s bytes on disk with 4k blocks)\n" % (byte_format(size), disk_size))
   for x in [1, 5, 10, 50, 100, 500]:
-    print "Estimated storage requirement for %sk metrics: %s" % (x, byte_format(x * 1000 * disk_size))
+    print("Estimated storage requirement for %sk metrics: %s" % (x, byte_format(x * 1000 * disk_size)))
   sys.exit(0)
 
 if len(args) < 2:
@@ -75,13 +75,13 @@ archives = [whisper.parseRetentionDef(retentionDef)
             for retentionDef in args[1:]]
 
 if os.path.exists(path) and options.overwrite:
-    print 'Overwriting existing file: %s' % path
+    print('Overwriting existing file: %s' % path)
     os.unlink(path)
 
 try:
   whisper.create(path, archives, xFilesFactor=options.xFilesFactor, aggregationMethod=options.aggregationMethod)
-except whisper.WhisperException, exc:
+except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 size = os.stat(path).st_size
-print 'Created: %s (%d bytes)' % (path,size)
+print('Created: %s (%d bytes)' % (path,size))
