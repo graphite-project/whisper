@@ -27,6 +27,9 @@ import itertools
 import time
 import sys
 
+if sys.version_info >= (3, 0):
+    xrange = range
+
 def itemgetter(*items):
     if HAS_OPERATOR:
         return operator.itemgetter(*items)

@@ -4,12 +4,16 @@ import os
 import mmap
 import struct
 import signal
+import sys
 import optparse
 
 try:
   import whisper
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+if sys.version_info >= (3, 0):
+    xrange = range
 
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
@@ -37,7 +41,7 @@ def read_header(map):
   archives = []
   archiveOffset = whisper.metadataSize
 
-  for i in whisper.xrange(archiveCount):
+  for i in xrange(archiveCount):
     try:
       (offset, secondsPerPoint, points) = struct.unpack(whisper.archiveInfoFormat, map[archiveOffset:archiveOffset+whisper.archiveInfoSize])
     except:
@@ -83,7 +87,7 @@ def dump_archives(archives):
   for i,archive in enumerate(archives):
     print('Archive %d data:' %i)
     offset = archive['offset']
-    for point in whisper.xrange(archive['points']):
+    for point in xrange(archive['points']):
       (timestamp, value) = struct.unpack(whisper.pointFormat, map[offset:offset+whisper.pointSize])
       print('%d: %d, %10.35g' % (point, timestamp, value))
       offset += whisper.pointSize
