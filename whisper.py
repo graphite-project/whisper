@@ -18,12 +18,12 @@
 # Here is the basic layout of a whisper data file
 #
 # File = Header,Data
-#	Header = Metadata,ArchiveInfo+
-#		Metadata = aggregationType,maxRetention,xFilesFactor,archiveCount
-#		ArchiveInfo = Offset,SecondsPerPoint,Points
-#	Data = Archive+
-#		Archive = Point+
-#			Point = timestamp,value
+#   Header = Metadata,ArchiveInfo+
+#       Metadata = aggregationType,maxRetention,xFilesFactor,archiveCount
+#       ArchiveInfo = Offset,SecondsPerPoint,Points
+#   Data = Archive+
+#       Archive = Point+
+#       Point = timestamp,value
 
 import itertools
 import operator
@@ -922,7 +922,7 @@ def file_diff(fh_from, fh_to, ignore_empty=False):
     (toTimeInfo, toValues) = __archive_fetch(fh_to, archive, startTime, untilTime)
     (start, end, archive_step) = (min(fromTimeInfo[0], toTimeInfo[0]), max(fromTimeInfo[1], toTimeInfo[1]), min(fromTimeInfo[2], toTimeInfo[2]))
 
-    points = map(lambda s: (s * archive_step + start, fromValues[s], toValues[s]), xrange(0,(end - start) // archive_step))
+    points = map(lambda s: (s * archive_step + start, fromValues[s], toValues[s]), xrange(0, (end - start) // archive_step))
     if ignore_empty:
       points = [p for p in points if p[1] is not None and p[2] is not None]
     else:
