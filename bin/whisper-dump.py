@@ -32,7 +32,7 @@ def read_header(map):
   try:
     (aggregationType,maxRetention,xFilesFactor,archiveCount) = struct.unpack(whisper.metadataFormat,map[:whisper.metadataSize])
   except:
-    raise CorruptWhisperFile("Unable to unpack header")
+    raise whisper.CorruptWhisperFile("Unable to unpack header")
 
   archives = []
   archiveOffset = whisper.metadataSize
@@ -41,7 +41,7 @@ def read_header(map):
     try:
       (offset, secondsPerPoint, points) = struct.unpack(whisper.archiveInfoFormat, map[archiveOffset:archiveOffset+whisper.archiveInfoSize])
     except:
-      raise CorruptWhisperFile("Unable to read archive %d metadata" % i)
+      raise whisper.CorruptWhisperFile("Unable to read archive %d metadata" % i)
 
     archiveInfo = {
       'offset' : offset,

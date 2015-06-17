@@ -3,3 +3,8 @@ build
 dist
 *.pyc
 .tox
+.coverage
+htmlcov/*
+ve
+.idea
+*.iml

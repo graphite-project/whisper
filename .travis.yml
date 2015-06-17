@@ -9,12 +9,14 @@ python:
   - 3.4
 
 install:
-    pip install .
+  - pip install .
+  - pip install coverage coveralls
 
 script:
   - bin/whisper-create.py --help
   - bin/whisper-dump.py --help
   - bin/whisper-fetch.py --help
+  - bin/whisper-fill.py --help
   - bin/whisper-info.py --help
   - bin/whisper-merge.py --help
   - bin/whisper-resize.py --help
@@ -23,4 +25,7 @@ script:
   - contrib/whisper-auto-update.py --help
   - contrib/whisper-auto-resize.py --help
   - "if echo $TRAVIS_PYTHON_VERSION | egrep -q '^(2.6|pypy)$'; then pip install unittest2 --use-mirrors; fi"
-  - python test_whisper.py
+  # Coverage of tests ensures we don't have dead coded in the tests
+  - coverage run --include='whisper.py,test_whisper.py' test_whisper.py
+after_success:
+  coveralls

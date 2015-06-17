@@ -42,7 +42,7 @@ storagePath = args[0]
 configPath  = args[1]
 
 #check to see if we are processing a subfolder
-# we need to have a seperate config option for this since
+# we need to have a separate config option for this since
 # otherwise the metric test thinks the metric is at the root
 # of the storage path and can match schemas incorrectly
 if options.subdir is None:
