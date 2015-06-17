@@ -70,7 +70,7 @@ def dump_header(header):
   print('  aggregation method: %s' % header['aggregationMethod'])
   print('  max retention: %d' % header['maxRetention'])
   print('  xFilesFactor: %g' % header['xFilesFactor'])
-  print()
+  print("")
   dump_archive_headers(header['archives'])
 
 def dump_archive_headers(archives):
@@ -81,7 +81,7 @@ def dump_archive_headers(archives):
     print('  points: %d' % archive['points'])
     print('  retention: %d' % archive['retention'])
     print('  size: %d' % archive['size'])
-    print()
+    print("")
 
 def dump_archives(archives):
   for i,archive in enumerate(archives):
