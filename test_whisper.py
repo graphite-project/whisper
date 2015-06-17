@@ -186,6 +186,13 @@ class TestWhisper(WhisperTestBase):
         self.assertEqual(whisper.aggregate('sum', [10, 2, 3, 4]), 19)
         # average of the list elements
         self.assertEqual(whisper.aggregate('average', [1, 2, 3, 4]), 2.5)
+        avg_zero = [1, 2, 3, 4, None, None, None, None]
+        non_null = [i for i in avg_zero if i is not None]
+        self.assertEqual(whisper.aggregate('avg_zero', non_null, avg_zero), 1.25)
+        # avg_zero without neighborValues
+        
+        with self.assertRaises(whisper.InvalidAggregationMethod):
+            whisper.aggregate('avg_zero', non_null)
 
         with AssertRaisesException(whisper.InvalidAggregationMethod('Unrecognized aggregation method derp')):
             whisper.aggregate('derp', [12, 2, 3123, 1])
