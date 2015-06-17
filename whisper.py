@@ -23,7 +23,7 @@
 #       ArchiveInfo = Offset,SecondsPerPoint,Points
 #   Data = Archive+
 #       Archive = Point+
-#       Point = timestamp,value
+#           Point = timestamp,value
 
 import itertools
 import operator
