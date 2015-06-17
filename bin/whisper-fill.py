@@ -27,6 +27,9 @@ import itertools
 import time
 import sys
 
+if sys.version_info >= (3, 0):
+    xrange = range
+
 def itemgetter(*items):
     if HAS_OPERATOR:
         return operator.itemgetter(*items)
@@ -119,6 +122,8 @@ def main(argv):
         if len(argv) != 2:
                 print("usage: whisper-fill.py src dst");
                 print("       copies data from src in dst, if missing")
+                if len(argv) == 1 and (argv[0].lower() == "--help" or argv[0].lower() == "-h"):
+                        sys.exit(0)
                 sys.exit(1)
 
         src = argv[0]

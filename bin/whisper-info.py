@@ -32,27 +32,27 @@ else:
 
 try:
   info = whisper.info(path)
-except whisper.WhisperException, exc:
+except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 info['fileSize'] = os.stat(path).st_size
 
 if field:
   if field not in info:
-    print 'Unknown field "%s". Valid fields are %s' % (field, ','.join(info))
+    print('Unknown field "%s". Valid fields are %s' % (field, ','.join(info)))
     sys.exit(1)
 
-  print info[field]
+  print(info[field])
   sys.exit(0)
 
 
 archives = info.pop('archives')
 for key,value in info.items():
-  print '%s: %s' % (key,value)
+  print('%s: %s' % (key,value))
 print
 
 for i,archive in enumerate(archives):
-  print 'Archive %d' % i
+  print('Archive %d' % i)
   for key,value in archive.items():
-    print '%s: %s' % (key,value)
+    print('%s: %s' % (key,value))
   print

@@ -18,14 +18,26 @@
 # Here is the basic layout of a whisper data file
 #
 # File = Header,Data
-#	Header = Metadata,ArchiveInfo+
-#		Metadata = aggregationType,maxRetention,xFilesFactor,archiveCount
-#		ArchiveInfo = Offset,SecondsPerPoint,Points
-#	Data = Archive+
-#		Archive = Point+
-#			Point = timestamp,value
+#   Header = Metadata,ArchiveInfo+
+#       Metadata = aggregationType,maxRetention,xFilesFactor,archiveCount
+#       ArchiveInfo = Offset,SecondsPerPoint,Points
+#   Data = Archive+
+#       Archive = Point+
+#           Point = timestamp,value
 
-import os, struct, time, operator, itertools
+import itertools
+import operator
+import os
+import re
+import struct
+import sys
+import time
+
+izip = getattr(itertools, 'izip', zip)
+ifilter = getattr(itertools, 'ifilter', filter)
+
+if sys.version_info >= (3, 0):
+    xrange = range
 
 try:
   import fcntl
@@ -52,12 +64,12 @@ if CAN_FALLOCATE:
     _fallocate = libc.posix_fallocate64
     _fallocate.restype = ctypes.c_int
     _fallocate.argtypes = [ctypes.c_int, c_off64_t, c_off64_t]
-  except AttributeError, e:
+  except AttributeError:
     try:
       _fallocate = libc.posix_fallocate
       _fallocate.restype = ctypes.c_int
       _fallocate.argtypes = [ctypes.c_int, c_off_t, c_off_t]
-    except AttributeError, e:
+    except AttributeError:
       CAN_FALLOCATE = False
 
   if CAN_FALLOCATE:
@@ -95,33 +107,30 @@ aggregationTypeToMethod = dict({
   5: 'min',
   6: 'avg_zero'
 })
-aggregationMethodToType = dict([[v,k] for k,v in aggregationTypeToMethod.items()])
+aggregationMethodToType = dict([[v, k] for k, v in aggregationTypeToMethod.items()])
 aggregationMethods = aggregationTypeToMethod.values()
 
-debug = startBlock = endBlock = lambda *a,**k: None
+debug = startBlock = endBlock = lambda *a, **k: None
 
 UnitMultipliers = {
-  'seconds' : 1,
-  'minutes' : 60,
-  'hours' : 3600,
-  'days' : 86400,
-  'weeks' : 86400 * 7,
-  'years' : 86400 * 365
+  'seconds': 1,
+  'minutes': 60,
+  'hours': 3600,
+  'days': 86400,
+  'weeks': 86400 * 7,
+  'years': 86400 * 365
 }
 
 
 def getUnitString(s):
-  if 'seconds'.startswith(s): return 'seconds'
-  if 'minutes'.startswith(s): return 'minutes'
-  if 'hours'.startswith(s): return 'hours'
-  if 'days'.startswith(s): return 'days'
-  if 'weeks'.startswith(s): return 'weeks'
-  if 'years'.startswith(s): return 'years'
+  for value in ('seconds', 'minutes', 'hours', 'days', 'weeks', 'years'):
+      if value.startswith(s):
+          return value
   raise ValueError("Invalid unit '%s'" % s)
 
+
 def parseRetentionDef(retentionDef):
-  import re
-  (precision, points) = retentionDef.strip().split(':')
+  (precision, points) = retentionDef.strip().split(':', 1)
 
   if precision.isdigit():
     precision = int(precision) * UnitMultipliers[getUnitString('s')]
@@ -139,7 +148,7 @@ def parseRetentionDef(retentionDef):
     points_re = re.compile(r'^(\d+)([a-z]+)$')
     match = points_re.match(points)
     if match:
-      points = int(match.group(1)) * UnitMultipliers[getUnitString(match.group(2))] / precision
+      points = int(match.group(1)) * UnitMultipliers[getUnitString(match.group(2))] // precision
     else:
       raise ValueError("Invalid retention specification '%s'" % points)
 
@@ -147,25 +156,32 @@ def parseRetentionDef(retentionDef):
 
 
 class WhisperException(Exception):
+
     """Base class for whisper exceptions."""
 
 
 class InvalidConfiguration(WhisperException):
+
     """Invalid configuration."""
 
 
 class InvalidAggregationMethod(WhisperException):
+
     """Invalid aggregation method."""
 
 
 class InvalidTimeInterval(WhisperException):
+
     """Invalid time interval."""
 
 
 class TimestampNotCovered(WhisperException):
+
     """Timestamp not covered by any archives in this database."""
 
+
 class CorruptWhisperFile(WhisperException):
+
   def __init__(self, error, path):
     Exception.__init__(self, error)
     self.error = error
@@ -177,26 +193,29 @@ class CorruptWhisperFile(WhisperException):
   def __str__(self):
     return "%s (%s)" % (self.error, self.path)
 
+
 def enableDebug():
   global open, debug, startBlock, endBlock
+
   class open(file):
-    def __init__(self,*args,**kwargs):
-      file.__init__(self,*args,**kwargs)
+
+    def __init__(self, *args, **kwargs):
+      file.__init__(self, *args, **kwargs)
       self.writeCount = 0
       self.readCount = 0
 
-    def write(self,data):
+    def write(self, data):
       self.writeCount += 1
-      debug('WRITE %d bytes #%d' % (len(data),self.writeCount))
-      return file.write(self,data)
+      debug('WRITE %d bytes #%d' % (len(data), self.writeCount))
+      return file.write(self, data)
 
-    def read(self,bytes):
+    def read(self, bytes):
       self.readCount += 1
-      debug('READ %d bytes #%d' % (bytes,self.readCount))
-      return file.read(self,bytes)
+      debug('READ %d bytes #%d' % (bytes, self.readCount))
+      return file.read(self, bytes)
 
   def debug(message):
-    print 'DEBUG :: %s' % message
+    print('DEBUG :: %s' % message)
 
   __timingBlocks = {}
 
@@ -204,20 +223,21 @@ def enableDebug():
     __timingBlocks[name] = time.time()
 
   def endBlock(name):
-    debug("%s took %.5f seconds" % (name,time.time() - __timingBlocks.pop(name)))
+    debug("%s took %.5f seconds" % (name, time.time() - __timingBlocks.pop(name)))
 
 
 def __readHeader(fh):
-  info = __headerCache.get(fh.name)
-  if info:
-    return info
+  if CACHE_HEADERS:
+    info = __headerCache.get(fh.name)
+    if info:
+      return info
 
   originalOffset = fh.tell()
   fh.seek(0)
   packedMetadata = fh.read(metadataSize)
 
   try:
-    (aggregationType,maxRetention,xff,archiveCount) = struct.unpack(metadataFormat,packedMetadata)
+    (aggregationType, maxRetention, xff, archiveCount) = struct.unpack(metadataFormat, packedMetadata)
   except:
     raise CorruptWhisperFile("Unable to read header", fh.name)
 
@@ -226,25 +246,25 @@ def __readHeader(fh):
   for i in xrange(archiveCount):
     packedArchiveInfo = fh.read(archiveInfoSize)
     try:
-      (offset,secondsPerPoint,points) = struct.unpack(archiveInfoFormat,packedArchiveInfo)
-    except:
+      (offset, secondsPerPoint, points) = struct.unpack(archiveInfoFormat, packedArchiveInfo)
+    except (struct.error, ValueError, TypeError):
       raise CorruptWhisperFile("Unable to read archive%d metadata" % i, fh.name)
 
     archiveInfo = {
-      'offset' : offset,
-      'secondsPerPoint' : secondsPerPoint,
-      'points' : points,
-      'retention' : secondsPerPoint * points,
-      'size' : points * pointSize,
+      'offset': offset,
+      'secondsPerPoint': secondsPerPoint,
+      'points': points,
+      'retention': secondsPerPoint * points,
+      'size': points * pointSize,
     }
     archives.append(archiveInfo)
 
   fh.seek(originalOffset)
   info = {
-    'aggregationMethod' : aggregationTypeToMethod.get(aggregationType, 'average'),
-    'maxRetention' : maxRetention,
-    'xFilesFactor' : xff,
-    'archives' : archives,
+    'aggregationMethod': aggregationTypeToMethod.get(aggregationType, 'average'),
+    'maxRetention': maxRetention,
+    'xFilesFactor': xff,
+    'archives': archives,
   }
   if CACHE_HEADERS:
     __headerCache[fh.name] = info
@@ -259,40 +279,37 @@ path is a string
 aggregationMethod specifies the method to use when propagating data (see ``whisper.aggregationMethods``)
 xFilesFactor specifies the fraction of data points in a propagation interval that must have known values for a propagation to occur.  If None, the existing xFilesFactor in path will not be changed
 """
-  fh = None
-  try:
-
-    fh = open(path,'r+b')
+  with open(path, 'r+b') as fh:
     if LOCK:
-      fcntl.flock( fh.fileno(), fcntl.LOCK_EX )
+      fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
 
     packedMetadata = fh.read(metadataSize)
 
     try:
-      (aggregationType,maxRetention,xff,archiveCount) = struct.unpack(metadataFormat,packedMetadata)
-    except:
+      (aggregationType, maxRetention, xff, archiveCount) = struct.unpack(metadataFormat, packedMetadata)
+    except (struct.error, ValueError):
       raise CorruptWhisperFile("Unable to read header", fh.name)
 
     try:
-      newAggregationType = struct.pack( longFormat, aggregationMethodToType[aggregationMethod] )
+      newAggregationType = struct.pack(longFormat, aggregationMethodToType[aggregationMethod])
     except KeyError:
       raise InvalidAggregationMethod("Unrecognized aggregation method: %s" %
             aggregationMethod)
 
     if xFilesFactor is not None:
-        #use specified xFilesFactor
-        xff = struct.pack( floatFormat, float(xFilesFactor) )
+        # Use specified xFilesFactor
+        xff = struct.pack(floatFormat, float(xFilesFactor))
     else:
-	#retain old value
-        xff = struct.pack( floatFormat, xff )
+        # Retain old value
+        xff = struct.pack(floatFormat, xff)
 
-    #repack the remaining header information
-    maxRetention = struct.pack( longFormat, maxRetention )
+    # Repack the remaining header information
+    maxRetention = struct.pack(longFormat, maxRetention)
     archiveCount = struct.pack(longFormat, archiveCount)
 
     packedMetadata = newAggregationType + maxRetention + xff + archiveCount
     fh.seek(0)
-    #fh.write(newAggregationType)
+    # fh.write(newAggregationType)
     fh.write(packedMetadata)
 
     if AUTOFLUSH:
@@ -301,10 +318,6 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
 
       if CACHE_HEADERS and fh.name in __headerCache:
         del __headerCache[fh.name]
-
-  finally:
-    if fh:
-      fh.close()
 
   return aggregationTypeToMethod.get(aggregationType, 'average')
 
@@ -324,15 +337,15 @@ def validateArchiveList(archiveList):
   if not archiveList:
     raise InvalidConfiguration("You must specify at least one archive configuration!")
 
-  archiveList.sort(key=lambda a: a[0]) #sort by precision (secondsPerPoint)
+  archiveList.sort(key=lambda a: a[0])  # Sort by precision (secondsPerPoint)
 
-  for i,archive in enumerate(archiveList):
+  for i, archive in enumerate(archiveList):
     if i == len(archiveList) - 1:
       break
 
     nextArchive = archiveList[i+1]
     if not archive[0] < nextArchive[0]:
-      raise InvalidConfiguration("A Whisper database may not configured having"
+      raise InvalidConfiguration("A Whisper database may not be configured having "
         "two archives with the same precision (archive%d: %s, archive%d: %s)" %
         (i, archive, i + 1, nextArchive))
 
@@ -352,7 +365,7 @@ def validateArchiveList(archiveList):
         (i, retention, i + 1, nextRetention))
 
     archivePoints = archive[1]
-    pointsPerConsolidation = nextArchive[0] / archive[0]
+    pointsPerConsolidation = nextArchive[0] // archive[0]
     if not archivePoints >= pointsPerConsolidation:
       raise InvalidConfiguration("Each archive must have at least enough points "
         "to consolidate to the next archive (archive%d consolidates %d of "
@@ -360,7 +373,7 @@ def validateArchiveList(archiveList):
         (i + 1, pointsPerConsolidation, i, archivePoints))
 
 
-def create(path,archiveList,xFilesFactor=None,aggregationMethod=None,sparse=False,useFallocate=False):
+def create(path, archiveList, xFilesFactor=None, aggregationMethod=None, sparse=False, useFallocate=False):
   """create(path,archiveList,xFilesFactor=0.5,aggregationMethod='average')
 
 path is a string
@@ -374,56 +387,61 @@ aggregationMethod specifies the function to use when propagating data (see ``whi
   if aggregationMethod is None:
     aggregationMethod = 'average'
 
-  #Validate archive configurations...
+  # Validate archive configurations...
   validateArchiveList(archiveList)
 
-  #Looks good, now we create the file and write the header
+  # Looks good, now we create the file and write the header
   if os.path.exists(path):
     raise InvalidConfiguration("File %s already exists!" % path)
-  fh = None
-  try:
-    fh = open(path,'wb')
-    if LOCK:
-      fcntl.flock( fh.fileno(), fcntl.LOCK_EX )
 
-    aggregationType = struct.pack( longFormat, aggregationMethodToType.get(aggregationMethod, 1) )
-    oldest = max([secondsPerPoint * points for secondsPerPoint,points in archiveList])
-    maxRetention = struct.pack( longFormat, oldest )
-    xFilesFactor = struct.pack( floatFormat, float(xFilesFactor) )
-    archiveCount = struct.pack(longFormat, len(archiveList))
-    packedMetadata = aggregationType + maxRetention + xFilesFactor + archiveCount
-    fh.write(packedMetadata)
-    headerSize = metadataSize + (archiveInfoSize * len(archiveList))
-    archiveOffsetPointer = headerSize
+  with open(path, 'wb') as fh:
+    try:
+      if LOCK:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
 
-    for secondsPerPoint,points in archiveList:
-      archiveInfo = struct.pack(archiveInfoFormat, archiveOffsetPointer, secondsPerPoint, points)
-      fh.write(archiveInfo)
-      archiveOffsetPointer += (points * pointSize)
+      aggregationType = struct.pack(longFormat, aggregationMethodToType.get(aggregationMethod, 1))
+      oldest = max([secondsPerPoint * points for secondsPerPoint, points in archiveList])
+      maxRetention = struct.pack(longFormat, oldest)
+      xFilesFactor = struct.pack(floatFormat, float(xFilesFactor))
+      archiveCount = struct.pack(longFormat, len(archiveList))
+      packedMetadata = aggregationType + maxRetention + xFilesFactor + archiveCount
+      fh.write(packedMetadata)
+      headerSize = metadataSize + (archiveInfoSize * len(archiveList))
+      archiveOffsetPointer = headerSize
 
-    #If configured to use fallocate and capable of fallocate use that, else
-    #attempt sparse if configure or zero pre-allocate if sparse isn't configured.
-    if CAN_FALLOCATE and useFallocate:
-      remaining = archiveOffsetPointer - headerSize
-      fallocate(fh, headerSize, remaining)
-    elif sparse:
-      fh.seek(archiveOffsetPointer - 1)
-      fh.write('\x00')
-    else:
-      remaining = archiveOffsetPointer - headerSize
-      chunksize = 16384
-      zeroes = '\x00' * chunksize
-      while remaining > chunksize:
-        fh.write(zeroes)
-        remaining -= chunksize
-      fh.write(zeroes[:remaining])
+      for secondsPerPoint, points in archiveList:
+        archiveInfo = struct.pack(archiveInfoFormat, archiveOffsetPointer, secondsPerPoint, points)
+        fh.write(archiveInfo)
+        archiveOffsetPointer += (points * pointSize)
 
-    if AUTOFLUSH:
-      fh.flush()
-      os.fsync(fh.fileno())
-  finally:
-    if fh:
+      # If configured to use fallocate and capable of fallocate use that, else
+      # attempt sparse if configure or zero pre-allocate if sparse isn't configured.
+      if CAN_FALLOCATE and useFallocate:
+        remaining = archiveOffsetPointer - headerSize
+        fallocate(fh, headerSize, remaining)
+      elif sparse:
+        fh.seek(archiveOffsetPointer - 1)
+        fh.write(b'\x00')
+      else:
+        remaining = archiveOffsetPointer - headerSize
+        chunksize = 16384
+        zeroes = b'\x00' * chunksize
+        while remaining > chunksize:
+          fh.write(zeroes)
+          remaining -= chunksize
+        fh.write(zeroes[:remaining])
+
+      if AUTOFLUSH:
+        fh.flush()
+        os.fsync(fh.fileno())
+      # Explicitly close the file to catch IOError on close()
       fh.close()
+    except IOError:
+      # if we got an IOError above, the file is either empty or half created.
+      # Better off deleting it to avoid surprises later
+      os.unlink(fh.name)
+      raise
+
 
 def aggregate(aggregationMethod, knownValues, neighborValues=None):
   if aggregationMethod == 'average':
@@ -446,7 +464,7 @@ def aggregate(aggregationMethod, knownValues, neighborValues=None):
             aggregationMethod)
 
 
-def __propagate(fh,header,timestamp,higher,lower):
+def __propagate(fh, header, timestamp, higher, lower):
   aggregationMethod = header['aggregationMethod']
   xff = header['xFilesFactor']
 
@@ -455,67 +473,67 @@ def __propagate(fh,header,timestamp,higher,lower):
 
   fh.seek(higher['offset'])
   packedPoint = fh.read(pointSize)
-  (higherBaseInterval,higherBaseValue) = struct.unpack(pointFormat,packedPoint)
+  (higherBaseInterval, higherBaseValue) = struct.unpack(pointFormat, packedPoint)
 
   if higherBaseInterval == 0:
     higherFirstOffset = higher['offset']
   else:
     timeDistance = lowerIntervalStart - higherBaseInterval
-    pointDistance = timeDistance / higher['secondsPerPoint']
+    pointDistance = timeDistance // higher['secondsPerPoint']
     byteDistance = pointDistance * pointSize
     higherFirstOffset = higher['offset'] + (byteDistance % higher['size'])
 
-  higherPoints = lower['secondsPerPoint'] / higher['secondsPerPoint']
+  higherPoints = lower['secondsPerPoint'] // higher['secondsPerPoint']
   higherSize = higherPoints * pointSize
   relativeFirstOffset = higherFirstOffset - higher['offset']
   relativeLastOffset = (relativeFirstOffset + higherSize) % higher['size']
   higherLastOffset = relativeLastOffset + higher['offset']
   fh.seek(higherFirstOffset)
 
-  if higherFirstOffset < higherLastOffset: #we don't wrap the archive
+  if higherFirstOffset < higherLastOffset:  # We don't wrap the archive
     seriesString = fh.read(higherLastOffset - higherFirstOffset)
-  else: #We do wrap the archive
+  else:  # We do wrap the archive
     higherEnd = higher['offset'] + higher['size']
     seriesString = fh.read(higherEnd - higherFirstOffset)
     fh.seek(higher['offset'])
     seriesString += fh.read(higherLastOffset - higher['offset'])
 
-  #Now we unpack the series data we just read
-  byteOrder,pointTypes = pointFormat[0],pointFormat[1:]
-  points = len(seriesString) / pointSize
+  # Now we unpack the series data we just read
+  byteOrder, pointTypes = pointFormat[0], pointFormat[1:]
+  points = len(seriesString) // pointSize
   seriesFormat = byteOrder + (pointTypes * points)
   unpackedSeries = struct.unpack(seriesFormat, seriesString)
 
-  #And finally we construct a list of values
+  # And finally we construct a list of values
   neighborValues = [None] * points
   currentInterval = lowerIntervalStart
   step = higher['secondsPerPoint']
 
-  for i in xrange(0,len(unpackedSeries),2):
+  for i in xrange(0, len(unpackedSeries), 2):
     pointTime = unpackedSeries[i]
     if pointTime == currentInterval:
-      neighborValues[i/2] = unpackedSeries[i+1]
+      neighborValues[i//2] = unpackedSeries[i+1]
     currentInterval += step
 
-  #Propagate aggregateValue to propagate from neighborValues if we have enough known points
+  # Propagate aggregateValue to propagate from neighborValues if we have enough known points
   knownValues = [v for v in neighborValues if v is not None]
   if not knownValues:
     return False
 
   knownPercent = float(len(knownValues)) / float(len(neighborValues))
-  if knownPercent >= xff: #we have enough data to propagate a value!
+  if knownPercent >= xff:  # We have enough data to propagate a value!
     aggregateValue = aggregate(aggregationMethod, knownValues, neighborValues)
-    myPackedPoint = struct.pack(pointFormat,lowerIntervalStart,aggregateValue)
+    myPackedPoint = struct.pack(pointFormat, lowerIntervalStart, aggregateValue)
     fh.seek(lower['offset'])
     packedPoint = fh.read(pointSize)
-    (lowerBaseInterval,lowerBaseValue) = struct.unpack(pointFormat,packedPoint)
+    (lowerBaseInterval, lowerBaseValue) = struct.unpack(pointFormat, packedPoint)
 
-    if lowerBaseInterval == 0: #First propagated update to this lower archive
+    if lowerBaseInterval == 0:  # First propagated update to this lower archive
       fh.seek(lower['offset'])
       fh.write(myPackedPoint)
-    else: #Not our first propagated update to this lower archive
+    else:  # Not our first propagated update to this lower archive
       timeDistance = lowerIntervalStart - lowerBaseInterval
-      pointDistance = timeDistance / lower['secondsPerPoint']
+      pointDistance = timeDistance // lower['secondsPerPoint']
       byteDistance = pointDistance * pointSize
       lowerOffset = lower['offset'] + (byteDistance % lower['size'])
       fh.seek(lowerOffset)
@@ -527,28 +545,25 @@ def __propagate(fh,header,timestamp,higher,lower):
     return False
 
 
-def update(path,value,timestamp=None):
-  """update(path,value,timestamp=None)
+def update(path, value, timestamp=None):
+  """
+  update(path, value, timestamp=None)
 
-path is a string
-value is a float
-timestamp is either an int or float
-"""
+  path is a string
+  value is a float
+  timestamp is either an int or float
+  """
   value = float(value)
-  fh = None
-  try:
-    fh = open(path,'r+b')
+  with open(path, 'r+b') as fh:
     return file_update(fh, value, timestamp)
-  finally:
-    if fh:
-      fh.close()
+
 
 def file_update(fh, value, timestamp):
   if LOCK:
-    fcntl.flock( fh.fileno(), fcntl.LOCK_EX )
+    fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
 
   header = __readHeader(fh)
-  now = int( time.time() )
+  now = int(time.time())
   if timestamp is None:
     timestamp = now
 
@@ -558,31 +573,31 @@ def file_update(fh, value, timestamp):
     raise TimestampNotCovered("Timestamp not covered by any archives in "
       "this database.")
 
-  for i,archive in enumerate(header['archives']): #Find the highest-precision archive that covers timestamp
+  for i, archive in enumerate(header['archives']):  # Find the highest-precision archive that covers timestamp
     if archive['retention'] < diff: continue
-    lowerArchives = header['archives'][i+1:] #We'll pass on the update to these lower precision archives later
+    lowerArchives = header['archives'][i+1:]  # We'll pass on the update to these lower precision archives later
     break
 
-  #First we update the highest-precision archive
+  # First we update the highest-precision archive
   myInterval = timestamp - (timestamp % archive['secondsPerPoint'])
-  myPackedPoint = struct.pack(pointFormat,myInterval,value)
+  myPackedPoint = struct.pack(pointFormat, myInterval, value)
   fh.seek(archive['offset'])
   packedPoint = fh.read(pointSize)
-  (baseInterval,baseValue) = struct.unpack(pointFormat,packedPoint)
+  (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
 
-  if baseInterval == 0: #This file's first update
+  if baseInterval == 0:  # This file's first update
     fh.seek(archive['offset'])
     fh.write(myPackedPoint)
-    baseInterval,baseValue = myInterval,value
-  else: #Not our first update
+    baseInterval, baseValue = myInterval, value
+  else:  # Not our first update
     timeDistance = myInterval - baseInterval
-    pointDistance = timeDistance / archive['secondsPerPoint']
+    pointDistance = timeDistance // archive['secondsPerPoint']
     byteDistance = pointDistance * pointSize
     myOffset = archive['offset'] + (byteDistance % archive['size'])
     fh.seek(myOffset)
     fh.write(myPackedPoint)
 
-  #Now we propagate the update to lower-precision archives
+  # Now we propagate the update to lower-precision archives
   higher = archive
   for lower in lowerArchives:
     if not __propagate(fh, header, myInterval, higher, lower):
@@ -594,103 +609,96 @@ def file_update(fh, value, timestamp):
     os.fsync(fh.fileno())
 
 
-
-def update_many(path,points):
+def update_many(path, points):
   """update_many(path,points)
 
 path is a string
 points is a list of (timestamp,value) points
 """
   if not points: return
-  points = [ (int(t),float(v)) for (t,v) in points]
-  points.sort(key=lambda p: p[0],reverse=True) #order points by timestamp, newest first
-  fh = None
-  try:
-    fh = open(path,'r+b')
+  points = [(int(t), float(v)) for (t, v) in points]
+  points.sort(key=lambda p: p[0], reverse=True)  # Order points by timestamp, newest first
+  with open(path, 'r+b') as fh:
     return file_update_many(fh, points)
-  finally:
-    if fh:
-      fh.close()
 
 
 def file_update_many(fh, points):
   if LOCK:
-    fcntl.flock( fh.fileno(), fcntl.LOCK_EX )
+    fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
 
   header = __readHeader(fh)
-  now = int( time.time() )
-  archives = iter( header['archives'] )
-  currentArchive = archives.next()
+  now = int(time.time())
+  archives = iter(header['archives'])
+  currentArchive = next(archives)
   currentPoints = []
 
   for point in points:
     age = now - point[0]
 
-    while currentArchive['retention'] < age: #we can't fit any more points in this archive
-      if currentPoints: #commit all the points we've found that it can fit
-        currentPoints.reverse() #put points in chronological order
-        __archive_update_many(fh,header,currentArchive,currentPoints)
+    while currentArchive['retention'] < age:  # We can't fit any more points in this archive
+      if currentPoints:  # Commit all the points we've found that it can fit
+        currentPoints.reverse()  # Put points in chronological order
+        __archive_update_many(fh, header, currentArchive, currentPoints)
         currentPoints = []
       try:
-        currentArchive = archives.next()
+        currentArchive = next(archives)
       except StopIteration:
         currentArchive = None
         break
 
     if not currentArchive:
-      break #drop remaining points that don't fit in the database
+      break  # Drop remaining points that don't fit in the database
 
     currentPoints.append(point)
 
-  if currentArchive and currentPoints: #don't forget to commit after we've checked all the archives
+  if currentArchive and currentPoints:  # Don't forget to commit after we've checked all the archives
     currentPoints.reverse()
-    __archive_update_many(fh,header,currentArchive,currentPoints)
+    __archive_update_many(fh, header, currentArchive, currentPoints)
 
   if AUTOFLUSH:
     fh.flush()
     os.fsync(fh.fileno())
 
 
-
-def __archive_update_many(fh,header,archive,points):
+def __archive_update_many(fh, header, archive, points):
   step = archive['secondsPerPoint']
-  alignedPoints = [ (timestamp - (timestamp % step), value)
-                    for (timestamp,value) in points ]
-  #Create a packed string for each contiguous sequence of points
+  alignedPoints = [(timestamp - (timestamp % step), value)
+                    for (timestamp, value) in points]
+  # Create a packed string for each contiguous sequence of points
   packedStrings = []
   previousInterval = None
-  currentString = ""
+  currentString = b""
   lenAlignedPoints = len(alignedPoints)
-  for i in xrange(0,lenAlignedPoints):
-    #take last point in run of points with duplicate intervals
+  for i in xrange(0, lenAlignedPoints):
+    # Take last point in run of points with duplicate intervals
     if i+1 < lenAlignedPoints and alignedPoints[i][0] == alignedPoints[i+1][0]:
       continue
-    (interval,value) = alignedPoints[i]
+    (interval, value) = alignedPoints[i]
     if (not previousInterval) or (interval == previousInterval + step):
-      currentString += struct.pack(pointFormat,interval,value)
+      currentString += struct.pack(pointFormat, interval, value)
       previousInterval = interval
     else:
-      numberOfPoints = len(currentString) / pointSize
+      numberOfPoints = len(currentString) // pointSize
       startInterval = previousInterval - (step * (numberOfPoints-1))
-      packedStrings.append( (startInterval,currentString) )
-      currentString = struct.pack(pointFormat,interval,value)
+      packedStrings.append((startInterval, currentString))
+      currentString = struct.pack(pointFormat, interval, value)
       previousInterval = interval
   if currentString:
-    numberOfPoints = len(currentString) / pointSize
+    numberOfPoints = len(currentString) // pointSize
     startInterval = previousInterval - (step * (numberOfPoints-1))
-    packedStrings.append( (startInterval,currentString) )
+    packedStrings.append((startInterval, currentString))
 
-  #Read base point and determine where our writes will start
+  # Read base point and determine where our writes will start
   fh.seek(archive['offset'])
   packedBasePoint = fh.read(pointSize)
-  (baseInterval,baseValue) = struct.unpack(pointFormat,packedBasePoint)
-  if baseInterval == 0: #This file's first update
-    baseInterval = packedStrings[0][0] #use our first string as the base, so we start at the start
+  (baseInterval, baseValue) = struct.unpack(pointFormat, packedBasePoint)
+  if baseInterval == 0:  # This file's first update
+    baseInterval = packedStrings[0][0]  # Use our first string as the base, so we start at the start
 
-  #Write all of our packed strings in locations determined by the baseInterval
-  for (interval,packedString) in packedStrings:
+  # Write all of our packed strings in locations determined by the baseInterval
+  for (interval, packedString) in packedStrings:
     timeDistance = interval - baseInterval
-    pointDistance = timeDistance / step
+    pointDistance = timeDistance // step
     byteDistance = pointDistance * pointSize
     myOffset = archive['offset'] + (byteDistance % archive['size'])
     fh.seek(myOffset)
@@ -698,14 +706,14 @@ def __archive_update_many(fh,header,archive,points):
     bytesBeyond = (myOffset + len(packedString)) - archiveEnd
 
     if bytesBeyond > 0:
-      fh.write( packedString[:-bytesBeyond] )
-      assert fh.tell() == archiveEnd, "archiveEnd=%d fh.tell=%d bytesBeyond=%d len(packedString)=%d" % (archiveEnd,fh.tell(),bytesBeyond,len(packedString))
-      fh.seek( archive['offset'] )
-      fh.write( packedString[-bytesBeyond:] ) #safe because it can't exceed the archive (retention checking logic above)
+      fh.write(packedString[:-bytesBeyond])
+      assert fh.tell() == archiveEnd, "archiveEnd=%d fh.tell=%d bytesBeyond=%d len(packedString)=%d" % (archiveEnd, fh.tell(), bytesBeyond, len(packedString))
+      fh.seek(archive['offset'])
+      fh.write(packedString[-bytesBeyond:])  # Safe because it can't exceed the archive (retention checking logic above)
     else:
       fh.write(packedString)
 
-  #Now we propagate the updates to lower-precision archives
+  # Now we propagate the updates to lower-precision archives
   higher = archive
   lowerArchives = [arc for arc in header['archives'] if arc['secondsPerPoint'] > archive['secondsPerPoint']]
 
@@ -724,20 +732,20 @@ def __archive_update_many(fh,header,archive,points):
 
 
 def info(path):
-  """info(path)
+  """
+  info(path)
 
-path is a string
-"""
-  fh = None
+  path is a string
+  """
   try:
-    fh = open(path,'rb')
-    return __readHeader(fh)
-  finally:
-    if fh:
-      fh.close()
+    with open(path, 'rb') as fh:
+      return __readHeader(fh)
+  except (IOError, OSError):
+    pass
   return None
 
-def fetch(path,fromTime,untilTime=None,now=None):
+
+def fetch(path, fromTime, untilTime=None, now=None):
   """fetch(path,fromTime,untilTime=None)
 
 path is a string
@@ -749,18 +757,14 @@ where timeInfo is itself a tuple of (fromTime, untilTime, step)
 
 Returns None if no data can be returned
 """
-  fh = None
-  try:
-    fh = open(path,'rb')
+  with open(path, 'rb') as fh:
     return file_fetch(fh, fromTime, untilTime, now)
-  finally:
-    if fh:
-      fh.close()
 
-def file_fetch(fh, fromTime, untilTime, now = None):
+
+def file_fetch(fh, fromTime, untilTime, now=None):
   header = __readHeader(fh)
   if now is None:
-    now = int( time.time() )
+    now = int(time.time())
   if untilTime is None:
     untilTime = now
   fromTime = int(fromTime)
@@ -769,7 +773,7 @@ def file_fetch(fh, fromTime, untilTime, now = None):
   # Here we try and be flexible and return as much data as we can.
   # If the range of data is from too far in the past or fully in the future, we
   # return nothing
-  if (fromTime > untilTime):
+  if fromTime > untilTime:
     raise InvalidTimeInterval("Invalid time interval: from time '%s' is after until time '%s'" % (fromTime, untilTime))
 
   oldestTime = now - header['maxRetention']
@@ -793,75 +797,82 @@ def file_fetch(fh, fromTime, untilTime, now = None):
 
   return __archive_fetch(fh, archive, fromTime, untilTime)
 
+
 def __archive_fetch(fh, archive, fromTime, untilTime):
   """
 Fetch data from a single archive. Note that checks for validity of the time
 period requested happen above this level so it's possible to wrap around the
 archive on a read and request data older than the archive's retention
 """
-  fromInterval = int( fromTime - (fromTime % archive['secondsPerPoint']) ) + archive['secondsPerPoint']
-  untilInterval = int( untilTime - (untilTime % archive['secondsPerPoint']) ) + archive['secondsPerPoint']
+  fromInterval = int(fromTime - (fromTime % archive['secondsPerPoint'])) + archive['secondsPerPoint']
+  untilInterval = int(untilTime - (untilTime % archive['secondsPerPoint'])) + archive['secondsPerPoint']
   fh.seek(archive['offset'])
   packedPoint = fh.read(pointSize)
-  (baseInterval,baseValue) = struct.unpack(pointFormat,packedPoint)
+  (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
 
   if baseInterval == 0:
     step = archive['secondsPerPoint']
-    points = (untilInterval - fromInterval) / step
-    timeInfo = (fromInterval,untilInterval,step)
+    points = (untilInterval - fromInterval) // step
+    timeInfo = (fromInterval, untilInterval, step)
     valueList = [None] * points
-    return (timeInfo,valueList)
+    return (timeInfo, valueList)
 
-  #Determine fromOffset
+  # Determine fromOffset
   timeDistance = fromInterval - baseInterval
-  pointDistance = timeDistance / archive['secondsPerPoint']
+  pointDistance = timeDistance // archive['secondsPerPoint']
   byteDistance = pointDistance * pointSize
   fromOffset = archive['offset'] + (byteDistance % archive['size'])
 
-  #Determine untilOffset
+  # Determine untilOffset
   timeDistance = untilInterval - baseInterval
-  pointDistance = timeDistance / archive['secondsPerPoint']
+  pointDistance = timeDistance // archive['secondsPerPoint']
   byteDistance = pointDistance * pointSize
   untilOffset = archive['offset'] + (byteDistance % archive['size'])
 
-  #Read all the points in the interval
+  # Read all the points in the interval
   fh.seek(fromOffset)
-  if fromOffset < untilOffset: #If we don't wrap around the archive
+  if fromOffset < untilOffset:  # If we don't wrap around the archive
     seriesString = fh.read(untilOffset - fromOffset)
-  else: #We do wrap around the archive, so we need two reads
+  else:  # We do wrap around the archive, so we need two reads
     archiveEnd = archive['offset'] + archive['size']
     seriesString = fh.read(archiveEnd - fromOffset)
     fh.seek(archive['offset'])
     seriesString += fh.read(untilOffset - archive['offset'])
 
-  #Now we unpack the series data we just read (anything faster than unpack?)
-  byteOrder,pointTypes = pointFormat[0],pointFormat[1:]
-  points = len(seriesString) / pointSize
+  # Now we unpack the series data we just read (anything faster than unpack?)
+  byteOrder, pointTypes = pointFormat[0], pointFormat[1:]
+  points = len(seriesString) // pointSize
   seriesFormat = byteOrder + (pointTypes * points)
   unpackedSeries = struct.unpack(seriesFormat, seriesString)
 
-  #And finally we construct a list of values (optimize this!)
-  valueList = [None] * points #pre-allocate entire list for speed
+  # And finally we construct a list of values (optimize this!)
+  valueList = [None] * points  # Pre-allocate entire list for speed
   currentInterval = fromInterval
   step = archive['secondsPerPoint']
 
-  for i in xrange(0,len(unpackedSeries),2):
+  for i in xrange(0, len(unpackedSeries), 2):
     pointTime = unpackedSeries[i]
     if pointTime == currentInterval:
       pointValue = unpackedSeries[i+1]
-      valueList[i/2] = pointValue #in-place reassignment is faster than append()
+      valueList[i//2] = pointValue  # In-place reassignment is faster than append()
     currentInterval += step
 
-  timeInfo = (fromInterval,untilInterval,step)
-  return (timeInfo,valueList)
+  timeInfo = (fromInterval, untilInterval, step)
+  return (timeInfo, valueList)
+
 
 def merge(path_from, path_to):
   """ Merges the data from one whisper file into another. Each file must have
   the same archive configuration
 """
-  fh_from = open(path_from, 'rb')
-  fh_to = open(path_to, 'rb+')
-  return file_merge(fh_from, fh_to)
+  # Python 2.7 will allow the following commented line
+  # with open(path_from, 'rb') as fh_from, open(path_to, 'rb+') as fh_to:
+  # But with Python 2.6 we need to use this (I prefer not to introduce
+  # contextlib.nested just for this):
+  with open(path_from, 'rb') as fh_from:
+    with open(path_to, 'rb+') as fh_to:
+      return file_merge(fh_from, fh_to)
+
 
 def file_merge(fh_from, fh_to):
   headerFrom = __readHeader(fh_from)
@@ -880,24 +891,21 @@ def file_merge(fh_from, fh_to):
     fromTime = now - archive['retention']
     (timeInfo, values) = __archive_fetch(fh_from, archive, fromTime, untilTime)
     (start, end, archive_step) = timeInfo
-    pointsToWrite = list(itertools.ifilter(
+    pointsToWrite = list(ifilter(
       lambda points: points[1] is not None,
-      itertools.izip(xrange(start, end, archive_step), values)))
+      izip(xrange(start, end, archive_step), values)))
     __archive_update_many(fh_to, headerTo, archive, pointsToWrite)
     untilTime = fromTime
-  fh_from.close()
-  fh_to.close()
 
-def diff(path_from, path_to, ignore_empty = False):
+
+def diff(path_from, path_to, ignore_empty=False):
   """ Compare two whisper databases. Each file must have the same archive configuration """
-  fh_from = open(path_from, 'rb')
-  fh_to = open(path_to, 'rb')
-  diffs = file_diff(fh_from, fh_to, ignore_empty)
-  fh_to.close()
-  fh_from.close()
-  return diffs
+  with open(path_from, 'rb') as fh_from:
+    with open(path_to, 'rb+') as fh_to:
+      return file_diff(fh_from, fh_to, ignore_empty)
 
-def file_diff(fh_from, fh_to, ignore_empty = False):
+
+def file_diff(fh_from, fh_to, ignore_empty=False):
   headerFrom = __readHeader(fh_from)
   headerTo = __readHeader(fh_to)
 
@@ -918,16 +926,16 @@ def file_diff(fh_from, fh_to, ignore_empty = False):
     startTime = now - archive['retention']
     (fromTimeInfo, fromValues) = __archive_fetch(fh_from, archive, startTime, untilTime)
     (toTimeInfo, toValues) = __archive_fetch(fh_to, archive, startTime, untilTime)
-    (start, end, archive_step) = ( min(fromTimeInfo[0],toTimeInfo[0]), max(fromTimeInfo[1],toTimeInfo[1]), min(fromTimeInfo[2],toTimeInfo[2]) )
+    (start, end, archive_step) = (min(fromTimeInfo[0], toTimeInfo[0]), max(fromTimeInfo[1], toTimeInfo[1]), min(fromTimeInfo[2], toTimeInfo[2]))
 
-    points = map(lambda s: (s * archive_step + start,fromValues[s],toValues[s]), range(0,(end - start) / archive_step))
+    points = map(lambda s: (s * archive_step + start, fromValues[s], toValues[s]), xrange(0, (end - start) // archive_step))
     if ignore_empty:
-      points = [p for p in points if p[1] != None and p[2] != None]
+      points = [p for p in points if p[1] is not None and p[2] is not None]
     else:
-      points = [p for p in points if p[1] != None or p[2] != None]
+      points = [p for p in points if p[1] is not None or p[2] is not None]
 
     diffs = [p for p in points if p[1] != p[2]]
 
-    archive_diffs.append( (archive_number, diffs, points.__len__()) )
+    archive_diffs.append((archive_number, diffs, points.__len__()))
     untilTime = startTime
   return archive_diffs

@@ -4,12 +4,16 @@ import os
 import mmap
 import struct
 import signal
+import sys
 import optparse
 
 try:
   import whisper
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+if sys.version_info >= (3, 0):
+    xrange = range
 
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
@@ -32,7 +36,7 @@ def read_header(map):
   try:
     (aggregationType,maxRetention,xFilesFactor,archiveCount) = struct.unpack(whisper.metadataFormat,map[:whisper.metadataSize])
   except:
-    raise CorruptWhisperFile("Unable to unpack header")
+    raise whisper.CorruptWhisperFile("Unable to unpack header")
 
   archives = []
   archiveOffset = whisper.metadataSize
@@ -41,7 +45,7 @@ def read_header(map):
     try:
       (offset, secondsPerPoint, points) = struct.unpack(whisper.archiveInfoFormat, map[archiveOffset:archiveOffset+whisper.archiveInfoSize])
     except:
-      raise CorruptWhisperFile("Unable to read archive %d metadata" % i)
+      raise whisper.CorruptWhisperFile("Unable to read archive %d metadata" % i)
 
     archiveInfo = {
       'offset' : offset,
@@ -62,30 +66,30 @@ def read_header(map):
   return header
 
 def dump_header(header):
-  print 'Meta data:'
-  print '  aggregation method: %s' % header['aggregationMethod']
-  print '  max retention: %d' % header['maxRetention']
-  print '  xFilesFactor: %g' % header['xFilesFactor']
-  print
+  print('Meta data:')
+  print('  aggregation method: %s' % header['aggregationMethod'])
+  print('  max retention: %d' % header['maxRetention'])
+  print('  xFilesFactor: %g' % header['xFilesFactor'])
+  print("")
   dump_archive_headers(header['archives'])
 
 def dump_archive_headers(archives):
   for i,archive in enumerate(archives):
-    print 'Archive %d info:' % i
-    print '  offset: %d' % archive['offset']
-    print '  seconds per point: %d' % archive['secondsPerPoint']
-    print '  points: %d' % archive['points']
-    print '  retention: %d' % archive['retention']
-    print '  size: %d' % archive['size']
-    print
+    print('Archive %d info:' % i)
+    print('  offset: %d' % archive['offset'])
+    print('  seconds per point: %d' % archive['secondsPerPoint'])
+    print('  points: %d' % archive['points'])
+    print('  retention: %d' % archive['retention'])
+    print('  size: %d' % archive['size'])
+    print("")
 
 def dump_archives(archives):
   for i,archive in enumerate(archives):
-    print 'Archive %d data:' %i
+    print('Archive %d data:' %i)
     offset = archive['offset']
     for point in xrange(archive['points']):
       (timestamp, value) = struct.unpack(whisper.pointFormat, map[offset:offset+whisper.pointSize])
-      print '%d: %d, %10.35g' % (point, timestamp, value)
+      print('%d: %d, %10.35g' % (point, timestamp, value))
       offset += whisper.pointSize
     print
 
