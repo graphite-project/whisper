@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import time
 import math
 import random
 import struct
 
 import errno
-from mock import patch, mock_open
+
+try:
+    from unittest.mock import patch, mock_open
+except ImportError:
+    from mock import patch, mock_open
 
 try:
     import unittest2 as unittest
