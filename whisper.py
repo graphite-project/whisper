@@ -861,9 +861,10 @@ archive on a read and request data older than the archive's retention
   return (timeInfo, valueList)
 
 
-def merge(path_from, path_to):
+def merge(path_from, path_to, time_from=None,time_to=None):
   """ Merges the data from one whisper file into another. Each file must have
-  the same archive configuration
+  the same archive configuration. time_from and time_to can optionally be
+  specified for the merge.
 """
   # Python 2.7 will allow the following commented line
   # with open(path_from, 'rb') as fh_from, open(path_to, 'rb+') as fh_to:
@@ -871,31 +872,49 @@ def merge(path_from, path_to):
   # contextlib.nested just for this):
   with open(path_from, 'rb') as fh_from:
     with open(path_to, 'rb+') as fh_to:
-      return file_merge(fh_from, fh_to)
+      return file_merge(fh_from, fh_to, time_from, time_to)
 
 
-def file_merge(fh_from, fh_to):
+def file_merge(fh_from, fh_to, time_from=None, time_to=None):
   headerFrom = __readHeader(fh_from)
   headerTo = __readHeader(fh_to)
-
   if headerFrom['archives'] != headerTo['archives']:
     raise NotImplementedError("%s and %s archive configurations are unalike. " \
     "Resize the input before merging" % (fh_from.name, fh_to.name))
 
+  now = int(time.time())
+
+  if (time_to is not None):
+    untilTime = time_to
+  else:
+    untilTime = now
+
+  if (time_from is not None):
+    fromTime = time_from
+  else:
+    fromTime = 0
+
+  # Sanity check: do not mix the from/to values.
+  if untilTime < fromTime:
+    raise ValueError("time_to must be >= time_from")
+
   archives = headerFrom['archives']
   archives.sort(key=operator.itemgetter('retention'))
 
-  now = int(time.time())
-  untilTime = now
   for archive in archives:
-    fromTime = now - archive['retention']
-    (timeInfo, values) = __archive_fetch(fh_from, archive, fromTime, untilTime)
+    archiveFrom = fromTime
+    archiveTo = untilTime
+    if archiveFrom < now - archive['retention']:
+      archiveFrom = now - archive['retention']
+    # if untilTime is too old, skip this archive
+    if archiveTo < now - archive['retention']:
+      continue
+    (timeInfo, values) = __archive_fetch(fh_from, archive, archiveFrom, archiveTo)
     (start, end, archive_step) = timeInfo
     pointsToWrite = list(ifilter(
       lambda points: points[1] is not None,
       izip(xrange(start, end, archive_step), values)))
     __archive_update_many(fh_to, headerTo, archive, pointsToWrite)
-    untilTime = fromTime
 
 
 def diff(path_from, path_to, ignore_empty=False):
