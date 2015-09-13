@@ -149,7 +149,7 @@ def processMetric(fullPath, schemas, agg_schemas):
 
     # if we need to rebuild, lets do it.
     if (rebuild == True):
-        cmd = 'whisper-resize.py %s %s --xFilesFactor=%s --aggregationMethod=%s %s' % (fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
+        cmd = 'whisper-resize.py "%s" %s --xFilesFactor=%s --aggregationMethod=%s %s' % (fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
         if (options.quiet != True or options.confirm == True):
             print(messages)
             print(cmd)
