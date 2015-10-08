@@ -757,6 +757,10 @@ def file_fetch(fh, fromTime, untilTime, now = None):
 
   fromInterval = int( fromTime - (fromTime % archive['secondsPerPoint']) ) + archive['secondsPerPoint']
   untilInterval = int( untilTime - (untilTime % archive['secondsPerPoint']) ) + archive['secondsPerPoint']
+  if fromInterval == untilInterval:
+    # Check for zero-length time rages and always include the next point
+    untilInterval = untilInterval + archive['secondsPerPoint']
+
   fh.seek(archive['offset'])
   packedPoint = fh.read(pointSize)
   (baseInterval,baseValue) = struct.unpack(pointFormat,packedPoint)
