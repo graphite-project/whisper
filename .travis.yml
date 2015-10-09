@@ -11,7 +11,7 @@ python:
 
 install:
   - pip install .
-  - pip install coverage coveralls
+  - (python --version 2>&1 | grep -q "Python 3.2." && pip install "coverage<4" coveralls) || pip install coverage coveralls
 
 script:
   - bin/whisper-create.py --help
