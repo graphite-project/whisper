@@ -114,10 +114,14 @@ class AssertRaisesException(object):
 class WhisperTestBase(unittest.TestCase):
     def setUp(self):
         self.filename = 'db.wsp'
+        self.testdb = 'test-db.wsp'
+        self._remove(self.filename)
+        self._remove(self.testdb)
         self.retention = [(1, 60), (60, 60)]
 
     def tearDown(self):
         self._remove(self.filename)
+        self._remove(self.testdb)
 
     @staticmethod
     def _remove(wsp_file):
@@ -332,65 +336,54 @@ class TestWhisper(WhisperTestBase):
         """
         test merging two databases
         """
-        testdb = "test-%s" % self.filename
-
         # Create 2 whisper databases and merge one into the other
         self._update()
-        self._update(testdb)
+        self._update(self.testdb)
 
-        whisper.merge(self.filename, testdb)
-        self._remove(testdb)
+        whisper.merge(self.filename, self.testdb)
 
     def test_merge_bad_archive_config(self):
-        testdb = "test-%s" % self.filename
 
         # Create 2 whisper databases with different schema
         self._update()
-        whisper.create(testdb, [(100, 1)])
+        whisper.create(self.testdb, [(100, 1)])
 
         with AssertRaisesException(NotImplementedError('db.wsp and test-db.wsp archive configurations are unalike. Resize the input before merging')):
-            whisper.merge(self.filename, testdb)
-
-        self._remove(testdb)
+            whisper.merge(self.filename, self.testdb)
 
     def test_diff(self):
-        testdb = "test-%s" % self.filename
-
         now = time.time()
 
-        whisper.create(testdb, self.retention)
+        whisper.create(self.testdb, self.retention)
         whisper.create(self.filename, self.retention)
-        whisper.update(testdb, 1.0, now)
+        whisper.update(self.testdb, 1.0, now)
         whisper.update(self.filename, 2.0, now)
 
-        results = whisper.diff(testdb, self.filename)
-        self._remove(testdb)
+        results = whisper.diff(self.testdb, self.filename)
 
         expected = [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)]
 
         self.assertEqual(results, expected)
 
     def test_diff_with_empty(self):
-        testdb = "test-%s" % self.filename
-
         now = time.time()
 
-        whisper.create(testdb, self.retention)
+        whisper.create(self.testdb, self.retention)
         whisper.create(self.filename, self.retention)
-        whisper.update(testdb, 1.0, now)
+        whisper.update(self.testdb, 1.0, now)
         whisper.update(self.filename, 2.0, now)
 
         # Purposefully insert nulls to strip out
         previous = now - self.retention[0][0]
-        whisper.update(testdb, float('NaN'), previous)
+        whisper.update(self.testdb, float('NaN'), previous)
 
-        results = whisper.diff(testdb, self.filename, ignore_empty=True)
+        results = whisper.diff(self.testdb, self.filename, ignore_empty=True)
         self.assertEqual(
             results,
             [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)],
         )
 
-        results_empties = whisper.diff(testdb, self.filename, ignore_empty=False)
+        results_empties = whisper.diff(self.testdb, self.filename, ignore_empty=False)
         expected = [(0, [(int(previous), float('NaN'), None), (int(now), 1.0, 2.0)], 2), (1, [], 0)]
 
         # Stupidly, float('NaN') != float('NaN'), so assert that the
@@ -407,40 +400,33 @@ class TestWhisper(WhisperTestBase):
         self.assertTrue(
             math.isnan(results_empties[0][1][0][1])
         )
-        self._remove(testdb)
 
     def test_file_diff(self):
-        testdb = "test-%s" % self.filename
-
         now = time.time()
 
-        whisper.create(testdb, self.retention)
+        whisper.create(self.testdb, self.retention)
         whisper.create(self.filename, self.retention)
-        whisper.update(testdb, 1.0, now)
+        whisper.update(self.testdb, 1.0, now)
         whisper.update(self.filename, 2.0, now)
 
         # Merging 2 archives with different retentions should fail
-        with open(testdb, 'rb') as fh_1:
+        with open(self.testdb, 'rb') as fh_1:
             with open(self.filename, 'rb+') as fh_2:
                 results = whisper.file_diff(fh_1, fh_2)
-        self._remove(testdb)
 
         expected = [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)]
 
         self.assertEqual(results, expected)
 
     def test_file_diff_invalid(self):
-        testdb = "test-%s" % self.filename
-
-        whisper.create(testdb, [(120, 10)])
+        whisper.create(self.testdb, [(120, 10)])
         whisper.create(self.filename, self.retention)
 
         # Merging 2 archives with different retentions should fail
-        with open(testdb, 'rb') as fh_1:
+        with open(self.testdb, 'rb') as fh_1:
             with open(self.filename, 'rb+') as fh_2:
                 with AssertRaisesException(NotImplementedError('test-db.wsp and db.wsp archive configurations are unalike. Resize the input before diffing')):
                     whisper.file_diff(fh_1, fh_2)
-        self._remove(testdb)
 
     def test_fetch(self):
         """
@@ -585,6 +571,87 @@ class TestWhisper(WhisperTestBase):
         whisper.LOCK = original_lock
         whisper.AUTOFLUSH = original_autoflush
         whisper.CACHE_HEADERS = original_caching
+
+    def test_fetch_across_retention_boundary(self):
+        """
+        Create a db and validate that fetching data across archive boundaries
+        returns data from the appropriate archive
+        """
+
+        retention = [ (1, 300),    #  1s for 5 minutes
+                      (10, 60),    # 10s for 10 minutes
+                      (60, 30),    # 60s for 30 minutes
+                      (300, 12)]   #  5m for 60 minutes
+        now = int( time.time() )
+        range_len = 3600
+        whisper.create(self.filename, retention)
+        
+        # fetch all data from first archive
+        (timeInfo, points) = whisper.fetch(self.filename, now - (5 * 60), now, now)
+        self.assertEqual(1, timeInfo[2])
+
+        # fetch data across the archive boundary
+        (timeInfo, points) = whisper.fetch(self.filename, now - (5 * 60 + 1), now , now)
+        self.assertEqual(10, timeInfo[2])
+
+        # cross to third archive
+        (timeInfo, points) = whisper.fetch(self.filename, now - (10 * 60 + 1), now , now)
+        self.assertEqual(60, timeInfo[2])
+
+    def test_fetch_coarse_across_retention_boundary(self):
+        """
+        Create a db and validate that fetching data across archive boundaries
+        using the 'coarse' fetch strategy returns data from the appropriate
+        archive.
+        """
+
+        retention = [ (1, 3600),   #  1s for 60m
+                      (10, 361),   # 10s for 60m10s
+                      (60, 61),    # 60s for 61m
+                      (300, 13)]   #  5m for 65m
+        now = int( time.time() )
+        range_len = 3600
+        whisper.create(self.filename, retention)
+
+        whisper.FETCH_STRATEGY_COARSE_THRESHOLD = 15
+        whisper.FETCH_STRATEGY = 'coarse'
+        # fetch 300s worth of data
+        (timeInfo, points) = whisper.fetch(self.filename, now - (5 * 60),
+                                           now, now)
+        # Data will be fetched from 10s resolution archive since it has >15 pts
+        # for requested timerange
+        self.assertEqual(10, timeInfo[2])
+
+        whisper.FETCH_STRATEGY = None
+        # Same fetch
+        (timeInfo, points) = whisper.fetch(self.filename, now - (5 * 60),
+                                           now, now)
+        self.assertEqual(1, timeInfo[2])
+
+        whisper.FETCH_STRATEGY = 'coarse'
+        # fetch 16m worth of data at some point in the past
+        (timeInfo, points) = whisper.fetch(self.filename, now - (26 * 60),
+                                           now - (10 * 60) , now)
+        # data will be fetched from 60s resolution archive
+        self.assertEqual(60, timeInfo[2])
+
+        whisper.FETCH_STRATEGY = None
+        # same fetch
+        (timeInfo, points) = whisper.fetch(self.filename, now - (26 * 60),
+                                           now - (10 * 60) , now)
+        self.assertEqual(1, timeInfo[2])
+
+        whisper.FETCH_STRATEGY = 'coarse'
+        # "zoom" in the data fetched above: fetch 6 minutes of data within the timerange
+        (timeInfo, points) = whisper.fetch(self.filename, now - (26 * 60),
+                                           now - (20 * 60) , now)
+        # data will be fetched from 10s resolution archive
+        self.assertEqual(10, timeInfo[2])
+
+        # "zoom" in the even more to make sure we can still reach the original data
+        (timeInfo, points) = whisper.fetch(self.filename, now - (26 * 60),
+                                           now - (24 * 60) , now)
+        self.assertEqual(1, timeInfo[2])
 
 
 class TestgetUnitString(unittest.TestCase):
