@@ -750,7 +750,7 @@ def file_fetch(fh, fromTime, untilTime, now = None):
   if untilTime > now:
     untilTime = now
 
-  diff = now - fromTime
+  diff = untilTime - fromTime
   for archive in header['archives']:
     if archive['retention'] >= diff:
       break
