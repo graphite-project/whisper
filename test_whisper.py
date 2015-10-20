@@ -190,7 +190,7 @@ class TestWhisper(WhisperTestBase):
         non_null = [i for i in avg_zero if i is not None]
         self.assertEqual(whisper.aggregate('avg_zero', non_null, avg_zero), 1.25)
         # avg_zero without neighborValues
-        
+
         with self.assertRaises(whisper.InvalidAggregationMethod):
             whisper.aggregate('avg_zero', non_null)
 
@@ -325,7 +325,7 @@ class TestWhisper(WhisperTestBase):
             now = int(time.time())
             self.assertEqual(
                 whisper.file_fetch(fh, fromTime=now, untilTime=now + 200, now=now),
-                ((now + 1, now + 1, 1), []),
+                ((now + 1, now + 2, 1), [None]),
             )
 
     def test_merge(self):
