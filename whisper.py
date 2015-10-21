@@ -806,6 +806,10 @@ archive on a read and request data older than the archive's retention
 """
   fromInterval = int(fromTime - (fromTime % archive['secondsPerPoint'])) + archive['secondsPerPoint']
   untilInterval = int(untilTime - (untilTime % archive['secondsPerPoint'])) + archive['secondsPerPoint']
+  if fromInterval == untilInterval:
+    # Zero-length time range: always include the next point
+    untilInterval += archive['secondsPerPoint']
+
   fh.seek(archive['offset'])
   packedPoint = fh.read(pointSize)
   (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
