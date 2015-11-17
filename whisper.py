@@ -99,6 +99,16 @@ metadataSize = struct.calcsize(metadataFormat)
 archiveInfoFormat = "!3L"
 archiveInfoSize = struct.calcsize(archiveInfoFormat)
 
+try:
+  import numpy
+  pointFormatNumpy = numpy.dtype([
+    ('timestamp', numpy.dtype('>i')),
+    ('value', numpy.dtype('>d'))
+  ])
+except ImportError:
+  pointFormatNumpy = None
+  pass
+
 aggregationTypeToMethod = dict({
   1: 'average',
   2: 'sum',
@@ -745,7 +755,7 @@ def info(path):
   return None
 
 
-def fetch(path, fromTime, untilTime=None, now=None):
+def fetch(path, fromTime, untilTime=None, now=None, asNumpy=False):
   """fetch(path,fromTime,untilTime=None)
 
 path is a string
@@ -758,10 +768,10 @@ where timeInfo is itself a tuple of (fromTime, untilTime, step)
 Returns None if no data can be returned
 """
   with open(path, 'rb') as fh:
-    return file_fetch(fh, fromTime, untilTime, now)
+    return file_fetch(fh, fromTime, untilTime, now, asNumpy)
 
 
-def file_fetch(fh, fromTime, untilTime, now=None):
+def file_fetch(fh, fromTime, untilTime, now=None, asNumpy=False):
   header = __readHeader(fh)
   if now is None:
     now = int(time.time())
@@ -795,10 +805,10 @@ def file_fetch(fh, fromTime, untilTime, now=None):
     if archive['retention'] >= diff:
       break
 
-  return __archive_fetch(fh, archive, fromTime, untilTime)
+  return __archive_fetch(fh, archive, fromTime, untilTime, asNumpy)
 
 
-def __archive_fetch(fh, archive, fromTime, untilTime):
+def __archive_fetch(fh, archive, fromTime, untilTime, asNumpy=False):
   """
 Fetch data from a single archive. Note that checks for validity of the time
 period requested happen above this level so it's possible to wrap around the
@@ -843,25 +853,34 @@ archive on a read and request data older than the archive's retention
     fh.seek(archive['offset'])
     seriesString += fh.read(untilOffset - archive['offset'])
 
-  # Now we unpack the series data we just read (anything faster than unpack?)
-  byteOrder, pointTypes = pointFormat[0], pointFormat[1:]
-  points = len(seriesString) // pointSize
-  seriesFormat = byteOrder + (pointTypes * points)
-  unpackedSeries = struct.unpack(seriesFormat, seriesString)
-
-  # And finally we construct a list of values (optimize this!)
-  valueList = [None] * points  # Pre-allocate entire list for speed
-  currentInterval = fromInterval
   step = archive['secondsPerPoint']
-
-  for i in xrange(0, len(unpackedSeries), 2):
-    pointTime = unpackedSeries[i]
-    if pointTime == currentInterval:
-      pointValue = unpackedSeries[i+1]
-      valueList[i//2] = pointValue  # In-place reassignment is faster than append()
-    currentInterval += step
-
   timeInfo = (fromInterval, untilInterval, step)
+
+  if asNumpy and pointFormatNumpy:
+    dataPoints = numpy.fromstring(seriesString, dtype=pointFormatNumpy)
+    valueList = dataPoints['value']
+    timeStamps = dataPoints['timestamp']
+    timeVerifs = numpy.arange(*timeInfo)
+    nonValids = timeStamps != timeVerifs
+    valueList[nonValids] = None #0
+  else:
+    # Now we unpack the series data we just read (anything faster than unpack?)
+    byteOrder, pointTypes = pointFormat[0], pointFormat[1:]
+    points = len(seriesString) // pointSize
+    seriesFormat = byteOrder + (pointTypes * points)
+    unpackedSeries = struct.unpack(seriesFormat, seriesString)
+  
+    # And finally we construct a list of values (optimize this!)
+    valueList = [None] * points  # Pre-allocate entire list for speed
+    currentInterval = fromInterval
+  
+    for i in xrange(0, len(unpackedSeries), 2):
+      pointTime = unpackedSeries[i]
+      if pointTime == currentInterval:
+        pointValue = unpackedSeries[i+1]
+        valueList[i//2] = pointValue  # In-place reassignment is faster than append()
+      currentInterval += step
+
   return (timeInfo, valueList)
 
 
