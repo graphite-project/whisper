@@ -134,18 +134,14 @@ def processMetric(fullPath, schemas, agg_schemas):
     info_xFilesFactor = "{0:.2f}".format(info['xFilesFactor'])
     str_xFilesFactor =  "{0:.2f}".format(xFilesFactor)
 
-    # check to see if the current and configured aggregationMethods are the same
+    # check to see if the current and configured xFilesFactor are the same
     if (str_xFilesFactor != info_xFilesFactor):
         rebuild = True
         messages += '%s xFilesFactor differs real: %s should be: %s \n' % (metric, info_xFilesFactor, str_xFilesFactor)
+    # check to see if the current and configured aggregationMethods are the same
     if (aggregationMethod != info['aggregationMethod']):
         rebuild = True
         messages += '%s aggregation schema differs real: %s should be: %s \n' % (metric, info['aggregationMethod'], aggregationMethod)
-
-    # check to see if the current and configured xFilesFactor are the same
-    if (xFilesFactor != info['xFilesFactor']):
-        rebuild = True
-        messages += '%s xFilesFactor differs real: %s should be: %s \n' % (metric, info['xFilesFactor'], xFilesFactor)
 
     # if we need to rebuild, lets do it.
     if (rebuild == True):
