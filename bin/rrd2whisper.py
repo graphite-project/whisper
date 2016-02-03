@@ -103,7 +103,8 @@ for rra in relevant_rras:
 
 for datasource in datasources:
   now = int(time.time())
-  path = rrd_path.replace('.rrd', '_%s.wsp' % datasource)
+  suffix = '_%s' % datasource if len(datasources) > 1 else ''
+  path = rrd_path.replace('.rrd', '%s.wsp' % suffix)
   try:
     whisper.create(path, archives, xFilesFactor=xFilesFactor)
   except whisper.InvalidConfiguration as e:
