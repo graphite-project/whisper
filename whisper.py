@@ -86,6 +86,17 @@ CACHE_HEADERS = False
 AUTOFLUSH = False
 __headerCache = {}
 
+class HeaderCacheEntry():
+    name = None
+    info = None
+    time = None
+
+    def __init__(name, info, time):
+        self.name = name
+        self.info = info
+        self.time = time
+
+
 longFormat = "!L"
 longSize = struct.calcsize(longFormat)
 floatFormat = "!f"
@@ -228,7 +239,7 @@ def enableDebug():
 
 def __readHeader(fh):
   if CACHE_HEADERS:
-    info = __headerCache.get(fh.name)
+    info = __headerCache.get(fh.name).info
     if info:
       return info
 
@@ -267,7 +278,7 @@ def __readHeader(fh):
     'archives': archives,
   }
   if CACHE_HEADERS:
-    __headerCache[fh.name] = info
+    __headerCache[fh.name] = HeaderCacheEntry(fh.name, info, time.time())
 
   return info
 
