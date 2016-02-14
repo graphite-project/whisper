@@ -240,6 +240,7 @@ def enableDebug():
 def __readHeader(fh):
   if CACHE_HEADERS:
     info = __headerCache.get(fh.name).info
+    __headerCache.get(fh.name).time = time.time()
     if info:
       return info
 
