@@ -91,7 +91,7 @@ class HeaderCacheEntry():
     info = None
     time = None
 
-    def __init__(name, info, time):
+    def __init__(self, name, info, time):
         self.name = name
         self.info = info
         self.time = time
@@ -239,11 +239,9 @@ def enableDebug():
 
 def __readHeader(fh):
   if CACHE_HEADERS:
-    info = __headerCache.get(fh.name).info
-    __headerCache.get(fh.name).time = time.time()
-    if info:
-      return info
-
+    if fh.name in __headerCache:
+        __headerCache.get(fh.name).time = time.time()
+        return __headerCache.get(fh.name).info
   originalOffset = fh.tell()
   fh.seek(0)
   packedMetadata = fh.read(metadataSize)
