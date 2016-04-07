@@ -53,7 +53,7 @@ except ImportError:
   CAN_FALLOCATE = False
 
 try:
-  import ftools
+  from fadvise import posix_fadvise, POSIX_FADV_RANDOM
   CAN_FADVISE = True
 except ImportError:
   CAN_FADVISE = False
@@ -406,7 +406,7 @@ aggregationMethod specifies the function to use when propagating data (see ``whi
       if LOCK:
         fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
       if CAN_FADVISE and FADVISE_RANDOM:
-        ftools.fadvise(fh.fileno(), mode="POSIX_FADV_RANDOM")
+        posix_fadvise(fh.fileno(), 0, 0, POSIX_FADV_RANDOM)
 
       aggregationType = struct.pack(longFormat, aggregationMethodToType.get(aggregationMethod, 1))
       oldest = max([secondsPerPoint * points for secondsPerPoint, points in archiveList])
@@ -565,7 +565,7 @@ def update(path, value, timestamp=None):
   value = float(value)
   with open(path, 'r+b') as fh:
     if CAN_FADVISE and FADVISE_RANDOM:
-      ftools.fadvise(fh.fileno(), mode="POSIX_FADV_RANDOM")
+      posix_fadvise(fh.fileno(), 0, 0, POSIX_FADV_RANDOM)
     return file_update(fh, value, timestamp)
 
 
@@ -631,7 +631,7 @@ points is a list of (timestamp,value) points
   points.sort(key=lambda p: p[0], reverse=True)  # Order points by timestamp, newest first
   with open(path, 'r+b') as fh:
     if CAN_FADVISE and FADVISE_RANDOM:
-      ftools.fadvise(fh.fileno(), mode="POSIX_FADV_RANDOM")
+      posix_fadvise(fh.fileno(), 0, 0, POSIX_FADV_RANDOM)
     return file_update_many(fh, points)
 
 
