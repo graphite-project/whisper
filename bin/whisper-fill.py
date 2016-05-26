@@ -15,7 +15,7 @@
 # Work performed by Fabian Groffen @grobian while working at Booking.com.
 # additional patches are from https://github.com/jssjr/carbonate/
 
-from whisper import info, fetch, update_many
+import whisper
 
 try:
     from whisper import operator
@@ -50,7 +50,7 @@ def itemgetter(*items):
 def fill(src, dst, tstart, tstop):
     # fetch range start-stop from src, taking values from the highest
     # precision archive, thus optionally requiring multiple fetch + merges
-    srcHeader = info(src)
+    srcHeader = whisper.info(src)
 
     srcArchives = srcHeader['archives']
     srcArchives.sort(key=itemgetter('retention'))
@@ -74,14 +74,14 @@ def fill(src, dst, tstart, tstop):
         untilTime = tstop
         fromTime = rtime if rtime > tstart else tstart
 
-        (timeInfo, values) = fetch(src, fromTime, untilTime)
+        (timeInfo, values) = whisper.fetch(src, fromTime, untilTime)
         (start, end, archive_step) = timeInfo
         pointsToWrite = list(itertools.ifilter(
             lambda points: points[1] is not None,
             itertools.izip(xrange(start, end, archive_step), values)))
         # order points by timestamp, newest first
         pointsToWrite.sort(key=lambda p: p[0], reverse=True)
-        update_many(dst, pointsToWrite)
+        whisper.update_many(dst, pointsToWrite)
 
         tstop = fromTime
 
@@ -91,7 +91,7 @@ def fill(src, dst, tstart, tstop):
 
 
 def fill_archives(src, dst, startFrom):
-    header = info(dst)
+    header = whisper.info(dst)
     archives = header['archives']
     archives = sorted(archives, key=lambda t: t['retention'])
 
@@ -100,7 +100,7 @@ def fill_archives(src, dst, startFrom):
         if fromTime >= startFrom:
             continue
 
-        (timeInfo, values) = fetch(dst, fromTime, startFrom)
+        (timeInfo, values) = whisper.fetch(dst, fromTime, startFrom)
         (start, end, step) = timeInfo
         gapstart = None
         for v in values:
@@ -121,7 +121,7 @@ def fill_archives(src, dst, startFrom):
 
 def main():
         option_parser = optparse.OptionParser(
-            usage='%prog src dst',
+            usage='%prog [--lock] src dst',
             description='copies data from src in dst, if missing')
         option_parser.add_option('--lock', help='Lock whisper files',
                 default=False, action='store_true')
@@ -130,6 +130,9 @@ def main():
         if len(args) != 2:
                 option_parser.print_help()
                 sys.exit(1)
+
+        if options.lock is True and whisper.CAN_LOCK:
+            whisper.LOCK = True
 
         src = args[0]
         dst = args[1]
