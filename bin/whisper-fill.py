@@ -26,6 +26,7 @@ except ImportError:
 import itertools
 import time
 import sys
+import optparse
 
 if sys.version_info >= (3, 0):
     xrange = range
@@ -118,20 +119,24 @@ def fill_archives(src, dst, startFrom):
         startFrom = fromTime
 
 
-def main(argv):
-        if len(argv) != 2:
-                print("usage: whisper-fill.py src dst");
-                print("       copies data from src in dst, if missing")
-                if len(argv) == 1 and (argv[0].lower() == "--help" or argv[0].lower() == "-h"):
-                        sys.exit(0)
+def main():
+        option_parser = optparse.OptionParser(
+            usage='%prog src dst',
+            description='copies data from src in dst, if missing')
+        option_parser.add_option('--lock', help='Lock whisper files',
+                default=False, action='store_true')
+        (options, args) = option_parser.parse_args()
+
+        if len(args) != 2:
+                option_parser.print_help()
                 sys.exit(1)
 
-        src = argv[0]
-        dst = argv[1]
+        src = args[0]
+        dst = args[1]
         startFrom = time.time()
 
         fill_archives(src, dst, startFrom)
 
 
 if __name__ == "__main__":
-        main(sys.argv[1:])
+        main()
