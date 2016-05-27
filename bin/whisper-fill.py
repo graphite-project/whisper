@@ -15,7 +15,7 @@
 # Work performed by Fabian Groffen @grobian while working at Booking.com.
 # additional patches are from https://github.com/jssjr/carbonate/
 
-from whisper import info, fetch, update_many
+import whisper
 
 try:
     from whisper import operator
@@ -26,6 +26,7 @@ except ImportError:
 import itertools
 import time
 import sys
+import optparse
 
 if sys.version_info >= (3, 0):
     xrange = range
@@ -49,7 +50,7 @@ def itemgetter(*items):
 def fill(src, dst, tstart, tstop):
     # fetch range start-stop from src, taking values from the highest
     # precision archive, thus optionally requiring multiple fetch + merges
-    srcHeader = info(src)
+    srcHeader = whisper.info(src)
 
     srcArchives = srcHeader['archives']
     srcArchives.sort(key=itemgetter('retention'))
@@ -73,14 +74,14 @@ def fill(src, dst, tstart, tstop):
         untilTime = tstop
         fromTime = rtime if rtime > tstart else tstart
 
-        (timeInfo, values) = fetch(src, fromTime, untilTime)
+        (timeInfo, values) = whisper.fetch(src, fromTime, untilTime)
         (start, end, archive_step) = timeInfo
         pointsToWrite = list(itertools.ifilter(
             lambda points: points[1] is not None,
             itertools.izip(xrange(start, end, archive_step), values)))
         # order points by timestamp, newest first
         pointsToWrite.sort(key=lambda p: p[0], reverse=True)
-        update_many(dst, pointsToWrite)
+        whisper.update_many(dst, pointsToWrite)
 
         tstop = fromTime
 
@@ -90,7 +91,7 @@ def fill(src, dst, tstart, tstop):
 
 
 def fill_archives(src, dst, startFrom):
-    header = info(dst)
+    header = whisper.info(dst)
     archives = header['archives']
     archives = sorted(archives, key=lambda t: t['retention'])
 
@@ -99,7 +100,7 @@ def fill_archives(src, dst, startFrom):
         if fromTime >= startFrom:
             continue
 
-        (timeInfo, values) = fetch(dst, fromTime, startFrom)
+        (timeInfo, values) = whisper.fetch(dst, fromTime, startFrom)
         (start, end, step) = timeInfo
         gapstart = None
         for v in values:
@@ -118,20 +119,27 @@ def fill_archives(src, dst, startFrom):
         startFrom = fromTime
 
 
-def main(argv):
-        if len(argv) != 2:
-                print("usage: whisper-fill.py src dst");
-                print("       copies data from src in dst, if missing")
-                if len(argv) == 1 and (argv[0].lower() == "--help" or argv[0].lower() == "-h"):
-                        sys.exit(0)
+def main():
+        option_parser = optparse.OptionParser(
+            usage='%prog [--lock] src dst',
+            description='copies data from src in dst, if missing')
+        option_parser.add_option('--lock', help='Lock whisper files',
+                default=False, action='store_true')
+        (options, args) = option_parser.parse_args()
+
+        if len(args) != 2:
+                option_parser.print_help()
                 sys.exit(1)
 
-        src = argv[0]
-        dst = argv[1]
+        if options.lock is True and whisper.CAN_LOCK:
+            whisper.LOCK = True
+
+        src = args[0]
+        dst = args[1]
         startFrom = time.time()
 
         fill_archives(src, dst, startFrom)
 
 
 if __name__ == "__main__":
-        main(sys.argv[1:])
+        main()
