@@ -150,7 +150,6 @@ def main():
 
         src = args[0]
         dst = args[1]
-        print('DEBUG: src: %s dst: %s' % (src, dst))
         
         # if our src *AND* dst are directories we'll want to walk them
         # to get our file list, setup our worker pool, and start goin
