@@ -124,10 +124,15 @@ already present in the target file, but instead, only add the missing
 data (e.g. where the gaps in the target file are).  Because no values
 are overwritten, no data or precision gets lost.  Also, unlike
 whisper-merge, try to take the highest-precision archive to provide
-the data, instead of the one with the largest retention.
+the data, instead of the one with the largest retention. If the source
+and destination are both directories, recursive comparison is performed
+on filename patterns, and appropriate backfilling is done in a multi
+threaded fashion (Handy if you have lots of files to fill).
 
 ```
-Usage: whisper-fill.py [options] src_path dst_path
+Usage: whisper-fill.py [options] src_file_path dst_file_path
+ *or*
+Usage: whisper-fill.py [options] src_dir_path dst_dir_path
 
 Options:
   -h, --help  show this help message and exit
