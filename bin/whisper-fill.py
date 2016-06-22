@@ -24,9 +24,11 @@ except ImportError:
     HAS_OPERATOR = False
 
 import itertools
+import os
 import time
 import sys
 import optparse
+from multiprocessing.dummy import Pool as ThreadPool
 
 if sys.version_info >= (3, 0):
     xrange = range
@@ -118,6 +120,18 @@ def fill_archives(src, dst, startFrom):
 
         startFrom = fromTime
 
+def list_files(tgt):
+    if os.path.isdir(tgt):
+        retv = []
+        for r, d, f in os.walk(tgt):
+            for fn in f:
+                retv.append('/'.join((r, fn)))
+        return retv
+    else:
+        return False
+
+def wrap_fill_archives(data):
+    fill_archives(data[0], data[1], data[2])
 
 def main():
         option_parser = optparse.OptionParser(
@@ -136,9 +150,39 @@ def main():
 
         src = args[0]
         dst = args[1]
-        startFrom = time.time()
+        print('DEBUG: src: %s dst: %s' % (src, dst))
+        
+        # if our src *AND* dst are directories we'll want to walk them
+        # to get our file list, setup our worker pool, and start goin
+        if os.path.isdir(src) and os.path.isdir(dst):
+            
+            # First things first, lets get our pool setup
+            pool = ThreadPool(8)
 
-        fill_archives(src, dst, startFrom)
+            print('Please wait while the source and destination directories are compared.')
+            print('This may take a moment, depending on how many files are present.')
+
+            # Now let's list our files
+            src_f = list_files(src)
+            dst_f = list_files(dst)
+            fills = []
+
+            # And provided that all worked out, let's start processing
+            if False not in (src_f, dst_f):
+                # so we go 2 valid file lists now, let's start listing
+                # off backfills.
+                for sf in src_f:
+                    if os.path.isfile('%s%s' % (dst, sf.split(src)[1])):
+                        fills.append((dst, sf.split(src)[1], time.time()))
+                        
+            # And now that we have a list of files to backfill, let's get
+            # cracking
+            results = pool.map(wrap_fill_archives, fills)
+            pool.close()
+            pool.join()
+        else:
+            startFrom = time.time()
+            fill_archives(src, dst, startFrom)
 
 
 if __name__ == "__main__":
