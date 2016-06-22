@@ -175,6 +175,8 @@ def main():
                     if os.path.isfile('%s%s' % (dst, sf.split(src)[1])):
                         fills.append((dst, sf.split(src)[1], time.time()))
                         
+            print('Processing %d files with 8 workers.' % len(fills))
+            
             # And now that we have a list of files to backfill, let's get
             # cracking
             results = pool.map(wrap_fill_archives, fills)
