@@ -97,10 +97,10 @@ def processMetric(fullPath, schemas, agg_schemas):
     messages = ''
 
     # get archive info from whisper file
-    info = whisper.info(fullpath)
+    info = whisper.info(fullPath)
 
     # get graphite metric name from fullPath
-    metric = getMetricFromPath(fullpath)
+    metric = getMetricFromPath(fullPath)
 
     # loop the carbon-storage schemas
     for schema in schemas:
