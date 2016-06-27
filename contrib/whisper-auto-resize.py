@@ -200,9 +200,11 @@ def confirm(question, error_response='Valid options : yes or no'):
             return False
         print(error_response)
 
-for root, _, files in os.walk(processPath):
-    # we only want to deal with non-hidden whisper files
-    for f in fnmatch.filter(files, '*.wsp'):
-        fullpath = os.path.join(root, f)
-        processMetric(fullpath, schemas, agg_schemas)
-
+if os.path.isfile(processPath) and processPath.endswith('.wsp'):
+    processMetric(processPath, schemas, agg_schemas)
+else:
+    for root, _, files in os.walk(processPath):
+        # we only want to deal with non-hidden whisper files
+        for f in fnmatch.filter(files, '*.wsp'):
+            fullpath = os.path.join(root, f)
+            processMetric(fullpath, schemas, agg_schemas)
