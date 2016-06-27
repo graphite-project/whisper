@@ -131,7 +131,8 @@ def list_files(tgt):
         return False
 
 def wrap_fill_archives(data):
-    fill_archives(data[0], data[1], data[2])
+    fill_archives('/'.join((data[0], data[2])), '/'.join((data[1], data[2])), data[3])
+    sys.stdout.write('.')
 
 def main():
         option_parser = optparse.OptionParser(
@@ -172,7 +173,7 @@ def main():
                 # off backfills.
                 for sf in src_f:
                     if os.path.isfile('%s%s' % (dst, sf.split(src)[1])):
-                        fills.append((dst, sf.split(src)[1], time.time()))
+                        fills.append((src, dst, sf.split(src)[1], time.time()))
                         
             print('Processing %d files with 8 workers.' % len(fills))
             
@@ -181,6 +182,7 @@ def main():
             results = pool.map(wrap_fill_archives, fills)
             pool.close()
             pool.join()
+            print('')
         else:
             startFrom = time.time()
             fill_archives(src, dst, startFrom)
