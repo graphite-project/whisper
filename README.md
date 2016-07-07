@@ -95,6 +95,19 @@ Options:
                  zero values.
 ```
 
+whisper-lastupdate.py
+----------------
+Display the most recently stored metric to stdout.
+
+```
+Usage: whisper-lastupdate.py [options] path
+
+Options:
+  -h, --help     show this help message and exit
+  --json         Output results in JSON form
+  --pretty       Show human-readable timestamps instead of unix times
+```
+
 whisper-info.py
 ---------------
 
