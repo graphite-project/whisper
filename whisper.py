@@ -458,7 +458,7 @@ def aggregate(aggregationMethod, knownValues, neighborValues=None):
   elif aggregationMethod == 'sum':
     return float(sum(knownValues))
   elif aggregationMethod == 'last':
-    return knownValues[len(knownValues)-1]
+    return knownValues[-1]
   elif aggregationMethod == 'max':
     return max(knownValues)
   elif aggregationMethod == 'min':
