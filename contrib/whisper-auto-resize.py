@@ -109,9 +109,12 @@ def processMetric(fullPath, schemas, agg_schemas):
             archive_config = [archive.getTuple() for archive in schema.archives]
             break
 
+    xFilesFactor = 0.5
+    aggregationMethod = 'average'
+
     # loop through the carbon-aggregation schemas
     for agg_schema in agg_schemas:
-        if agg_schema.matches(metric):
+        if agg_schema.matches(metric) and all(x is not None for x in agg_schema.archives):
             xFilesFactor, aggregationMethod = agg_schema.archives
             break
 
