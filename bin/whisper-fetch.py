@@ -57,7 +57,7 @@ except whisper.WhisperException as exc:
 
 if options.drop:
     fcn = _DROP_FUNCTIONS.get(options.drop)
-    values = [ fcn(x) for x in values ]
+    values = [ x for x in values if fcn(x) ]
 
 (start,end,step) = timeInfo
 
