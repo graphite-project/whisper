@@ -2,6 +2,16 @@
 import sys, os, fnmatch
 from subprocess import call
 from optparse import OptionParser
+from distutils.spawn import find_executable
+from os.path import basename
+
+# On Debian systems whisper-resize.py is available as whisper-resize
+whisperResizeExecutable = find_executable("whisper-resize.py")
+if whisperResizeExecutable is None:
+    whisperResizeExecutable = find_executable("whisper-resize")
+    if whisperResizeExecutable is None:
+        # Probably will fail later, set it nevertheless
+        whisperResizeExecutable = "whisper-resize.py"
 
 option_parser = OptionParser(
     usage='''%prog storagePath configPath
@@ -30,7 +40,7 @@ option_parser.add_option(
     help="ask for comfirmation prior to resizing a whisper file")
 option_parser.add_option(
     '-x', '--extra_args', default='',
-    type='string', help="pass any additional arguments to the whisper-resize.py script")
+    type='string', help="pass any additional arguments to the %s script" % basename(whisperResizeExecutable))
 
 (options, args) = option_parser.parse_args()
 
@@ -152,7 +162,7 @@ def processMetric(fullPath, schemas, agg_schemas):
 
     # if we need to rebuild, lets do it.
     if (rebuild == True):
-        cmd = 'whisper-resize.py "%s" %s --xFilesFactor=%s --aggregationMethod=%s %s' % (fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
+        cmd = '%s "%s" %s --xFilesFactor=%s --aggregationMethod=%s %s' % (whisperResizeExecutable, fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
         if (options.quiet != True or options.confirm == True):
             print(messages)
             print(cmd)
