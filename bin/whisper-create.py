@@ -42,6 +42,8 @@ option_parser.add_option('--aggregationMethod', default='average',
         ', '.join(whisper.aggregationMethods))
 option_parser.add_option('--overwrite', default=False, action='store_true')
 option_parser.add_option('--estimate', default=False, action='store_true', help="Don't create a whisper file, estimate storage requirements based on archive definitions")
+option_parser.add_option('--sparse', default=False, action='store_true', help="Create new whisper as sparse file")
+option_parser.add_option('--fallocate', default=False, action='store_true', help="Create new whisper and use fallocate")
 
 (options, args) = option_parser.parse_args()
 
@@ -79,7 +81,7 @@ if os.path.exists(path) and options.overwrite:
     os.unlink(path)
 
 try:
-  whisper.create(path, archives, xFilesFactor=options.xFilesFactor, aggregationMethod=options.aggregationMethod)
+  whisper.create(path, archives, xFilesFactor=options.xFilesFactor, aggregationMethod=options.aggregationMethod, sparse=options.sparse, useFallocate=options.fallocate)
 except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
