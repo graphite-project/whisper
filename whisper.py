@@ -721,10 +721,10 @@ Returns None if no data can be returned
     return file_fetch(fh, fromTime, untilTime, now)
 
 
-def file_fetch(fh, fromTime, untilTime, now = None):
+def file_fetch(fh, fromTime, untilTime, now=None):
   header = __readHeader(fh)
   if now is None:
-    now = int( time.time() )
+    now = int(time.time())
   if untilTime is None:
     untilTime = now
   fromTime = int(fromTime)
@@ -733,7 +733,7 @@ def file_fetch(fh, fromTime, untilTime, now = None):
   # Here we try and be flexible and return as much data as we can.
   # If the range of data is from too far in the past or fully in the future, we
   # return nothing
-  if (fromTime > untilTime):
+  if fromTime > untilTime:
     raise InvalidTimeInterval("Invalid time interval: from time '%s' is after until time '%s'" % (fromTime, untilTime))
 
   oldestTime = now - header['maxRetention']
@@ -755,65 +755,74 @@ def file_fetch(fh, fromTime, untilTime, now = None):
     if archive['retention'] >= diff:
       break
 
-  fromInterval = int( fromTime - (fromTime % archive['secondsPerPoint']) ) + archive['secondsPerPoint']
-  untilInterval = int( untilTime - (untilTime % archive['secondsPerPoint']) ) + archive['secondsPerPoint']
+  return __archive_fetch(fh, archive, fromTime, untilTime)
+
+
+def __archive_fetch(fh, archive, fromTime, untilTime):
+  """
+Fetch data from a single archive. Note that checks for validity of the time
+period requested happen above this level so it's possible to wrap around the
+archive on a read and request data older than the archive's retention
+"""
+  fromInterval = int(fromTime - (fromTime % archive['secondsPerPoint'])) + archive['secondsPerPoint']
+  untilInterval = int(untilTime - (untilTime % archive['secondsPerPoint'])) + archive['secondsPerPoint']
   if fromInterval == untilInterval:
-    # Check for zero-length time rages and always include the next point
-    untilInterval = untilInterval + archive['secondsPerPoint']
+    # Zero-length time range: always include the next point
+    untilInterval += archive['secondsPerPoint']
 
   fh.seek(archive['offset'])
   packedPoint = fh.read(pointSize)
-  (baseInterval,baseValue) = struct.unpack(pointFormat,packedPoint)
+  (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
 
   if baseInterval == 0:
     step = archive['secondsPerPoint']
-    points = (untilInterval - fromInterval) / step
-    timeInfo = (fromInterval,untilInterval,step)
+    points = (untilInterval - fromInterval) // step
+    timeInfo = (fromInterval, untilInterval, step)
     valueList = [None] * points
-    return (timeInfo,valueList)
+    return (timeInfo, valueList)
 
-  #Determine fromOffset
+  # Determine fromOffset
   timeDistance = fromInterval - baseInterval
-  pointDistance = timeDistance / archive['secondsPerPoint']
+  pointDistance = timeDistance // archive['secondsPerPoint']
   byteDistance = pointDistance * pointSize
   fromOffset = archive['offset'] + (byteDistance % archive['size'])
 
-  #Determine untilOffset
+  # Determine untilOffset
   timeDistance = untilInterval - baseInterval
-  pointDistance = timeDistance / archive['secondsPerPoint']
+  pointDistance = timeDistance // archive['secondsPerPoint']
   byteDistance = pointDistance * pointSize
   untilOffset = archive['offset'] + (byteDistance % archive['size'])
 
-  #Read all the points in the interval
+  # Read all the points in the interval
   fh.seek(fromOffset)
-  if fromOffset < untilOffset: #If we don't wrap around the archive
+  if fromOffset < untilOffset:  # If we don't wrap around the archive
     seriesString = fh.read(untilOffset - fromOffset)
-  else: #We do wrap around the archive, so we need two reads
+  else:  # We do wrap around the archive, so we need two reads
     archiveEnd = archive['offset'] + archive['size']
     seriesString = fh.read(archiveEnd - fromOffset)
     fh.seek(archive['offset'])
     seriesString += fh.read(untilOffset - archive['offset'])
 
-  #Now we unpack the series data we just read (anything faster than unpack?)
-  byteOrder,pointTypes = pointFormat[0],pointFormat[1:]
-  points = len(seriesString) / pointSize
+  # Now we unpack the series data we just read (anything faster than unpack?)
+  byteOrder, pointTypes = pointFormat[0], pointFormat[1:]
+  points = len(seriesString) // pointSize
   seriesFormat = byteOrder + (pointTypes * points)
   unpackedSeries = struct.unpack(seriesFormat, seriesString)
 
-  #And finally we construct a list of values (optimize this!)
-  valueList = [None] * points #pre-allocate entire list for speed
+  # And finally we construct a list of values (optimize this!)
+  valueList = [None] * points  # Pre-allocate entire list for speed
   currentInterval = fromInterval
   step = archive['secondsPerPoint']
 
-  for i in xrange(0,len(unpackedSeries),2):
+  for i in xrange(0, len(unpackedSeries), 2):
     pointTime = unpackedSeries[i]
     if pointTime == currentInterval:
       pointValue = unpackedSeries[i+1]
-      valueList[i/2] = pointValue #in-place reassignment is faster than append()
+      valueList[i//2] = pointValue  # In-place reassignment is faster than append()
     currentInterval += step
 
-  timeInfo = (fromInterval,untilInterval,step)
-  return (timeInfo,valueList)
+  timeInfo = (fromInterval, untilInterval, step)
+  return (timeInfo, valueList)
 
 def merge(path_from, path_to, step=1<<12):
   headerFrom = info(path_from)
