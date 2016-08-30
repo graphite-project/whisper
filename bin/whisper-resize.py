@@ -166,10 +166,9 @@ else:
 if options.newfile is not None:
   sys.exit(0)
 
-if not options.nobackup:
-    backup = path + '.bak'
-    print('Renaming old database to: %s' % backup)
-    os.rename(path, backup)
+backup = path + '.bak'
+print('Renaming old database to: %s' % backup)
+os.rename(path, backup)
 
 try:
   print('Renaming new database to: %s' % path)
@@ -180,3 +179,6 @@ except:
   os.rename(backup, path)
   sys.exit(1)
 
+if options.nobackup:
+    print("Unlinking backup: %s" % backup)
+    os.unlink(backup)
