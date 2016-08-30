@@ -180,5 +180,5 @@ except:
   sys.exit(1)
 
 if options.nobackup:
-    print("Unlinking backup: %s" % backup)
-    os.unlink(backup)
+  print("Unlinking backup: %s" % backup)
+  os.unlink(backup)
