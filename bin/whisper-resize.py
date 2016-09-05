@@ -112,16 +112,7 @@ if options.aggregate:
     # Loading all datapoints into memory for fast querying
     timeinfo, values = archive['data']
     new_datapoints = zip( range(*timeinfo), values )
-    if all_datapoints:
-      last_timestamp = all_datapoints[-1][0]
-      slice_end = 0
-      for i,(timestamp,value) in enumerate(new_datapoints):
-        if timestamp > last_timestamp:
-          slice_end = i
-          break
-      all_datapoints += new_datapoints[i:]
-    else:
-      all_datapoints += new_datapoints
+    all_datapoints += new_datapoints
 
   oldtimestamps = map( lambda p: p[0], all_datapoints)
   oldvalues = map( lambda p: p[1], all_datapoints)
@@ -132,11 +123,12 @@ if options.aggregate:
 
   new_info = whisper.info(newfile)
   new_archives = new_info['archives']
+  new_archives.sort(key=lambda a: a['secondsPerPoint'], reverse=True)
 
   for archive in new_archives:
     step = archive['secondsPerPoint']
-    fromTime = now - archive['retention'] + now % step
-    untilTime = now + now % step + step
+    fromTime = now - archive['retention'] - now % step
+    untilTime = now - now % step + step
     print("(%s,%s,%s)" % (fromTime,untilTime, step))
     timepoints_to_update = range(fromTime, untilTime, step)
     print("timepoints_to_update: %s" % timepoints_to_update)
