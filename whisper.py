@@ -95,6 +95,9 @@ LOCK = False
 CACHE_HEADERS = False
 AUTOFLUSH = False
 FADVISE_RANDOM = False
+# Buffering setting applied to all operations that do *not* require
+# a full scan of the file in order to minimize cache thrashing.
+BUFFERING = 0
 __headerCache = {}
 
 longFormat = "!L"
@@ -290,7 +293,7 @@ path is a string
 aggregationMethod specifies the method to use when propagating data (see ``whisper.aggregationMethods``)
 xFilesFactor specifies the fraction of data points in a propagation interval that must have known values for a propagation to occur.  If None, the existing xFilesFactor in path will not be changed
 """
-  with open(path, 'r+b') as fh:
+  with open(path, 'r+b', BUFFERING) as fh:
     if LOCK:
       fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
 
@@ -405,7 +408,7 @@ aggregationMethod specifies the function to use when propagating data (see ``whi
   if os.path.exists(path):
     raise InvalidConfiguration("File %s already exists!" % path)
 
-  with open(path, 'wb') as fh:
+  with open(path, 'wb', BUFFERING) as fh:
     try:
       if LOCK:
         fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
@@ -567,7 +570,7 @@ def update(path, value, timestamp=None):
   timestamp is either an int or float
   """
   value = float(value)
-  with open(path, 'r+b') as fh:
+  with open(path, 'r+b', BUFFERING) as fh:
     if CAN_FADVISE and FADVISE_RANDOM:
       posix_fadvise(fh.fileno(), 0, 0, POSIX_FADV_RANDOM)
     return file_update(fh, value, timestamp)
@@ -633,7 +636,7 @@ points is a list of (timestamp,value) points
   if not points: return
   points = [(int(t), float(v)) for (t, v) in points]
   points.sort(key=lambda p: p[0], reverse=True)  # Order points by timestamp, newest first
-  with open(path, 'r+b') as fh:
+  with open(path, 'r+b', BUFFERING) as fh:
     if CAN_FADVISE and FADVISE_RANDOM:
       posix_fadvise(fh.fileno(), 0, 0, POSIX_FADV_RANDOM)
     return file_update_many(fh, points)
