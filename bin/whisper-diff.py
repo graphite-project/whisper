@@ -9,8 +9,6 @@ try:
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
-now = int( time.time() )
-
 option_parser = optparse.OptionParser(usage='''%prog [options] path_a path_b''')
 option_parser.add_option('--summary', default=False, action='store_true',
                          help="show summary of differences")
