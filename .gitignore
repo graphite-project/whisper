@@ -8,3 +8,6 @@ htmlcov/*
 ve
 .idea
 *.iml
+.project
+.settings
+.pydevproject

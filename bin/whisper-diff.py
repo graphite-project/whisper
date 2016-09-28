@@ -1,12 +1,15 @@
 #!/usr/bin/python -tt
 
 import sys
+import time
 import optparse
 
 try:
   import whisper
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+
+now = int( time.time() )
 
 option_parser = optparse.OptionParser(usage='''%prog [options] path_a path_b''')
 option_parser.add_option('--summary', default=False, action='store_true',
@@ -17,6 +20,8 @@ option_parser.add_option('--columns', default=False, action='store_true',
                          help="print output in simple columns")
 option_parser.add_option('--no-headers', default=False, action='store_true',
                          help="do not print column headers")
+option_parser.add_option('--until', default=None, type='int',
+                         help="Unix epoch time of the end of your requested interval (default: None)")
 
 (options, args) = option_parser.parse_args()
 
@@ -26,6 +31,11 @@ if len(args) != 2:
 
 (path_a,path_b) = args[0::1]
 
+if options.until:
+  until_time = int( options.until )
+else:
+  until_time = None
+  
 def print_diffs(diffs,pretty=True,headers=True):
   if pretty:
     h = "%7s %11s %13s %13s\n"
@@ -56,7 +66,7 @@ def print_summary(diffs,pretty=True,headers=True):
   for archive, points, total in diffs:
     sys.stdout.write(f%(archive,total,points.__len__()))
     
-archive_diffs = whisper.diff(path_a,path_b,ignore_empty=options.ignore_empty)
+archive_diffs = whisper.diff(path_a,path_b,ignore_empty=options.ignore_empty,until_time=until_time)
 if options.summary:
   print_summary(archive_diffs,pretty=(not options.columns),headers=(not options.no_headers))
 else:
