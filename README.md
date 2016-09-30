@@ -199,6 +199,8 @@ Options:
   --ignore-empty  skip comparison if either value is undefined
   --columns       print output in simple columns
   --no-headers    do not print column headers
+  --until=UNTIL   Unix epoch time of the end of your requested interval
+                  (default: now)
 ```
 
 ## License
