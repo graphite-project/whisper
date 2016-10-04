@@ -36,6 +36,9 @@ Options:
                         The consolidation function to fetch from on input and
                         aggregationMethod to set on output. One of: average,
                         last, max, min
+  --destinationPath=DESTINATIONPATH
+                        Path to place created whisper file. Defaults to the
+                        RRD file's source path.
 ```
 
 whisper-create.py
