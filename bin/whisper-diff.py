@@ -68,10 +68,23 @@ def print_summary(diffs,pretty=True,headers=True):
     sys.stdout.write(f%(archive,total,points.__len__()))
 
 def print_summary_json(diffs,path_a,path_b):
-  print json.dumps({'path_a': path_a, 'path_b': path_b, 'archives': [{'archive': archive, 'total': total, 'points': points.__len__()} for archive, points, total in diffs]}, sort_keys=True, indent=2, separators=(',', ' : '))
+  print json.dumps({'path_a': path_a,
+                    'path_b': path_b,
+                    'archives': [{'archive': archive,
+                                  'total': total,
+                                  'points': points.__len__()}
+                                 for archive, points, total in diffs]},
+                   sort_keys=True, indent=2, separators=(',', ' : '))
 
 def print_diffs_json(diffs,path_a,path_b):
-  print json.dumps({'path_a': path_a, 'path_b': path_b, 'archives': [{'archive': archive, 'total': total, 'points': points.__len__(), 'datapoint': [{'timestamp': p[0], 'value_a': p[1], 'value_b': p[2]} for p in points]} for archive, points, total in diffs]}, sort_keys=True, indent=2, separators=(',', ' : '))
+  print json.dumps({'path_a': path_a,
+                    'path_b': path_b,
+                    'archives': [{'archive': archive,
+                                  'total': total,
+                                  'points': points.__len__(),
+                                  'datapoint': [{'timestamp': p[0], 'value_a': p[1], 'value_b': p[2]} for p in points]}
+                                 for archive, points, total in diffs]},
+                   sort_keys=True, indent=2, separators=(',', ' : '))
 
 def main():
   archive_diffs = whisper.diff(path_a,path_b,ignore_empty=options.ignore_empty,until_time=until_time)
