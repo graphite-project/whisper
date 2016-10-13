@@ -38,6 +38,11 @@ option_parser.add_option(
     ', '.join(aggregationMethods),
     default='average',
     type='string')
+option_parser.add_option('--destinationPath', 
+    help="Path to place created whisper file. Defaults to the " + 
+    "RRD file's source path.",
+    default='.', 
+    type='string')
 
 (options, args) = option_parser.parse_args()
 
@@ -104,7 +109,21 @@ for rra in relevant_rras:
 for datasource in datasources:
   now = int(time.time())
   suffix = '_%s' % datasource if len(datasources) > 1 else ''
-  path = rrd_path.replace('.rrd', '%s.wsp' % suffix)
+
+  if options.destinationPath:
+    destination_path = options.destinationPath
+    if not os.path.isdir(destination_path):
+      try:
+        os.makedirs(destination_path)
+      except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(destination_path):
+          pass
+        else: raise
+    rrd_file = os.path.basename(rrd_path).replace('.rrd', '%s.wsp' % suffix)
+    path = os.path.dirname(destination_path) + '/' + rrd_file
+  else:
+    path = rrd_path.replace('.rrd', '%s.wsp' % suffix)
+
   try:
     whisper.create(path, archives, xFilesFactor=xFilesFactor)
   except whisper.InvalidConfiguration as e:
