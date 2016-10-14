@@ -3,6 +3,7 @@
 import sys
 import time
 import optparse
+import json
 
 try:
   import whisper
@@ -20,6 +21,8 @@ option_parser.add_option('--no-headers', default=False, action='store_true',
                          help="do not print column headers")
 option_parser.add_option('--until', default=None, type='int',
                          help="Unix epoch time of the end of your requested interval (default: None)")
+option_parser.add_option('--json', default=False, action='store_true',
+                         help="Output results in JSON form")
 
 (options, args) = option_parser.parse_args()
 
@@ -63,9 +66,38 @@ def print_summary(diffs,pretty=True,headers=True):
     sys.stdout.write(f%('archive','total','differing'))
   for archive, points, total in diffs:
     sys.stdout.write(f%(archive,total,points.__len__()))
-    
-archive_diffs = whisper.diff(path_a,path_b,ignore_empty=options.ignore_empty,until_time=until_time)
-if options.summary:
-  print_summary(archive_diffs,pretty=(not options.columns),headers=(not options.no_headers))
-else:
-  print_diffs(archive_diffs,pretty=(not options.columns),headers=(not options.no_headers))
+
+def print_summary_json(diffs,path_a,path_b):
+  print json.dumps({'path_a': path_a,
+                    'path_b': path_b,
+                    'archives': [{'archive': archive,
+                                  'total': total,
+                                  'points': points.__len__()}
+                                 for archive, points, total in diffs]},
+                   sort_keys=True, indent=2, separators=(',', ' : '))
+
+def print_diffs_json(diffs,path_a,path_b):
+  print json.dumps({'path_a': path_a,
+                    'path_b': path_b,
+                    'archives': [{'archive': archive,
+                                  'total': total,
+                                  'points': points.__len__(),
+                                  'datapoint': [{'timestamp': p[0], 'value_a': p[1], 'value_b': p[2]} for p in points]}
+                                 for archive, points, total in diffs]},
+                   sort_keys=True, indent=2, separators=(',', ' : '))
+
+def main():
+  archive_diffs = whisper.diff(path_a,path_b,ignore_empty=options.ignore_empty,until_time=until_time)
+  if options.summary:
+    if options.json:
+      print_summary_json(archive_diffs,path_a,path_b)
+    else:
+      print_summary(archive_diffs,pretty=(not options.columns),headers=(not options.no_headers))
+  else:
+    if options.json:
+      print_diffs_json(archive_diffs,path_a,path_b)
+    else:
+      print_diffs(archive_diffs,pretty=(not options.columns),headers=(not options.no_headers))
+
+if __name__ == "__main__":
+  main()

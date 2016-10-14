@@ -204,6 +204,7 @@ Options:
   --no-headers    do not print column headers
   --until=UNTIL   Unix epoch time of the end of your requested interval
                   (default: now)
+  --json          Output results in JSON form
 ```
 
 ## License
