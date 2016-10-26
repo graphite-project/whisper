@@ -14,7 +14,7 @@ setup(
   license='Apache Software License 2.0',
   description='Fixed size round-robin style database',
   py_modules=['whisper'],
-  scripts=glob('bin/*'),
+  scripts=glob('bin/*') + glob('contrib/*'),
   classifiers=[
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.6',
