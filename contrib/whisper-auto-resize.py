@@ -119,14 +119,16 @@ def processMetric(fullPath, schemas, agg_schemas):
             archive_config = [archive.getTuple() for archive in schema.archives]
             break
 
-    xFilesFactor = 0.5
-    aggregationMethod = 'average'
-
     # loop through the carbon-aggregation schemas
     for agg_schema in agg_schemas:
-        if agg_schema.matches(metric) and all(x is not None for x in agg_schema.archives):
+        if agg_schema.matches(metric):
             xFilesFactor, aggregationMethod = agg_schema.archives
             break
+
+    if xFilesFactor is None:
+        xFilesFactor = 0.5
+    if aggregationMethod is None:
+        aggregationMethod = 'average'
 
     # loop through the bucket tuples and convert to string format for resizing
     for retention in archive_config:
