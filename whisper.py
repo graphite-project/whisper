@@ -330,8 +330,8 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
       fh.flush()
       os.fsync(fh.fileno())
 
-      if CACHE_HEADERS and fh.name in __headerCache:
-        del __headerCache[fh.name]
+    if CACHE_HEADERS and fh.name in __headerCache:
+      del __headerCache[fh.name]
 
   return aggregationTypeToMethod.get(aggregationType, 'average')
 
