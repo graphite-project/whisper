@@ -13,7 +13,7 @@ except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
 if sys.version_info >= (3, 0):
-    xrange = range
+  xrange = range
 
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)

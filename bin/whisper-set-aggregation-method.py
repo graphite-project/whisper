@@ -6,9 +6,9 @@ import signal
 import optparse
 
 try:
-    import whisper
+  import whisper
 except ImportError:
-    raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
 # Ignore SIGPIPE
 try:
