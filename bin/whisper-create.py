@@ -20,10 +20,10 @@ def byte_format(num):
 
 # Ignore SIGPIPE
 try:
-   signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+  signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 except AttributeError:
-   #OS=windows
-   pass
+  #OS=windows
+  pass
 
 option_parser = optparse.OptionParser(
     usage='''%prog path timePerPoint:timeToStore [timePerPoint:timeToStore]*
@@ -77,8 +77,8 @@ archives = [whisper.parseRetentionDef(retentionDef)
             for retentionDef in args[1:]]
 
 if os.path.exists(path) and options.overwrite:
-    print('Overwriting existing file: %s' % path)
-    os.unlink(path)
+  print('Overwriting existing file: %s' % path)
+  os.unlink(path)
 
 try:
   whisper.create(path, archives, xFilesFactor=options.xFilesFactor, aggregationMethod=options.aggregationMethod, sparse=options.sparse, useFallocate=options.fallocate)

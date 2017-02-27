@@ -56,8 +56,8 @@ except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 if options.drop:
-    fcn = _DROP_FUNCTIONS.get(options.drop)
-    values = [ x for x in values if fcn(x) ]
+  fcn = _DROP_FUNCTIONS.get(options.drop)
+  values = [ x for x in values if fcn(x) ]
 
 (start,end,step) = timeInfo
 

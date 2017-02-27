@@ -30,7 +30,7 @@ path_from = args[0]
 path_to = args[1]
 
 for filename in (path_from, path_to):
-   if not os.path.exists(filename):
-       raise SystemExit('[ERROR] File "%s" does not exist!' % filename)
+  if not os.path.exists(filename):
+    raise SystemExit('[ERROR] File "%s" does not exist!' % filename)
 
 whisper.merge(path_from, path_to, options._from, options.until)

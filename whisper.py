@@ -37,7 +37,7 @@ izip = getattr(itertools, 'izip', zip)
 ifilter = getattr(itertools, 'ifilter', filter)
 
 if sys.version_info >= (3, 0):
-    xrange = range
+  xrange = range
 
 try:
   import fcntl
@@ -138,8 +138,8 @@ UnitMultipliers = {
 
 def getUnitString(s):
   for value in ('seconds', 'minutes', 'hours', 'days', 'weeks', 'years'):
-      if value.startswith(s):
-          return value
+    if value.startswith(s):
+      return value
   raise ValueError("Invalid unit '%s'" % s)
 
 
@@ -171,27 +171,27 @@ def parseRetentionDef(retentionDef):
 
 class WhisperException(Exception):
 
-    """Base class for whisper exceptions."""
+  """Base class for whisper exceptions."""
 
 
 class InvalidConfiguration(WhisperException):
 
-    """Invalid configuration."""
+  """Invalid configuration."""
 
 
 class InvalidAggregationMethod(WhisperException):
 
-    """Invalid aggregation method."""
+  """Invalid aggregation method."""
 
 
 class InvalidTimeInterval(WhisperException):
 
-    """Invalid time interval."""
+  """Invalid time interval."""
 
 
 class TimestampNotCovered(WhisperException):
 
-    """Timestamp not covered by any archives in this database."""
+  """Timestamp not covered by any archives in this database."""
 
 
 class CorruptWhisperFile(WhisperException):
@@ -311,11 +311,11 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
             aggregationMethod)
 
     if xFilesFactor is not None:
-        # Use specified xFilesFactor
-        xff = struct.pack(floatFormat, float(xFilesFactor))
+      # Use specified xFilesFactor
+      xff = struct.pack(floatFormat, float(xFilesFactor))
     else:
-        # Retain old value
-        xff = struct.pack(floatFormat, xff)
+      # Retain old value
+      xff = struct.pack(floatFormat, xff)
 
     # Repack the remaining header information
     maxRetention = struct.pack(longFormat, maxRetention)
@@ -472,7 +472,7 @@ def aggregate(aggregationMethod, knownValues, neighborValues=None):
     return min(knownValues)
   elif aggregationMethod == 'avg_zero':
     if not neighborValues:
-        raise InvalidAggregationMethod("Using avg_zero without neighborValues")
+      raise InvalidAggregationMethod("Using avg_zero without neighborValues")
     values = [x or 0 for x in neighborValues]
     return float(sum(values)) / float(len(values))
   else:
@@ -683,7 +683,7 @@ def file_update_many(fh, points):
 def __archive_update_many(fh, header, archive, points):
   step = archive['secondsPerPoint']
   alignedPoints = [(timestamp - (timestamp % step), value)
-                    for (timestamp, value) in points]
+                   for (timestamp, value) in points]
   # Create a packed string for each contiguous sequence of points
   packedStrings = []
   previousInterval = None
@@ -964,9 +964,9 @@ def file_diff(fh_from, fh_to, ignore_empty=False, until_time=None):
 
   now = int(time.time())
   if until_time:
-      untilTime = until_time
+    untilTime = until_time
   else:
-      untilTime = now
+    untilTime = now
 
   for archive_number, archive in enumerate(archives):
     diffs = []
