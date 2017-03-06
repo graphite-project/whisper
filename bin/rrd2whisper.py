@@ -41,7 +41,7 @@ option_parser.add_option(
 option_parser.add_option('--destinationPath', 
     help="Path to place created whisper file. Defaults to the " + 
     "RRD file's source path.",
-    default='.', 
+    default=None,
     type='string')
 
 (options, args) = option_parser.parse_args()
@@ -120,7 +120,7 @@ for datasource in datasources:
           pass
         else: raise
     rrd_file = os.path.basename(rrd_path).replace('.rrd', '%s.wsp' % suffix)
-    path = os.path.dirname(destination_path) + '/' + rrd_file
+    path = destination_path + '/' + rrd_file
   else:
     path = rrd_path.replace('.rrd', '%s.wsp' % suffix)
 
