@@ -515,7 +515,9 @@ class TestWhisper(WhisperTestBase):
 
         target_xff = 0.42
         info0 = whisper.info(self.filename)
-        whisper.setXFilesFactor(self.filename, target_xff)
+        old_xff = whisper.setXFilesFactor(self.filename, target_xff)
+        # return value should match old xff
+        self.assertEqual(info0['xFilesFactor'], old_xff)
         info1 = whisper.info(self.filename)
 
         # Other header information should not change
@@ -599,7 +601,10 @@ class TestWhisper(WhisperTestBase):
             # original xFilesFactor
             info0 = whisper.info(self.filename)
             # optional xFilesFactor not passed
-            whisper.setAggregationMethod(self.filename, ag)
+            old_ag = whisper.setAggregationMethod(self.filename, ag)
+
+            # should return old aggregationmethod
+            self.assertEqual(old_ag, info0['aggregationMethod'])
 
             # original value should not change
             info1 = whisper.info(self.filename)
@@ -609,7 +614,9 @@ class TestWhisper(WhisperTestBase):
             self.assertEqual(ag, info1['aggregationMethod'])
 
             # optional xFilesFactor used
-            whisper.setAggregationMethod(self.filename, ag, xff)
+            old_ag = whisper.setAggregationMethod(self.filename, ag, xff)
+            # should return old aggregationmethod
+            self.assertEqual(old_ag, info1['aggregationMethod'])
             # new info should match what we just set it to
             info2 = whisper.info(self.filename)
             # packing and unpacking because
