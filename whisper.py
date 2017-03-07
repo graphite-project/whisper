@@ -306,28 +306,15 @@ def setXFilesFactor(path, xFilesFactor):
   returns the old xFilesFactor
   """
 
-  with open(path, 'r+b', BUFFERING) as fh:
-    if LOCK:
-      fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+  (_, old_xff) = __setAggregation(path, xFilesFactor=xFilesFactor)
 
-    info = __readHeader(fh)
-
-    __writeHeaderMetadata(fh, info['aggregationMethod'], info['maxRetention'],
-                          xFilesFactor, len(info['archives']))
-
-    if AUTOFLUSH:
-      fh.flush()
-      os.fsync(fh.fileno())
-
-    if CACHE_HEADERS and fh.name in __headerCache:
-      del __headerCache[fh.name]
-
-  return info['xFilesFactor']
+  return old_xff
 
 
 def setAggregationMethod(path, aggregationMethod, xFilesFactor=None):
-  """setAggregationMethod(path,aggregationMethod,xFilesFactor=None)
-  path is a string
+  """Sets the aggregationMethod for file in path
+
+  path is a string pointing to the whisper file
   aggregationMethod specifies the method to use when propagating data (see
   ``whisper.aggregationMethods``)
   xFilesFactor specifies the fraction of data points in a propagation interval
@@ -337,6 +324,14 @@ def setAggregationMethod(path, aggregationMethod, xFilesFactor=None):
   returns the old aggregationMethod
   """
 
+  (old_agm, _) = __setAggregation(path, aggregationMethod, xFilesFactor)
+
+  return old_agm
+
+
+def __setAggregation(path, aggregationMethod=None, xFilesFactor=None):
+  """ Set aggregationMethod and or xFilesFactor for file in path"""
+
   with open(path, 'r+b', BUFFERING) as fh:
     if LOCK:
       fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
@@ -345,6 +340,9 @@ def setAggregationMethod(path, aggregationMethod, xFilesFactor=None):
 
     if xFilesFactor is None:
       xFilesFactor = info['xFilesFactor']
+
+    if aggregationMethod is None:
+      aggregationMethod = info['aggregationMethod']
 
     __writeHeaderMetadata(fh, aggregationMethod, info['maxRetention'],
                           xFilesFactor, len(info['archives']))
@@ -356,7 +354,7 @@ def setAggregationMethod(path, aggregationMethod, xFilesFactor=None):
     if CACHE_HEADERS and fh.name in __headerCache:
       del __headerCache[fh.name]
 
-  return info['aggregationMethod']
+  return (info['aggregationMethod'], info['xFilesFactor'])
 
 
 def __writeHeaderMetadata(fh, aggregationMethod, maxRetention, xFilesFactor, archiveCount):
@@ -374,7 +372,7 @@ def __writeHeaderMetadata(fh, aggregationMethod, maxRetention, xFilesFactor, arc
     raise InvalidXFilesFactor("Invalid xFilesFactor %s, not a float" %
                               xFilesFactor)
 
-  if not 0 <= xFilesFactor <= 1:
+  if xFilesFactor < 0 or xFilesFactor > 1:
     raise InvalidXFilesFactor("Invalid xFilesFactor %s, not between 0 and 1" %
                               xFilesFactor)
 
