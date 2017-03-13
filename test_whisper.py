@@ -678,6 +678,7 @@ class TestParseRetentionDef(unittest.TestCase):
             ('60:10x', ValueError("Invalid unit 'x'")),
 
             # From parseRetentionDef
+            ('10', ValueError("Invalid retention definition '10'")),
             ('10X:10', ValueError("Invalid precision specification '10X'")),
             ('10:10$', ValueError("Invalid retention specification '10$'")),
             ('60:10', (60, 10)),
