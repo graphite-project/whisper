@@ -347,6 +347,22 @@ class TestWhisper(WhisperTestBase):
         whisper.merge(self.filename, testdb)
         self._remove(testdb)
 
+    def test_merge_empty(self):
+        """
+        test merging from an empty database
+        """
+        testdb_a = "test-a-%s" % self.filename
+        testdb_b = "test-b-%s" % self.filename
+
+        # create two empty databases with same retention
+        whisper.create(testdb_a, self.retention)
+        whisper.create(testdb_b, self.retention)
+
+        whisper.merge(testdb_a, testdb_b)
+
+        self._remove(testdb_a)
+        self._remove(testdb_b)
+
     def test_merge_bad_archive_config(self):
         testdb = "test-%s" % self.filename
 

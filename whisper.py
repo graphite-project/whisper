@@ -990,6 +990,9 @@ def file_merge(fh_from, fh_to, time_from=None, time_to=None):
     pointsToWrite = list(ifilter(
       lambda points: points[1] is not None,
       izip(xrange(start, end, archive_step), values)))
+    # skip if there are no points to write
+    if len(pointsToWrite) == 0:
+      continue
     __archive_update_many(fh_to, headerTo, archive, pointsToWrite)
 
 
