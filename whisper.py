@@ -144,7 +144,10 @@ def getUnitString(s):
 
 
 def parseRetentionDef(retentionDef):
-  (precision, points) = retentionDef.strip().split(':', 1)
+  try:
+    (precision, points) = retentionDef.strip().split(':', 1)
+  except ValueError:
+    raise ValueError("Invalid retention definition '%s'" % retentionDef)
 
   if precision.isdigit():
     precision = int(precision) * UnitMultipliers[getUnitString('s')]
