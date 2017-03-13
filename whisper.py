@@ -188,6 +188,9 @@ class InvalidTimeInterval(WhisperException):
 
   """Invalid time interval."""
 
+class InvalidXFilesFactor(WhisperException):
+
+  """Invalid xFilesFactor."""
 
 class TimestampNotCovered(WhisperException):
 
@@ -255,6 +258,14 @@ def __readHeader(fh):
   except:
     raise CorruptWhisperFile("Unable to read header", fh.name)
 
+  try:
+    agm = aggregationTypeToMethod[aggregationType]
+  except:
+    raise CorruptWhisperFile("Unable to read header", fh.name)
+
+  if not 0 <= xff <= 1:
+    raise CorruptWhisperFile("Unable to read header", fh.name)
+
   archives = []
 
   for i in xrange(archiveCount):
@@ -286,45 +297,55 @@ def __readHeader(fh):
   return info
 
 
-def setAggregationMethod(path, aggregationMethod, xFilesFactor=None):
-  """setAggregationMethod(path,aggregationMethod,xFilesFactor=None)
+def setXFilesFactor(path, xFilesFactor):
+  """Sets the xFilesFactor for file in path
 
-path is a string
-aggregationMethod specifies the method to use when propagating data (see ``whisper.aggregationMethods``)
-xFilesFactor specifies the fraction of data points in a propagation interval that must have known values for a propagation to occur.  If None, the existing xFilesFactor in path will not be changed
-"""
+  path is a string pointing to a whisper file
+  xFilesFactor is a float between 0 and 1
+
+  returns the old xFilesFactor
+  """
+
+  (_, old_xff) = __setAggregation(path, xFilesFactor=xFilesFactor)
+
+  return old_xff
+
+
+def setAggregationMethod(path, aggregationMethod, xFilesFactor=None):
+  """Sets the aggregationMethod for file in path
+
+  path is a string pointing to the whisper file
+  aggregationMethod specifies the method to use when propagating data (see
+  ``whisper.aggregationMethods``)
+  xFilesFactor specifies the fraction of data points in a propagation interval
+  that must have known values for a propagation to occur. If None, the
+  existing xFilesFactor in path will not be changed
+
+  returns the old aggregationMethod
+  """
+
+  (old_agm, _) = __setAggregation(path, aggregationMethod, xFilesFactor)
+
+  return old_agm
+
+
+def __setAggregation(path, aggregationMethod=None, xFilesFactor=None):
+  """ Set aggregationMethod and or xFilesFactor for file in path"""
+
   with open(path, 'r+b', BUFFERING) as fh:
     if LOCK:
       fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
 
-    packedMetadata = fh.read(metadataSize)
+    info = __readHeader(fh)
 
-    try:
-      (aggregationType, maxRetention, xff, archiveCount) = struct.unpack(metadataFormat, packedMetadata)
-    except (struct.error, ValueError):
-      raise CorruptWhisperFile("Unable to read header", fh.name)
+    if xFilesFactor is None:
+      xFilesFactor = info['xFilesFactor']
 
-    try:
-      newAggregationType = struct.pack(longFormat, aggregationMethodToType[aggregationMethod])
-    except KeyError:
-      raise InvalidAggregationMethod("Unrecognized aggregation method: %s" %
-            aggregationMethod)
+    if aggregationMethod is None:
+      aggregationMethod = info['aggregationMethod']
 
-    if xFilesFactor is not None:
-      # Use specified xFilesFactor
-      xff = struct.pack(floatFormat, float(xFilesFactor))
-    else:
-      # Retain old value
-      xff = struct.pack(floatFormat, xff)
-
-    # Repack the remaining header information
-    maxRetention = struct.pack(longFormat, maxRetention)
-    archiveCount = struct.pack(longFormat, archiveCount)
-
-    packedMetadata = newAggregationType + maxRetention + xff + archiveCount
-    fh.seek(0)
-    # fh.write(newAggregationType)
-    fh.write(packedMetadata)
+    __writeHeaderMetadata(fh, aggregationMethod, info['maxRetention'],
+                          xFilesFactor, len(info['archives']))
 
     if AUTOFLUSH:
       fh.flush()
@@ -333,7 +354,37 @@ xFilesFactor specifies the fraction of data points in a propagation interval tha
     if CACHE_HEADERS and fh.name in __headerCache:
       del __headerCache[fh.name]
 
-  return aggregationTypeToMethod.get(aggregationType, 'average')
+  return (info['aggregationMethod'], info['xFilesFactor'])
+
+
+def __writeHeaderMetadata(fh, aggregationMethod, maxRetention, xFilesFactor, archiveCount):
+  """ Writes header metadata to fh """
+
+  try:
+    aggregationType = aggregationMethodToType[aggregationMethod]
+  except KeyError:
+    raise InvalidAggregationMethod("Unrecognized aggregation method: %s" %
+                                   aggregationMethod)
+
+  try:
+    xFilesFactor = float(xFilesFactor)
+  except:
+    raise InvalidXFilesFactor("Invalid xFilesFactor %s, not a float" %
+                              xFilesFactor)
+
+  if xFilesFactor < 0 or xFilesFactor > 1:
+    raise InvalidXFilesFactor("Invalid xFilesFactor %s, not between 0 and 1" %
+                              xFilesFactor)
+
+  aggregationType = struct.pack(longFormat, aggregationType)
+  maxRetention = struct.pack(longFormat, maxRetention)
+  xFilesFactor = struct.pack(floatFormat, xFilesFactor)
+  archiveCount = struct.pack(longFormat, archiveCount)
+
+  packedMetadata = aggregationType + maxRetention + xFilesFactor + archiveCount
+
+  fh.seek(0)
+  fh.write(packedMetadata)
 
 
 def validateArchiveList(archiveList):
@@ -415,13 +466,11 @@ aggregationMethod specifies the function to use when propagating data (see ``whi
       if CAN_FADVISE and FADVISE_RANDOM:
         posix_fadvise(fh.fileno(), 0, 0, POSIX_FADV_RANDOM)
 
-      aggregationType = struct.pack(longFormat, aggregationMethodToType.get(aggregationMethod, 1))
       oldest = max([secondsPerPoint * points for secondsPerPoint, points in archiveList])
-      maxRetention = struct.pack(longFormat, oldest)
-      xFilesFactor = struct.pack(floatFormat, float(xFilesFactor))
-      archiveCount = struct.pack(longFormat, len(archiveList))
-      packedMetadata = aggregationType + maxRetention + xFilesFactor + archiveCount
-      fh.write(packedMetadata)
+
+      __writeHeaderMetadata(fh, aggregationMethod, oldest, xFilesFactor,
+                            len(archiveList))
+
       headerSize = metadataSize + (archiveInfoSize * len(archiveList))
       archiveOffsetPointer = headerSize
 

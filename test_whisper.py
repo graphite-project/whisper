@@ -46,6 +46,7 @@ class SimulatedCorruptWhisperFile(object):
 
         self.metadataFormat = whisper.metadataFormat
         self.archiveInfoFormat = whisper.archiveInfoFormat
+        self.CACHE_HEADERS = whisper.CACHE_HEADERS
 
     def __enter__(self):
         # Force the struct unpack to fail by changing the metadata
@@ -55,9 +56,14 @@ class SimulatedCorruptWhisperFile(object):
         else:
             whisper.archiveInfoFormat = '!ssss'
 
+        # Force whisper to reread the header instead of returning
+        # the previous (correct) header from the header cache
+        whisper.CACHE_HEADERS = False
+
     def __exit__(self, *args, **kwargs):
         whisper.metadataFormat = self.metadataFormat
         whisper.archiveInfoFormat = self.archiveInfoFormat
+        whisper.CACHE_HEADERS  = self.CACHE_HEADERS
 
 
 class AssertRaisesException(object):
@@ -498,6 +504,45 @@ class TestWhisper(WhisperTestBase):
         whisper.update_many(wsp, data[1:])
         return data
 
+    def test_set_xfilesfactor(self):
+        """
+        Create a whisper file
+        Update xFilesFactor
+        Check if update succeeded
+        Check if exceptions get raised with wrong input
+        """
+        whisper.create(self.filename, [(1, 20)])
+
+        target_xff = 0.42
+        info0 = whisper.info(self.filename)
+        old_xff = whisper.setXFilesFactor(self.filename, target_xff)
+        # return value should match old xff
+        self.assertEqual(info0['xFilesFactor'], old_xff)
+        info1 = whisper.info(self.filename)
+
+        # Other header information should not change
+        self.assertEqual(info0['aggregationMethod'],
+                         info1['aggregationMethod'])
+        self.assertEqual(info0['maxRetention'], info1['maxRetention'])
+        self.assertEqual(info0['archives'], info1['archives'])
+
+        # packing and unpacking because
+        # AssertionError: 0.20000000298023224 != 0.2
+        target_xff = struct.unpack("!f", struct.pack("!f", target_xff))[0]
+        self.assertEqual(info1['xFilesFactor'], target_xff)
+
+        with AssertRaisesException(
+            whisper.InvalidXFilesFactor('Invalid xFilesFactor zero, not a '
+                                        'float')):
+            whisper.setXFilesFactor(self.filename, "zero")
+
+        for invalid_xff in -1, 2:
+            with AssertRaisesException(
+                whisper.InvalidXFilesFactor('Invalid xFilesFactor %s, not '
+                                            'between 0 and 1' %
+                                            float(invalid_xff))):
+                whisper.setXFilesFactor(self.filename, invalid_xff)
+
     def test_update_single_archive(self):
         """
         Update with a single leveled archive
@@ -556,7 +601,10 @@ class TestWhisper(WhisperTestBase):
             # original xFilesFactor
             info0 = whisper.info(self.filename)
             # optional xFilesFactor not passed
-            whisper.setAggregationMethod(self.filename, ag)
+            old_ag = whisper.setAggregationMethod(self.filename, ag)
+
+            # should return old aggregationmethod
+            self.assertEqual(old_ag, info0['aggregationMethod'])
 
             # original value should not change
             info1 = whisper.info(self.filename)
@@ -566,7 +614,9 @@ class TestWhisper(WhisperTestBase):
             self.assertEqual(ag, info1['aggregationMethod'])
 
             # optional xFilesFactor used
-            whisper.setAggregationMethod(self.filename, ag, xff)
+            old_ag = whisper.setAggregationMethod(self.filename, ag, xff)
+            # should return old aggregationmethod
+            self.assertEqual(old_ag, info1['aggregationMethod'])
             # new info should match what we just set it to
             info2 = whisper.info(self.filename)
             # packing and unpacking because
