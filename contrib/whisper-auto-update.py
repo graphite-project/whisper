@@ -45,7 +45,10 @@ from_time = int( options._from )
 until_time = int( options.until )
 
 try:
-  (timeInfo, values_old) = whisper.fetch(path, from_time, until_time)
+  data = whisper.fetch(path, from_time, until_time)
+  if not data:
+    raise SystemExit('No data in selected timerange')
+  (timeInfo, values_old) = data
 except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
