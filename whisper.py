@@ -999,7 +999,7 @@ def file_merge(fh_from, fh_to, time_from=None, time_to=None):
 def diff(path_from, path_to, ignore_empty=False, until_time=None):
   """ Compare two whisper databases. Each file must have the same archive configuration """
   with open(path_from, 'rb') as fh_from:
-    with open(path_to, 'rb') as fh_to:
+    with open(path_to, 'rb+') as fh_to:
       return file_diff(fh_from, fh_to, ignore_empty, until_time)
 
 
