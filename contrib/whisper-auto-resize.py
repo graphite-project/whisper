@@ -74,7 +74,6 @@ if options.carbonlib is not None:
     sys.path.insert(0, options.carbonlib)
 
 try:
-    from carbon import conf
     from carbon.conf import settings
 except ImportError:
     raise SystemExit('[ERROR] Can\'t find the carbon module, try using --carbonlib to explicitly include the path')

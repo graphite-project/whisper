@@ -1,7 +1,6 @@
 #!/usr/bin/python -tt
 
 import sys
-import time
 import optparse
 import json
 
