@@ -32,7 +32,7 @@ datapoints = [tuple(point.split(':')) for point in datapoint_strings]
 
 try:
   if len(datapoints) == 1:
-    timestamp,value = datapoints[0]
+    timestamp, value = datapoints[0]
     whisper.update(path, value, timestamp)
   else:
     whisper.update_many(path, datapoints)

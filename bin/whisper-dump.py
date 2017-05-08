@@ -34,7 +34,7 @@ def mmap_file(filename):
 
 def read_header(map):
   try:
-    (aggregationType,maxRetention,xFilesFactor,archiveCount) = struct.unpack(whisper.metadataFormat,map[:whisper.metadataSize])
+    (aggregationType, maxRetention, xFilesFactor, archiveCount) = struct.unpack(whisper.metadataFormat, map[:whisper.metadataSize])
   except:
     raise whisper.CorruptWhisperFile("Unable to unpack header")
 
@@ -74,7 +74,7 @@ def dump_header(header):
   dump_archive_headers(header['archives'])
 
 def dump_archive_headers(archives):
-  for i,archive in enumerate(archives):
+  for i, archive in enumerate(archives):
     print('Archive %d info:' % i)
     print('  offset: %d' % archive['offset'])
     print('  seconds per point: %d' % archive['secondsPerPoint'])
@@ -84,7 +84,7 @@ def dump_archive_headers(archives):
     print("")
 
 def dump_archives(archives):
-  for i,archive in enumerate(archives):
+  for i, archive in enumerate(archives):
     print('Archive %d data:' %i)
     offset = archive['offset']
     for point in xrange(archive['points']):

@@ -937,7 +937,7 @@ archive on a read and request data older than the archive's retention
   return (timeInfo, valueList)
 
 
-def merge(path_from, path_to, time_from=None,time_to=None):
+def merge(path_from, path_to, time_from=None, time_to=None):
   """ Merges the data from one whisper file into another. Each file must have
   the same archive configuration. time_from and time_to can optionally be
   specified for the merge.
@@ -1039,5 +1039,5 @@ def file_diff(fh_from, fh_to, ignore_empty=False, until_time=None):
     diffs = [p for p in points if p[1] != p[2]]
 
     archive_diffs.append((archive_number, diffs, points.__len__()))
-    untilTime = min(startTime,untilTime)
+    untilTime = min(startTime, untilTime)
   return archive_diffs

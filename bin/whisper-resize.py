@@ -86,8 +86,8 @@ print('Retrieving all data from the archives')
 for archive in old_archives:
   fromTime = now - archive['retention'] + archive['secondsPerPoint']
   untilTime = now
-  timeinfo,values = whisper.fetch(path, fromTime, untilTime)
-  archive['data'] = (timeinfo,values)
+  timeinfo, values = whisper.fetch(path, fromTime, untilTime)
+  archive['data'] = (timeinfo, values)
 
 if options.newfile is None:
   tmpfile = path + '.tmp'
@@ -101,7 +101,7 @@ else:
 print('Creating new whisper database: %s' % newfile)
 whisper.create(newfile, new_archives, xFilesFactor=xff, aggregationMethod=aggregationMethod)
 size = os.stat(newfile).st_size
-print('Created: %s (%d bytes)' % (newfile,size))
+print('Created: %s (%d bytes)' % (newfile, size))
 
 if options.aggregate:
   # This is where data will be interpolated (best effort)
@@ -114,7 +114,7 @@ if options.aggregate:
     if all_datapoints:
       last_timestamp = all_datapoints[-1][0]
       slice_end = 0
-      for i,(timestamp,value) in enumerate(new_datapoints):
+      for i, (timestamp, value) in enumerate(new_datapoints):
         if timestamp > last_timestamp:
           slice_end = i
           break
@@ -136,7 +136,7 @@ if options.aggregate:
     step = archive['secondsPerPoint']
     fromTime = now - archive['retention'] + now % step
     untilTime = now + now % step + step
-    print("(%s,%s,%s)" % (fromTime,untilTime, step))
+    print("(%s,%s,%s)" % (fromTime, untilTime, step))
     timepoints_to_update = range(fromTime, untilTime, step)
     print("timepoints_to_update: %s" % timepoints_to_update)
     newdatapoints = []

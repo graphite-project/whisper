@@ -47,12 +47,12 @@ if field:
 
 
 archives = info.pop('archives')
-for key,value in info.items():
-  print('%s: %s' % (key,value))
+for key, value in info.items():
+  print('%s: %s' % (key, value))
 print
 
-for i,archive in enumerate(archives):
+for i, archive in enumerate(archives):
   print('Archive %d' % i)
-  for key,value in archive.items():
-    print('%s: %s' % (key,value))
+  for key, value in archive.items():
+    print('%s: %s' % (key, value))
   print

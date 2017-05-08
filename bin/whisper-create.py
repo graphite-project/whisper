@@ -12,7 +12,7 @@ except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
 def byte_format(num):
-  for x in ['bytes','KB','MB']:
+  for x in ['bytes', 'KB', 'MB']:
     if num < 1024.0:
       return "%.3f%s" % (num, x)
     num /= 1024.0
@@ -86,4 +86,4 @@ except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 size = os.stat(path).st_size
-print('Created: %s (%d bytes)' % (path,size))
+print('Created: %s (%d bytes)' % (path, size))

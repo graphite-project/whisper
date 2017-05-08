@@ -42,4 +42,4 @@ except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 
-print('Updated aggregation method: %s (%s -> %s)' % (path,oldAggregationMethod,aggregationMethod))
+print('Updated aggregation method: %s (%s -> %s)' % (path, oldAggregationMethod, aggregationMethod))

@@ -52,7 +52,7 @@ try:
 except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
-(start,end,step) = timeInfo
+(start, end, step) = timeInfo
 t = start
 for value_old in values_old:
   value_str_old = str(value_old)
@@ -63,7 +63,7 @@ for value_old in values_old:
   else:
     timestr = str(t)
 
-  print("%s\t%s -> %s" % (timestr,value_str_old, value_str_new))
+  print("%s\t%s -> %s" % (timestr, value_str_old, value_str_new))
   try:
     if value_new is not None:
       whisper.update(path, value_new, t)
