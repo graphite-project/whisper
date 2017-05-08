@@ -814,7 +814,8 @@ def __archive_update_many(fh, header, archive, points):
                    if arc['secondsPerPoint'] > archive['secondsPerPoint']]
 
   for lower in lowerArchives:
-    fit = lambda i: i - (i % lower['secondsPerPoint'])
+    def fit(i):
+      return i - (i % lower['secondsPerPoint'])
     lowerIntervals = [fit(p[0]) for p in alignedPoints]
     uniqueLowerIntervals = set(lowerIntervals)
     propagateFurther = False
