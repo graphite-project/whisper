@@ -4,6 +4,7 @@ import os
 import sys
 import signal
 import optparse
+import json
 
 try:
   import whisper
@@ -17,7 +18,9 @@ except AttributeError:
   # OS=windows
   pass
 
-option_parser = optparse.OptionParser(usage='''%prog path [field]''')
+option_parser = optparse.OptionParser(usage='''%prog [options] path [field]''')
+option_parser.add_option('--json', default=False, action='store_true',
+                         help="Output results in JSON form")
 (options, args) = option_parser.parse_args()
 
 if len(args) < 1:
@@ -45,14 +48,16 @@ if field:
   print(info[field])
   sys.exit(0)
 
-
-archives = info.pop('archives')
-for key, value in info.items():
-  print('%s: %s' % (key, value))
-print
-
-for i, archive in enumerate(archives):
-  print('Archive %d' % i)
-  for key, value in archive.items():
+if options.json:
+  print(json.dumps(info, indent=2, separators=(',', ': ')))
+else:
+  archives = info.pop('archives')
+  for key, value in info.items():
     print('%s: %s' % (key, value))
-  print
+  print('')
+
+  for i, archive in enumerate(archives):
+    print('Archive %d' % i)
+    for key, value in archive.items():
+      print('%s: %s' % (key, value))
+    print('')
