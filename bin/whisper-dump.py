@@ -50,20 +50,20 @@ def read_header(map):
       raise whisper.CorruptWhisperFile("Unable to read archive %d metadata" % i)
 
     archiveInfo = {
-      'offset' : offset,
-      'secondsPerPoint' : secondsPerPoint,
-      'points' : points,
-      'retention' : secondsPerPoint * points,
-      'size' : points * whisper.pointSize,
+      'offset': offset,
+      'secondsPerPoint': secondsPerPoint,
+      'points': points,
+      'retention': secondsPerPoint * points,
+      'size': points * whisper.pointSize,
     }
     archives.append(archiveInfo)
     archiveOffset += whisper.archiveInfoSize
 
   header = {
-    'aggregationMethod' : whisper.aggregationTypeToMethod.get(aggregationType, 'average'),
-    'maxRetention' : maxRetention,
-    'xFilesFactor' : xFilesFactor,
-    'archives' : archives,
+    'aggregationMethod': whisper.aggregationTypeToMethod.get(aggregationType, 'average'),
+    'maxRetention': maxRetention,
+    'xFilesFactor': xFilesFactor,
+    'archives': archives,
   }
   return header
 
