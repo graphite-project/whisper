@@ -1042,8 +1042,9 @@ def file_diff(fh_from, fh_to, ignore_empty=False, until_time=None):
 
   if headerFrom['archives'] != headerTo['archives']:
     # TODO: Add specific whisper-resize commands to right size things
-    raise NotImplementedError("%s and %s archive configurations are unalike. "
-                                "Resize the input before diffing" % (fh_from.name, fh_to.name))
+    raise NotImplementedError(
+        "%s and %s archive configurations are unalike. "
+        "Resize the input before diffing" % (fh_from.name, fh_to.name))
 
   archives = headerFrom['archives']
   archives.sort(key=operator.itemgetter('retention'))
