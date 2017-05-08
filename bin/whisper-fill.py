@@ -31,6 +31,7 @@ import optparse
 if sys.version_info >= (3, 0):
     xrange = range
 
+
 def itemgetter(*items):
     if HAS_OPERATOR:
         return operator.itemgetter(*items)
@@ -123,8 +124,9 @@ def main():
         option_parser = optparse.OptionParser(
             usage='%prog [--lock] src dst',
             description='copies data from src in dst, if missing')
-        option_parser.add_option('--lock', help='Lock whisper files',
-                default=False, action='store_true')
+        option_parser.add_option(
+            '--lock', help='Lock whisper files',
+            default=False, action='store_true')
         (options, args) = option_parser.parse_args()
 
         if len(args) != 2:

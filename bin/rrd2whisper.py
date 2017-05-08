@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import errno
 import os
 import sys
 import time
@@ -38,8 +39,9 @@ option_parser.add_option(
     ', '.join(aggregationMethods),
     default='average',
     type='string')
-option_parser.add_option('--destinationPath', 
-    help="Path to place created whisper file. Defaults to the " + 
+option_parser.add_option(
+    '--destinationPath',
+    help="Path to place created whisper file. Defaults to the " +
     "RRD file's source path.",
     default=None,
     type='string')
@@ -115,10 +117,11 @@ for datasource in datasources:
     if not os.path.isdir(destination_path):
       try:
         os.makedirs(destination_path)
-      except OSError as exc: # Python >2.5
+      except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(destination_path):
           pass
-        else: raise
+        else:
+          raise
     rrd_file = os.path.basename(rrd_path).replace('.rrd', '%s.wsp' % suffix)
     path = destination_path + '/' + rrd_file
   else:

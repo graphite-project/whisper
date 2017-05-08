@@ -15,9 +15,11 @@ signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 option_parser = optparse.OptionParser(
     usage='''%prog [options] from_path to_path''')
-option_parser.add_option('--from', default=None, type='int', dest='_from',
+option_parser.add_option(
+  '--from', default=None, type='int', dest='_from',
   help=("Begining of interval, unix timestamp (default: epoch)"))
-option_parser.add_option('--until', default=None, type='int',
+option_parser.add_option(
+  '--until', default=None, type='int',
   help="End of interval, unix timestamp (default: now)")
 
 (options, args) = option_parser.parse_args()

@@ -13,7 +13,7 @@ except ImportError:
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-now = int( time.time() )
+now = int(time.time())
 
 option_parser = optparse.OptionParser(
     usage='''%prog [options] path timestamp:value [timestamp:value]*''')
@@ -32,7 +32,7 @@ datapoints = [tuple(point.split(':')) for point in datapoint_strings]
 
 try:
   if len(datapoints) == 1:
-    timestamp,value = datapoints[0]
+    timestamp, value = datapoints[0]
     whisper.update(path, value, timestamp)
   else:
     whisper.update_many(path, datapoints)

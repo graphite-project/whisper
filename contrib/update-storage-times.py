@@ -193,4 +193,3 @@ if __name__ == '__main__':
 
     config_schemas(i_args.cfg)
     search_and_fix(i_args.subdir)
-
