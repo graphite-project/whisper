@@ -71,4 +71,3 @@ for value_old in values_old:
     t += step
   except whisper.WhisperException as exc:
     raise SystemExit('[ERROR] %s' % str(exc))
-
