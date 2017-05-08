@@ -71,17 +71,17 @@ def print_summary(diffs, pretty=True, headers=True):
 
 
 def print_summary_json(diffs, path_a, path_b):
-  print json.dumps({'path_a': path_a,
+  print(json.dumps({'path_a': path_a,
                     'path_b': path_b,
                     'archives': [{'archive': archive,
                                   'total': total,
                                   'points': points.__len__()}
                                  for archive, points, total in diffs]},
-                   sort_keys=True, indent=2, separators=(',', ' : '))
+                   sort_keys=True, indent=2, separators=(',', ' : ')))
 
 
 def print_diffs_json(diffs, path_a, path_b):
-  print json.dumps({'path_a': path_a,
+  print(json.dumps({'path_a': path_a,
                     'path_b': path_b,
                     'archives': [{'archive': archive,
                                   'total': total,
@@ -92,7 +92,7 @@ def print_diffs_json(diffs, path_a, path_b):
                                       'value_b': p[2]
                                     } for p in points]}
                                  for archive, points, total in diffs]},
-                   sort_keys=True, indent=2, separators=(',', ' : '))
+                   sort_keys=True, indent=2, separators=(',', ' : ')))
 
 
 def main():
