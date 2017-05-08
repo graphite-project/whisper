@@ -11,8 +11,9 @@ try:
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
+
 def byte_format(num):
-  for x in ['bytes','KB','MB']:
+  for x in ['bytes', 'KB', 'MB']:
     if num < 1024.0:
       return "%.3f%s" % (num, x)
     num /= 1024.0
@@ -22,7 +23,7 @@ def byte_format(num):
 try:
   signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 except AttributeError:
-  #OS=windows
+  # OS=windows
   pass
 
 option_parser = optparse.OptionParser(
@@ -38,12 +39,17 @@ timePerPoint and timeToStore specify lengths of time, for example:
 ''')
 option_parser.add_option('--xFilesFactor', default=0.5, type='float')
 option_parser.add_option('--aggregationMethod', default='average',
-        type='string', help="Function to use when aggregating values (%s)" %
-        ', '.join(whisper.aggregationMethods))
+                         type='string',
+                         help="Function to use when aggregating values (%s)" %
+                         ', '.join(whisper.aggregationMethods))
 option_parser.add_option('--overwrite', default=False, action='store_true')
-option_parser.add_option('--estimate', default=False, action='store_true', help="Don't create a whisper file, estimate storage requirements based on archive definitions")
-option_parser.add_option('--sparse', default=False, action='store_true', help="Create new whisper as sparse file")
-option_parser.add_option('--fallocate', default=False, action='store_true', help="Create new whisper and use fallocate")
+option_parser.add_option('--estimate', default=False, action='store_true',
+                         help="Don't create a whisper file, estimate storage "
+                              "requirements based on archive definitions")
+option_parser.add_option('--sparse', default=False, action='store_true',
+                         help="Create new whisper as sparse file")
+option_parser.add_option('--fallocate', default=False, action='store_true',
+                         help="Create new whisper and use fallocate")
 
 (options, args) = option_parser.parse_args()
 
@@ -63,9 +69,11 @@ if options.estimate:
 
   size = 16 + (archives * 12) + (total_points * 12)
   disk_size = int(math.ceil(size / 4096.0) * 4096)
-  print("\nEstimated Whisper DB Size: %s (%s bytes on disk with 4k blocks)\n" % (byte_format(size), disk_size))
+  print("\nEstimated Whisper DB Size: %s (%s bytes on disk with 4k blocks)\n" %
+        (byte_format(size), disk_size))
   for x in [1, 5, 10, 50, 100, 500]:
-    print("Estimated storage requirement for %sk metrics: %s" % (x, byte_format(x * 1000 * disk_size)))
+    print("Estimated storage requirement for %sk metrics: %s" %
+          (x, byte_format(x * 1000 * disk_size)))
   sys.exit(0)
 
 if len(args) < 2:
@@ -81,9 +89,11 @@ if os.path.exists(path) and options.overwrite:
   os.unlink(path)
 
 try:
-  whisper.create(path, archives, xFilesFactor=options.xFilesFactor, aggregationMethod=options.aggregationMethod, sparse=options.sparse, useFallocate=options.fallocate)
+  whisper.create(path, archives, xFilesFactor=options.xFilesFactor,
+                 aggregationMethod=options.aggregationMethod, sparse=options.sparse,
+                 useFallocate=options.fallocate)
 except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 size = os.stat(path).st_size
-print('Created: %s (%d bytes)' % (path,size))
+print('Created: %s (%d bytes)' % (path, size))
