@@ -16,7 +16,8 @@ if whisperResizeExecutable is None:
 option_parser = OptionParser(
     usage='''%prog storagePath configPath
 
-storagePath   the Path to the directory containing whisper files (CAN NOT BE A SUBDIR, use --subdir for that)
+storagePath   the Path to the directory containing whisper files (CAN NOT BE A
+              SUBDIR, use --subdir for that)
 configPath    the path to your carbon config files
 ''', version="%prog 0.1")
 
@@ -39,8 +40,9 @@ option_parser.add_option(
     '--confirm', default=False, action='store_true',
     help="ask for comfirmation prior to resizing a whisper file")
 option_parser.add_option(
-    '-x', '--extra_args', default='',
-    type='string', help="pass any additional arguments to the %s script" % basename(whisperResizeExecutable))
+    '-x', '--extra_args', default='', type='string',
+    help="pass any additional arguments to the %s script" %
+         basename(whisperResizeExecutable))
 
 (options, args) = option_parser.parse_args()
 
@@ -67,7 +69,8 @@ if options.whisperlib is not None:
 try:
     import whisper
 except ImportError:
-    raise SystemExit('[ERROR] Can\'t find the whisper module, try using --whisperlib to explicitly include the path')
+    raise SystemExit('[ERROR] Can\'t find the whisper module, try using '
+                     '--whisperlib to explicitly include the path')
 
 # Injecting the Carbon Lib Path if needed
 if options.carbonlib is not None:
@@ -76,7 +79,8 @@ if options.carbonlib is not None:
 try:
     from carbon.conf import settings
 except ImportError:
-    raise SystemExit('[ERROR] Can\'t find the carbon module, try using --carbonlib to explicitly include the path')
+    raise SystemExit('[ERROR] Can\'t find the carbon module, try using '
+                     '--carbonlib to explicitly include the path')
 
 # carbon.conf not seeing the config files so give it a nudge
 settings.CONF_DIR = configPath
@@ -135,7 +139,8 @@ def processMetric(fullPath, schemas, agg_schemas):
         current_schema = '%s:%s ' % (retention[0], retention[1])
         schema_config_args += current_schema
 
-    # loop through the current files bucket sizes and convert to string format to compare for resizing
+    # loop through the current files bucket sizes and convert to string format
+    # to compare for resizing
     for fileRetention in info['archives']:
         current_schema = '%s:%s ' % (fileRetention['secondsPerPoint'], fileRetention['points'])
         schema_file_args += current_schema
@@ -143,24 +148,30 @@ def processMetric(fullPath, schemas, agg_schemas):
     # check to see if the current and configured schemas are the same or rebuild
     if (schema_config_args != schema_file_args):
         rebuild = True
-        messages += 'updating Retentions from: %s to: %s \n' % (schema_file_args, schema_config_args)
+        messages += 'updating Retentions from: %s to: %s \n' % \
+                    (schema_file_args, schema_config_args)
 
-    # only care about the first two decimals in the comparison since there is floaty stuff going on.
+    # only care about the first two decimals in the comparison since there is
+    # floaty stuff going on.
     info_xFilesFactor = "{0:.2f}".format(info['xFilesFactor'])
     str_xFilesFactor =  "{0:.2f}".format(xFilesFactor)
 
     # check to see if the current and configured xFilesFactor are the same
     if (str_xFilesFactor != info_xFilesFactor):
         rebuild = True
-        messages += '%s xFilesFactor differs real: %s should be: %s \n' % (metric, info_xFilesFactor, str_xFilesFactor)
+        messages += '%s xFilesFactor differs real: %s should be: %s \n' % \
+                    (metric, info_xFilesFactor, str_xFilesFactor)
     # check to see if the current and configured aggregationMethods are the same
     if (aggregationMethod != info['aggregationMethod']):
         rebuild = True
-        messages += '%s aggregation schema differs real: %s should be: %s \n' % (metric, info['aggregationMethod'], aggregationMethod)
+        messages += '%s aggregation schema differs real: %s should be: %s \n' % \
+                    (metric, info['aggregationMethod'], aggregationMethod)
 
     # if we need to rebuild, lets do it.
     if rebuild is True:
-        cmd = '%s "%s" %s --xFilesFactor=%s --aggregationMethod=%s %s' % (whisperResizeExecutable, fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
+        cmd = '%s "%s" %s --xFilesFactor=%s --aggregationMethod=%s %s' % \
+              (whisperResizeExecutable, fullPath, options.extra_args,
+               xFilesFactor, aggregationMethod, schema_config_args)
         if options.quiet is not True or options.confirm is True:
             print(messages)
             print(cmd)
@@ -180,14 +191,16 @@ def processMetric(fullPath, schemas, agg_schemas):
 
 def getMetricFromPath(filePath):
     """
-        this method takes the full file path of a whisper file an converts it to a gaphite metric name
+        this method takes the full file path of a whisper file an converts it
+        to a gaphite metric name
 
         Parameters:
             filePath - full file path to a whisper file
 
         Returns a string representing the metric name
     """
-    # sanitize directory since we may get a trailing slash or not, and if we don't it creates a leading .
+    # sanitize directory since we may get a trailing slash or not, and if we
+    # don't it creates a leading '.'
     data_dir = os.path.normpath(settings.LOCAL_DATA_DIR) + os.sep
 
     # pull the data dir off and convert to the graphite metric name
