@@ -23,21 +23,24 @@ now = int(time.time())
 yesterday = now - (60 * 60 * 24)
 
 option_parser = optparse.OptionParser(usage='''%prog [options] path''')
-option_parser.add_option('--from', default=yesterday, type='int', dest='_from',
+option_parser.add_option(
+  '--from', default=yesterday, type='int', dest='_from',
   help=("Unix epoch time of the beginning of "
         "your requested interval (default: 24 hours ago)"))
-option_parser.add_option('--until', default=now, type='int',
+option_parser.add_option(
+  '--until', default=now, type='int',
   help="Unix epoch time of the end of your requested interval (default: now)")
-option_parser.add_option('--json', default=False, action='store_true',
+option_parser.add_option(
+  '--json', default=False, action='store_true',
   help="Output results in JSON form")
-option_parser.add_option('--pretty', default=False, action='store_true',
+option_parser.add_option(
+  '--pretty', default=False, action='store_true',
   help="Show human-readable timestamps instead of unix times")
-option_parser.add_option('--drop',
-                         choices=list(_DROP_FUNCTIONS.keys()),
-                         action='store',
-                         help="Specify 'nulls' to drop all null values. \
-Specify 'zeroes' to drop all zero values. \
-Specify 'empty' to drop both null and zero values")
+option_parser.add_option(
+  '--drop', choices=list(_DROP_FUNCTIONS.keys()), action='store',
+  help="Specify 'nulls' to drop all null values. "
+       "Specify 'zeroes' to drop all zero values. "
+       "Specify 'empty' to drop both null and zero values")
 
 (options, args) = option_parser.parse_args()
 

@@ -39,7 +39,8 @@ option_parser.add_option(
     ', '.join(aggregationMethods),
     default='average',
     type='string')
-option_parser.add_option('--destinationPath',
+option_parser.add_option(
+    '--destinationPath',
     help="Path to place created whisper file. Defaults to the " +
     "RRD file's source path.",
     default=None,

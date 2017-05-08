@@ -419,12 +419,14 @@ def validateArchiveList(archiveList):
 
     nextArchive = archiveList[i + 1]
     if not archive[0] < nextArchive[0]:
-      raise InvalidConfiguration("A Whisper database may not be configured having "
+      raise InvalidConfiguration(
+        "A Whisper database may not be configured having "
         "two archives with the same precision (archive%d: %s, archive%d: %s)" %
         (i, archive, i + 1, nextArchive))
 
     if nextArchive[0] % archive[0] != 0:
-      raise InvalidConfiguration("Higher precision archives' precision "
+      raise InvalidConfiguration(
+        "Higher precision archives' precision "
         "must evenly divide all lower precision archives' precision "
         "(archive%d: %s, archive%d: %s)" %
         (i, archive[0], i + 1, nextArchive[0]))
@@ -433,7 +435,8 @@ def validateArchiveList(archiveList):
     nextRetention = nextArchive[0] * nextArchive[1]
 
     if not nextRetention > retention:
-      raise InvalidConfiguration("Lower precision archives must cover "
+      raise InvalidConfiguration(
+        "Lower precision archives must cover "
         "larger time intervals than higher precision archives "
         "(archive%d: %s seconds, archive%d: %s seconds)" %
         (i, retention, i + 1, nextRetention))
@@ -441,7 +444,8 @@ def validateArchiveList(archiveList):
     archivePoints = archive[1]
     pointsPerConsolidation = nextArchive[0] // archive[0]
     if not archivePoints >= pointsPerConsolidation:
-      raise InvalidConfiguration("Each archive must have at least enough points "
+      raise InvalidConfiguration(
+        "Each archive must have at least enough points "
         "to consolidate to the next archive (archive%d consolidates %d of "
         "archive%d's points but it has only %d total points)" %
         (i + 1, pointsPerConsolidation, i, archivePoints))
@@ -538,8 +542,8 @@ def aggregate(aggregationMethod, knownValues, neighborValues=None):
     values = [x or 0 for x in neighborValues]
     return float(sum(values)) / float(len(values))
   else:
-    raise InvalidAggregationMethod("Unrecognized aggregation method %s" %
-            aggregationMethod)
+    raise InvalidAggregationMethod(
+      "Unrecognized aggregation method %s" % aggregationMethod)
 
 
 def __propagate(fh, header, timestamp, higher, lower):
@@ -649,8 +653,8 @@ def file_update(fh, value, timestamp):
   timestamp = int(timestamp)
   diff = now - timestamp
   if not ((diff < header['maxRetention']) and diff >= 0):
-    raise TimestampNotCovered("Timestamp not covered by any archives in "
-      "this database.")
+    raise TimestampNotCovered(
+      "Timestamp not covered by any archives in this database.")
 
   # Find the highest-precision archive that covers timestamp
   for i, archive in enumerate(header['archives']):
@@ -983,8 +987,9 @@ def file_merge(fh_from, fh_to, time_from=None, time_to=None):
   headerFrom = __readHeader(fh_from)
   headerTo = __readHeader(fh_to)
   if headerFrom['archives'] != headerTo['archives']:
-    raise NotImplementedError("%s and %s archive configurations are unalike. "
-    "Resize the input before merging" % (fh_from.name, fh_to.name))
+    raise NotImplementedError(
+      "%s and %s archive configurations are unalike. "
+      "Resize the input before merging" % (fh_from.name, fh_to.name))
 
   now = int(time.time())
 
