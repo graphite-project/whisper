@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-import sys, os, fnmatch
+import sys
+import os
+import fnmatch
 from subprocess import call
 from optparse import OptionParser
 from distutils.spawn import find_executable
@@ -16,7 +18,8 @@ if whisperResizeExecutable is None:
 option_parser = OptionParser(
     usage='''%prog storagePath configPath
 
-storagePath   the Path to the directory containing whisper files (CAN NOT BE A SUBDIR, use --subdir for that)
+storagePath   the Path to the directory containing whisper files (CAN NOT BE A
+              SUBDIR, use --subdir for that)
 configPath    the path to your carbon config files
 ''', version="%prog 0.1")
 
@@ -39,8 +42,9 @@ option_parser.add_option(
     '--confirm', default=False, action='store_true',
     help="ask for comfirmation prior to resizing a whisper file")
 option_parser.add_option(
-    '-x', '--extra_args', default='',
-    type='string', help="pass any additional arguments to the %s script" % basename(whisperResizeExecutable))
+    '-x', '--extra_args', default='', type='string',
+    help="pass any additional arguments to the %s script" %
+         basename(whisperResizeExecutable))
 
 (options, args) = option_parser.parse_args()
 
@@ -49,9 +53,9 @@ if len(args) < 2:
     sys.exit(1)
 
 storagePath = args[0]
-configPath  = args[1]
+configPath = args[1]
 
-#check to see if we are processing a subfolder
+# check to see if we are processing a subfolder
 # we need to have a separate config option for this since
 # otherwise the metric test thinks the metric is at the root
 # of the storage path and can match schemas incorrectly
@@ -67,28 +71,28 @@ if options.whisperlib is not None:
 try:
     import whisper
 except ImportError:
-    raise SystemExit('[ERROR] Can\'t find the whisper module, try using --whisperlib to explicitly include the path')
+    raise SystemExit('[ERROR] Can\'t find the whisper module, try using '
+                     '--whisperlib to explicitly include the path')
 
 # Injecting the Carbon Lib Path if needed
 if options.carbonlib is not None:
     sys.path.insert(0, options.carbonlib)
 
 try:
-    from carbon import conf
     from carbon.conf import settings
+    from carbon.storage import loadStorageSchemas, loadAggregationSchemas
 except ImportError:
-    raise SystemExit('[ERROR] Can\'t find the carbon module, try using --carbonlib to explicitly include the path')
+    raise SystemExit('[ERROR] Can\'t find the carbon module, try using '
+                     '--carbonlib to explicitly include the path')
 
-#carbon.conf not seeing the config files so give it a nudge
+# carbon.conf not seeing the config files so give it a nudge
 settings.CONF_DIR = configPath
 settings.LOCAL_DATA_DIR = storagePath
-
-# import these once we have the settings figured out
-from carbon.storage import loadStorageSchemas, loadAggregationSchemas
 
 # Load the Defined Schemas from our config files
 schemas = loadStorageSchemas()
 agg_schemas = loadAggregationSchemas()
+
 
 # check to see if a metric needs to be resized based on the current config
 def processMetric(fullPath, schemas, agg_schemas):
@@ -102,7 +106,7 @@ def processMetric(fullPath, schemas, agg_schemas):
 
     """
     schema_config_args = ''
-    schema_file_args   = ''
+    schema_file_args = ''
     rebuild = False
     messages = ''
 
@@ -135,58 +139,68 @@ def processMetric(fullPath, schemas, agg_schemas):
         current_schema = '%s:%s ' % (retention[0], retention[1])
         schema_config_args += current_schema
 
-    # loop through the current files bucket sizes and convert to string format to compare for resizing
+    # loop through the current files bucket sizes and convert to string format
+    # to compare for resizing
     for fileRetention in info['archives']:
-        current_schema  = '%s:%s ' % (fileRetention['secondsPerPoint'], fileRetention['points'])
+        current_schema = '%s:%s ' % (fileRetention['secondsPerPoint'], fileRetention['points'])
         schema_file_args += current_schema
 
     # check to see if the current and configured schemas are the same or rebuild
     if (schema_config_args != schema_file_args):
         rebuild = True
-        messages += 'updating Retentions from: %s to: %s \n' % (schema_file_args, schema_config_args)
+        messages += 'updating Retentions from: %s to: %s \n' % \
+                    (schema_file_args, schema_config_args)
 
-    # only care about the first two decimals in the comparison since there is floaty stuff going on.
+    # only care about the first two decimals in the comparison since there is
+    # floaty stuff going on.
     info_xFilesFactor = "{0:.2f}".format(info['xFilesFactor'])
-    str_xFilesFactor =  "{0:.2f}".format(xFilesFactor)
+    str_xFilesFactor = "{0:.2f}".format(xFilesFactor)
 
     # check to see if the current and configured xFilesFactor are the same
     if (str_xFilesFactor != info_xFilesFactor):
         rebuild = True
-        messages += '%s xFilesFactor differs real: %s should be: %s \n' % (metric, info_xFilesFactor, str_xFilesFactor)
+        messages += '%s xFilesFactor differs real: %s should be: %s \n' % \
+                    (metric, info_xFilesFactor, str_xFilesFactor)
     # check to see if the current and configured aggregationMethods are the same
     if (aggregationMethod != info['aggregationMethod']):
         rebuild = True
-        messages += '%s aggregation schema differs real: %s should be: %s \n' % (metric, info['aggregationMethod'], aggregationMethod)
+        messages += '%s aggregation schema differs real: %s should be: %s \n' % \
+                    (metric, info['aggregationMethod'], aggregationMethod)
 
     # if we need to rebuild, lets do it.
-    if (rebuild == True):
-        cmd = '%s "%s" %s --xFilesFactor=%s --aggregationMethod=%s %s' % (whisperResizeExecutable, fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
-        if (options.quiet != True or options.confirm == True):
+    if rebuild is True:
+        cmd = '%s "%s" %s --xFilesFactor=%s --aggregationMethod=%s %s' % \
+              (whisperResizeExecutable, fullPath, options.extra_args,
+               xFilesFactor, aggregationMethod, schema_config_args)
+        if options.quiet is not True or options.confirm is True:
             print(messages)
             print(cmd)
 
-        if (options.confirm == True):
+        if options.confirm is True:
             options.doit = confirm("Would you like to run this command? [y/n]: ")
-            if (options.doit == False):
+            if options.doit is False:
                 print("Skipping command \n")
 
-        if (options.doit == True):
+        if options.doit is True:
             exitcode = call(cmd, shell=True)
             # if the command failed lets bail so we can take a look before proceeding
             if (exitcode > 0):
                 print('Error running: %s' % (cmd))
                 sys.exit(1)
 
+
 def getMetricFromPath(filePath):
     """
-        this method takes the full file path of a whisper file an converts it to a gaphite metric name
+        this method takes the full file path of a whisper file an converts it
+        to a gaphite metric name
 
         Parameters:
             filePath - full file path to a whisper file
 
         Returns a string representing the metric name
     """
-    # sanitize directory since we may get a trailing slash or not, and if we don't it creates a leading .
+    # sanitize directory since we may get a trailing slash or not, and if we
+    # don't it creates a leading '.'
     data_dir = os.path.normpath(settings.LOCAL_DATA_DIR) + os.sep
 
     # pull the data dir off and convert to the graphite metric name
@@ -194,6 +208,7 @@ def getMetricFromPath(filePath):
     metric_name = metric_name.replace('.wsp', '')
     metric_name = metric_name.replace('/', '.')
     return metric_name
+
 
 def confirm(question, error_response='Valid options : yes or no'):
     """
@@ -207,7 +222,7 @@ def confirm(question, error_response='Valid options : yes or no'):
         answer = raw_input(question).lower()
         if answer in ('y', 'yes'):
             return True
-        if answer in ('n', 'no' ):
+        if answer in ('n', 'no'):
             return False
         print(error_response)
 

@@ -2,7 +2,6 @@
 
 import os
 import sys
-import math
 import time
 import bisect
 import signal
@@ -87,8 +86,8 @@ print('Retrieving all data from the archives')
 for archive in old_archives:
   fromTime = now - archive['retention'] + archive['secondsPerPoint']
   untilTime = now
-  timeinfo,values = whisper.fetch(path, fromTime, untilTime)
-  archive['data'] = (timeinfo,values)
+  timeinfo, values = whisper.fetch(path, fromTime, untilTime)
+  archive['data'] = (timeinfo, values)
 
 if options.newfile is None:
   tmpfile = path + '.tmp'
@@ -102,7 +101,7 @@ else:
 print('Creating new whisper database: %s' % newfile)
 whisper.create(newfile, new_archives, xFilesFactor=xff, aggregationMethod=aggregationMethod)
 size = os.stat(newfile).st_size
-print('Created: %s (%d bytes)' % (newfile,size))
+print('Created: %s (%d bytes)' % (newfile, size))
 
 if options.aggregate:
   # This is where data will be interpolated (best effort)
@@ -111,11 +110,11 @@ if options.aggregate:
   for archive in old_archives:
     # Loading all datapoints into memory for fast querying
     timeinfo, values = archive['data']
-    new_datapoints = zip( range(*timeinfo), values )
+    new_datapoints = zip(range(*timeinfo), values)
     if all_datapoints:
       last_timestamp = all_datapoints[-1][0]
       slice_end = 0
-      for i,(timestamp,value) in enumerate(new_datapoints):
+      for i, (timestamp, value) in enumerate(new_datapoints):
         if timestamp > last_timestamp:
           slice_end = i
           break
@@ -123,8 +122,8 @@ if options.aggregate:
     else:
       all_datapoints += new_datapoints
 
-  oldtimestamps = map( lambda p: p[0], all_datapoints)
-  oldvalues = map( lambda p: p[1], all_datapoints)
+  oldtimestamps = map(lambda p: p[0], all_datapoints)
+  oldvalues = map(lambda p: p[1], all_datapoints)
 
   print("oldtimestamps: %s" % oldtimestamps)
   # Simply cleaning up some used memory
@@ -137,11 +136,11 @@ if options.aggregate:
     step = archive['secondsPerPoint']
     fromTime = now - archive['retention'] + now % step
     untilTime = now + now % step + step
-    print("(%s,%s,%s)" % (fromTime,untilTime, step))
+    print("(%s,%s,%s)" % (fromTime, untilTime, step))
     timepoints_to_update = range(fromTime, untilTime, step)
     print("timepoints_to_update: %s" % timepoints_to_update)
     newdatapoints = []
-    for tinterval in zip( timepoints_to_update[:-1], timepoints_to_update[1:] ):
+    for tinterval in zip(timepoints_to_update[:-1], timepoints_to_update[1:]):
       # TODO: Setting lo= parameter for 'lefti' based on righti from previous
       #       iteration. Obviously, this can only be done if
       #       timepoints_to_update is always updated. Is it?
@@ -149,8 +148,8 @@ if options.aggregate:
       righti = bisect.bisect_left(oldtimestamps, tinterval[1], lo=lefti)
       newvalues = oldvalues[lefti:righti]
       if newvalues:
-        non_none = filter( lambda x: x is not None, newvalues)
-        if 1.0*len(non_none)/len(newvalues) >= xff:
+        non_none = filter(lambda x: x is not None, newvalues)
+        if 1.0 * len(non_none) / len(newvalues) >= xff:
           newdatapoints.append([tinterval[0],
                                 whisper.aggregate(aggregationMethod,
                                                   non_none, newvalues)])
@@ -159,7 +158,7 @@ else:
   print('Migrating data without aggregation...')
   for archive in old_archives:
     timeinfo, values = archive['data']
-    datapoints = zip( range(*timeinfo), values )
+    datapoints = zip(range(*timeinfo), values)
     datapoints = filter(lambda p: p[1] is not None, datapoints)
     whisper.update_many(newfile, datapoints)
 
