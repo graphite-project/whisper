@@ -154,7 +154,7 @@ def processMetric(fullPath, schemas, agg_schemas):
     # only care about the first two decimals in the comparison since there is
     # floaty stuff going on.
     info_xFilesFactor = "{0:.2f}".format(info['xFilesFactor'])
-    str_xFilesFactor =  "{0:.2f}".format(xFilesFactor)
+    str_xFilesFactor = "{0:.2f}".format(xFilesFactor)
 
     # check to see if the current and configured xFilesFactor are the same
     if (str_xFilesFactor != info_xFilesFactor):
