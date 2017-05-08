@@ -94,7 +94,7 @@ def dump_archive_headers(archives):
 
 def dump_archives(archives):
   for i, archive in enumerate(archives):
-    print('Archive %d data:' %i)
+    print('Archive %d data:' % i)
     offset = archive['offset']
     for point in xrange(archive['points']):
       (timestamp, value) = struct.unpack(
