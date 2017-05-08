@@ -14,7 +14,7 @@ except ImportError:
 try:
   signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 except AttributeError:
-  #OS=windows
+  # OS=windows
   pass
 
 option_parser = optparse.OptionParser(usage='''%prog path [field]''')

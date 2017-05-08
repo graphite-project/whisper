@@ -13,7 +13,7 @@ except ImportError:
 try:
   signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 except AttributeError:
-  #windows?
+  # windows?
   pass
 
 option_parser = optparse.OptionParser(

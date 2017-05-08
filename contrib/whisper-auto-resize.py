@@ -51,7 +51,7 @@ if len(args) < 2:
 storagePath = args[0]
 configPath  = args[1]
 
-#check to see if we are processing a subfolder
+# check to see if we are processing a subfolder
 # we need to have a separate config option for this since
 # otherwise the metric test thinks the metric is at the root
 # of the storage path and can match schemas incorrectly
@@ -78,7 +78,7 @@ try:
 except ImportError:
     raise SystemExit('[ERROR] Can\'t find the carbon module, try using --carbonlib to explicitly include the path')
 
-#carbon.conf not seeing the config files so give it a nudge
+# carbon.conf not seeing the config files so give it a nudge
 settings.CONF_DIR = configPath
 settings.LOCAL_DATA_DIR = storagePath
 

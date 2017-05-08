@@ -611,7 +611,7 @@ class TestWhisper(WhisperTestBase):
         with AssertRaisesException(whisper.InvalidAggregationMethod('Unrecognized aggregation method: yummy beer')):
             whisper.setAggregationMethod(self.filename, 'yummy beer')
 
-        #set setting every AggregationMethod available
+        # set setting every AggregationMethod available
         for ag in whisper.aggregationMethods:
           for xff in 0.0, 0.2, 0.4, 0.7, 0.75, 1.0:
             # original xFilesFactor
