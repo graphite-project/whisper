@@ -49,7 +49,7 @@ if len(args) < 2:
     sys.exit(1)
 
 storagePath = args[0]
-configPath  = args[1]
+configPath = args[1]
 
 # check to see if we are processing a subfolder
 # we need to have a separate config option for this since
@@ -102,7 +102,7 @@ def processMetric(fullPath, schemas, agg_schemas):
 
     """
     schema_config_args = ''
-    schema_file_args   = ''
+    schema_file_args = ''
     rebuild = False
     messages = ''
 
@@ -137,7 +137,7 @@ def processMetric(fullPath, schemas, agg_schemas):
 
     # loop through the current files bucket sizes and convert to string format to compare for resizing
     for fileRetention in info['archives']:
-        current_schema  = '%s:%s ' % (fileRetention['secondsPerPoint'], fileRetention['points'])
+        current_schema = '%s:%s ' % (fileRetention['secondsPerPoint'], fileRetention['points'])
         schema_file_args += current_schema
 
     # check to see if the current and configured schemas are the same or rebuild

@@ -63,7 +63,7 @@ class SimulatedCorruptWhisperFile(object):
     def __exit__(self, *args, **kwargs):
         whisper.metadataFormat = self.metadataFormat
         whisper.archiveInfoFormat = self.archiveInfoFormat
-        whisper.CACHE_HEADERS  = self.CACHE_HEADERS
+        whisper.CACHE_HEADERS = self.CACHE_HEADERS
 
 
 class AssertRaisesException(object):
