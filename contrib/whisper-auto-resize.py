@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-import sys, os, fnmatch
+import sys
+import os
+import fnmatch
 from subprocess import call
 from optparse import OptionParser
 from distutils.spawn import find_executable
