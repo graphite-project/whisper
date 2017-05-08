@@ -118,7 +118,8 @@ for datasource in datasources:
       except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(destination_path):
           pass
-        else: raise
+        else:
+          raise
     rrd_file = os.path.basename(rrd_path).replace('.rrd', '%s.wsp' % suffix)
     path = destination_path + '/' + rrd_file
   else:

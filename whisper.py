@@ -654,7 +654,8 @@ def file_update(fh, value, timestamp):
 
   # Find the highest-precision archive that covers timestamp
   for i, archive in enumerate(header['archives']):
-    if archive['retention'] < diff: continue
+    if archive['retention'] < diff:
+      continue
     # We'll pass on the update to these lower precision archives later
     lowerArchives = header['archives'][i + 1:]
     break
@@ -696,7 +697,8 @@ def update_many(path, points):
 path is a string
 points is a list of (timestamp,value) points
 """
-  if not points: return
+  if not points:
+    return
   points = [(int(t), float(v)) for (t, v) in points]
   points.sort(key=lambda p: p[0], reverse=True)  # Order points by timestamp, newest first
   with open(path, 'r+b', BUFFERING) as fh:
