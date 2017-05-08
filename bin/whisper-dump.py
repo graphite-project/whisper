@@ -26,11 +26,13 @@ if len(args) != 1:
 else:
   path = args[0]
 
+
 def mmap_file(filename):
   fd = os.open(filename, os.O_RDONLY)
   map = mmap.mmap(fd, os.fstat(fd).st_size, prot=mmap.PROT_READ)
   os.close(fd)
   return map
+
 
 def read_header(map):
   try:
@@ -65,6 +67,7 @@ def read_header(map):
   }
   return header
 
+
 def dump_header(header):
   print('Meta data:')
   print('  aggregation method: %s' % header['aggregationMethod'])
@@ -72,6 +75,7 @@ def dump_header(header):
   print('  xFilesFactor: %g' % header['xFilesFactor'])
   print("")
   dump_archive_headers(header['archives'])
+
 
 def dump_archive_headers(archives):
   for i, archive in enumerate(archives):
@@ -82,6 +86,7 @@ def dump_archive_headers(archives):
     print('  retention: %d' % archive['retention'])
     print('  size: %d' % archive['size'])
     print("")
+
 
 def dump_archives(archives):
   for i, archive in enumerate(archives):

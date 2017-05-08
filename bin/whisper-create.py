@@ -11,6 +11,7 @@ try:
 except ImportError:
   raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
+
 def byte_format(num):
   for x in ['bytes', 'KB', 'MB']:
     if num < 1024.0:

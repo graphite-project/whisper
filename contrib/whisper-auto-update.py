@@ -13,6 +13,7 @@ except ImportError:
 # update this callback to do the logic you want.
 # a future version could use a config while in which this fn is defined.
 
+
 def update_value(timestamp, value):
   if value is None:
     return value

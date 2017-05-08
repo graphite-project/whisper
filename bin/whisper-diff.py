@@ -35,7 +35,8 @@ if options.until:
   until_time = int( options.until )
 else:
   until_time = None
-  
+
+
 def print_diffs(diffs, pretty=True, headers=True):
   if pretty:
     h = "%7s %11s %13s %13s\n"
@@ -56,6 +57,7 @@ def print_diffs(diffs, pretty=True, headers=True):
       else:
         sys.stdout.write(f%(archive, p[0], p[1], p[2]))
 
+
 def print_summary(diffs, pretty=True, headers=True):
   if pretty:
     f = "%7s %9s %9s\n"
@@ -66,6 +68,7 @@ def print_summary(diffs, pretty=True, headers=True):
   for archive, points, total in diffs:
     sys.stdout.write(f%(archive, total, points.__len__()))
 
+
 def print_summary_json(diffs, path_a, path_b):
   print json.dumps({'path_a': path_a,
                     'path_b': path_b,
@@ -74,6 +77,7 @@ def print_summary_json(diffs, path_a, path_b):
                                   'points': points.__len__()}
                                  for archive, points, total in diffs]},
                    sort_keys=True, indent=2, separators=(',', ' : '))
+
 
 def print_diffs_json(diffs, path_a, path_b):
   print json.dumps({'path_a': path_a,
@@ -84,6 +88,7 @@ def print_diffs_json(diffs, path_a, path_b):
                                   'datapoint': [{'timestamp': p[0], 'value_a': p[1], 'value_b': p[2]} for p in points]}
                                  for archive, points, total in diffs]},
                    sort_keys=True, indent=2, separators=(',', ' : '))
+
 
 def main():
   archive_diffs = whisper.diff(path_a, path_b, ignore_empty=options.ignore_empty, until_time=until_time)

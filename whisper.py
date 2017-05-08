@@ -191,9 +191,11 @@ class InvalidTimeInterval(WhisperException):
 
   """Invalid time interval."""
 
+
 class InvalidXFilesFactor(WhisperException):
 
   """Invalid xFilesFactor."""
+
 
 class TimestampNotCovered(WhisperException):
 

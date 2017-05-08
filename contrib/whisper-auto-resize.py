@@ -89,6 +89,7 @@ from carbon.storage import loadStorageSchemas, loadAggregationSchemas
 schemas = loadStorageSchemas()
 agg_schemas = loadAggregationSchemas()
 
+
 # check to see if a metric needs to be resized based on the current config
 def processMetric(fullPath, schemas, agg_schemas):
     """
@@ -176,6 +177,7 @@ def processMetric(fullPath, schemas, agg_schemas):
                 print('Error running: %s' % (cmd))
                 sys.exit(1)
 
+
 def getMetricFromPath(filePath):
     """
         this method takes the full file path of a whisper file an converts it to a gaphite metric name
@@ -193,6 +195,7 @@ def getMetricFromPath(filePath):
     metric_name = metric_name.replace('.wsp', '')
     metric_name = metric_name.replace('/', '.')
     return metric_name
+
 
 def confirm(question, error_response='Valid options : yes or no'):
     """
