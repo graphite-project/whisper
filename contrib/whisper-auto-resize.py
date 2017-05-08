@@ -222,7 +222,7 @@ def confirm(question, error_response='Valid options : yes or no'):
         answer = raw_input(question).lower()
         if answer in ('y', 'yes'):
             return True
-        if answer in ('n', 'no' ):
+        if answer in ('n', 'no'):
             return False
         print(error_response)
 

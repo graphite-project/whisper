@@ -158,7 +158,7 @@ else:
   print('Migrating data without aggregation...')
   for archive in old_archives:
     timeinfo, values = archive['data']
-    datapoints = zip(range(*timeinfo), values )
+    datapoints = zip(range(*timeinfo), values)
     datapoints = filter(lambda p: p[1] is not None, datapoints)
     whisper.update_many(newfile, datapoints)
 
