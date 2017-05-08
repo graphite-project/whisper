@@ -45,17 +45,17 @@ def print_diffs(diffs, pretty=True, headers=True):
     h = "%s %s %s %s\n"
     f = "%s %d %s %s\n"
   if headers:
-    sys.stdout.write(h%('archive', 'timestamp', 'value_a', 'value_b'))
+    sys.stdout.write(h % ('archive', 'timestamp', 'value_a', 'value_b'))
   for archive, points, total in diffs:
     count = count=points.__len__()
     if pretty:
-      sys.stdout.write('Archive %d (%d of %d datapoints differ)\n'%(archive, points.__len__(), total))
-      sys.stdout.write(h%('', 'timestamp', 'value_a', 'value_b'))
+      sys.stdout.write('Archive %d (%d of %d datapoints differ)\n' % (archive, points.__len__(), total))
+      sys.stdout.write(h % ('', 'timestamp', 'value_a', 'value_b'))
     for p in points:
       if pretty:
-        sys.stdout.write(f%('', p[0], p[1], p[2]))
+        sys.stdout.write(f % ('', p[0], p[1], p[2]))
       else:
-        sys.stdout.write(f%(archive, p[0], p[1], p[2]))
+        sys.stdout.write(f % (archive, p[0], p[1], p[2]))
 
 
 def print_summary(diffs, pretty=True, headers=True):
@@ -64,9 +64,9 @@ def print_summary(diffs, pretty=True, headers=True):
   else:
     f = "%s %s %s\n"
   if headers:
-    sys.stdout.write(f%('archive', 'total', 'differing'))
+    sys.stdout.write(f % ('archive', 'total', 'differing'))
   for archive, points, total in diffs:
-    sys.stdout.write(f%(archive, total, points.__len__()))
+    sys.stdout.write(f % (archive, total, points.__len__()))
 
 
 def print_summary_json(diffs, path_a, path_b):
