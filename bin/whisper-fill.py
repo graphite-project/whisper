@@ -30,7 +30,7 @@ import optparse
 if sys.version_info >= (3, 0):
     xrange = range
 else:
-    from future_builtins import filter
+    from future_builtins import filter, zip
 
 def itemgetter(*items):
     if HAS_OPERATOR:
