@@ -80,6 +80,7 @@ if options.carbonlib is not None:
 
 try:
     from carbon.conf import settings
+    from carbon.storage import loadStorageSchemas, loadAggregationSchemas
 except ImportError:
     raise SystemExit('[ERROR] Can\'t find the carbon module, try using '
                      '--carbonlib to explicitly include the path')
@@ -87,9 +88,6 @@ except ImportError:
 # carbon.conf not seeing the config files so give it a nudge
 settings.CONF_DIR = configPath
 settings.LOCAL_DATA_DIR = storagePath
-
-# import these once we have the settings figured out
-from carbon.storage import loadStorageSchemas, loadAggregationSchemas
 
 # Load the Defined Schemas from our config files
 schemas = loadStorageSchemas()
