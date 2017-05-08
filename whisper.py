@@ -413,7 +413,7 @@ def validateArchiveList(archiveList):
     if i == len(archiveList) - 1:
       break
 
-    nextArchive = archiveList[i+1]
+    nextArchive = archiveList[i + 1]
     if not archive[0] < nextArchive[0]:
       raise InvalidConfiguration("A Whisper database may not be configured having "
         "two archives with the same precision (archive%d: %s, archive%d: %s)" %
@@ -582,7 +582,7 @@ def __propagate(fh, header, timestamp, higher, lower):
   for i in xrange(0, len(unpackedSeries), 2):
     pointTime = unpackedSeries[i]
     if pointTime == currentInterval:
-      neighborValues[i//2] = unpackedSeries[i+1]
+      neighborValues[i // 2] = unpackedSeries[i + 1]
     currentInterval += step
 
   # Propagate aggregateValue to propagate from neighborValues if we have enough known points
@@ -647,7 +647,7 @@ def file_update(fh, value, timestamp):
 
   for i, archive in enumerate(header['archives']):  # Find the highest-precision archive that covers timestamp
     if archive['retention'] < diff: continue
-    lowerArchives = header['archives'][i+1:]  # We'll pass on the update to these lower precision archives later
+    lowerArchives = header['archives'][i + 1:]  # We'll pass on the update to these lower precision archives later
     break
 
   # First we update the highest-precision archive
@@ -745,7 +745,7 @@ def __archive_update_many(fh, header, archive, points):
   lenAlignedPoints = len(alignedPoints)
   for i in xrange(0, lenAlignedPoints):
     # Take last point in run of points with duplicate intervals
-    if i+1 < lenAlignedPoints and alignedPoints[i][0] == alignedPoints[i+1][0]:
+    if i + 1 < lenAlignedPoints and alignedPoints[i][0] == alignedPoints[i + 1][0]:
       continue
     (interval, value) = alignedPoints[i]
     if (not previousInterval) or (interval == previousInterval + step):
@@ -753,13 +753,13 @@ def __archive_update_many(fh, header, archive, points):
       previousInterval = interval
     else:
       numberOfPoints = len(currentString) // pointSize
-      startInterval = previousInterval - (step * (numberOfPoints-1))
+      startInterval = previousInterval - (step * (numberOfPoints - 1))
       packedStrings.append((startInterval, currentString))
       currentString = struct.pack(pointFormat, interval, value)
       previousInterval = interval
   if currentString:
     numberOfPoints = len(currentString) // pointSize
-    startInterval = previousInterval - (step * (numberOfPoints-1))
+    startInterval = previousInterval - (step * (numberOfPoints - 1))
     packedStrings.append((startInterval, currentString))
 
   # Read base point and determine where our writes will start
@@ -931,8 +931,8 @@ archive on a read and request data older than the archive's retention
   for i in xrange(0, len(unpackedSeries), 2):
     pointTime = unpackedSeries[i]
     if pointTime == currentInterval:
-      pointValue = unpackedSeries[i+1]
-      valueList[i//2] = pointValue  # In-place reassignment is faster than append()
+      pointValue = unpackedSeries[i + 1]
+      valueList[i // 2] = pointValue  # In-place reassignment is faster than append()
     currentInterval += step
 
   timeInfo = (fromInterval, untilInterval, step)

@@ -17,7 +17,7 @@ except ImportError:
 def update_value(timestamp, value):
   if value is None:
     return value
-  return value*1024*1024*1024
+  return value * 1024 * 1024 * 1024
 
 
 # Ignore SIGPIPE

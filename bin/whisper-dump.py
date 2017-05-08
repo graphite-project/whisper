@@ -45,7 +45,7 @@ def read_header(map):
 
   for i in xrange(archiveCount):
     try:
-      (offset, secondsPerPoint, points) = struct.unpack(whisper.archiveInfoFormat, map[archiveOffset:archiveOffset+whisper.archiveInfoSize])
+      (offset, secondsPerPoint, points) = struct.unpack(whisper.archiveInfoFormat, map[archiveOffset:archiveOffset + whisper.archiveInfoSize])
     except:
       raise whisper.CorruptWhisperFile("Unable to read archive %d metadata" % i)
 
@@ -93,7 +93,7 @@ def dump_archives(archives):
     print('Archive %d data:' %i)
     offset = archive['offset']
     for point in xrange(archive['points']):
-      (timestamp, value) = struct.unpack(whisper.pointFormat, map[offset:offset+whisper.pointSize])
+      (timestamp, value) = struct.unpack(whisper.pointFormat, map[offset:offset + whisper.pointSize])
       print('%d: %d, %10.35g' % (point, timestamp, value))
       offset += whisper.pointSize
     print
