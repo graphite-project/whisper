@@ -159,18 +159,18 @@ def processMetric(fullPath, schemas, agg_schemas):
         messages += '%s aggregation schema differs real: %s should be: %s \n' % (metric, info['aggregationMethod'], aggregationMethod)
 
     # if we need to rebuild, lets do it.
-    if (rebuild == True):
+    if rebuild is True:
         cmd = '%s "%s" %s --xFilesFactor=%s --aggregationMethod=%s %s' % (whisperResizeExecutable, fullPath, options.extra_args, xFilesFactor, aggregationMethod, schema_config_args)
-        if (options.quiet != True or options.confirm == True):
+        if options.quiet is not True or options.confirm is True:
             print(messages)
             print(cmd)
 
-        if (options.confirm == True):
+        if options.confirm is True:
             options.doit = confirm("Would you like to run this command? [y/n]: ")
-            if (options.doit == False):
+            if options.doit is False:
                 print("Skipping command \n")
 
-        if (options.doit == True):
+        if options.doit is True:
             exitcode = call(cmd, shell=True)
             # if the command failed lets bail so we can take a look before proceeding
             if (exitcode > 0):
