@@ -23,7 +23,7 @@ def update_value(timestamp, value):
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-now = int( time.time() )
+now = int(time.time())
 yesterday = now - (60 * 60 * 24)
 
 option_parser = optparse.OptionParser(usage='''%prog [options] path''')
@@ -42,8 +42,8 @@ if len(args) < 1:
   sys.exit(1)
 
 path = args[0]
-from_time = int( options._from )
-until_time = int( options.until )
+from_time = int(options._from)
+until_time = int(options.until)
 
 try:
   data = whisper.fetch(path, from_time, until_time)

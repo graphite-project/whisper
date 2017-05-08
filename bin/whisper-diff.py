@@ -32,7 +32,7 @@ if len(args) != 2:
 (path_a, path_b) = args[0::1]
 
 if options.until:
-  until_time = int( options.until )
+  until_time = int(options.until)
 else:
   until_time = None
 

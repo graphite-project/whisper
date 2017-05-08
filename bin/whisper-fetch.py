@@ -19,7 +19,7 @@ _DROP_FUNCTIONS = {
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-now = int( time.time() )
+now = int(time.time())
 yesterday = now - (60 * 60 * 24)
 
 option_parser = optparse.OptionParser(usage='''%prog [options] path''')
@@ -47,8 +47,8 @@ if len(args) != 1:
 
 path = args[0]
 
-from_time = int( options._from )
-until_time = int( options.until )
+from_time = int(options._from)
+until_time = int(options.until)
 
 try:
   data = whisper.fetch(path, from_time, until_time)
@@ -60,7 +60,7 @@ except whisper.WhisperException as exc:
 
 if options.drop:
   fcn = _DROP_FUNCTIONS.get(options.drop)
-  values = [ x for x in values if fcn(x) ]
+  values = [x for x in values if fcn(x)]
 
 (start, end, step) = timeInfo
 

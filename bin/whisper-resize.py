@@ -110,7 +110,7 @@ if options.aggregate:
   for archive in old_archives:
     # Loading all datapoints into memory for fast querying
     timeinfo, values = archive['data']
-    new_datapoints = zip( range(*timeinfo), values )
+    new_datapoints = zip(range(*timeinfo), values)
     if all_datapoints:
       last_timestamp = all_datapoints[-1][0]
       slice_end = 0
@@ -122,8 +122,8 @@ if options.aggregate:
     else:
       all_datapoints += new_datapoints
 
-  oldtimestamps = map( lambda p: p[0], all_datapoints)
-  oldvalues = map( lambda p: p[1], all_datapoints)
+  oldtimestamps = map(lambda p: p[0], all_datapoints)
+  oldvalues = map(lambda p: p[1], all_datapoints)
 
   print("oldtimestamps: %s" % oldtimestamps)
   # Simply cleaning up some used memory
@@ -140,7 +140,7 @@ if options.aggregate:
     timepoints_to_update = range(fromTime, untilTime, step)
     print("timepoints_to_update: %s" % timepoints_to_update)
     newdatapoints = []
-    for tinterval in zip( timepoints_to_update[:-1], timepoints_to_update[1:] ):
+    for tinterval in zip(timepoints_to_update[:-1], timepoints_to_update[1:]):
       # TODO: Setting lo= parameter for 'lefti' based on righti from previous
       #       iteration. Obviously, this can only be done if
       #       timepoints_to_update is always updated. Is it?
@@ -148,7 +148,7 @@ if options.aggregate:
       righti = bisect.bisect_left(oldtimestamps, tinterval[1], lo=lefti)
       newvalues = oldvalues[lefti:righti]
       if newvalues:
-        non_none = filter( lambda x: x is not None, newvalues)
+        non_none = filter(lambda x: x is not None, newvalues)
         if 1.0 * len(non_none) / len(newvalues) >= xff:
           newdatapoints.append([tinterval[0],
                                 whisper.aggregate(aggregationMethod,
@@ -158,7 +158,7 @@ else:
   print('Migrating data without aggregation...')
   for archive in old_archives:
     timeinfo, values = archive['data']
-    datapoints = zip( range(*timeinfo), values )
+    datapoints = zip(range(*timeinfo), values )
     datapoints = filter(lambda p: p[1] is not None, datapoints)
     whisper.update_many(newfile, datapoints)
 

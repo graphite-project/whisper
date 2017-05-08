@@ -13,7 +13,7 @@ except ImportError:
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-now = int( time.time() )
+now = int(time.time())
 
 option_parser = optparse.OptionParser(
     usage='''%prog [options] path timestamp:value [timestamp:value]*''')
