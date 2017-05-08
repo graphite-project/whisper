@@ -23,13 +23,14 @@ try:
 except ImportError:
     HAS_OPERATOR = False
 
-import itertools
 import time
 import sys
 import optparse
 
 if sys.version_info >= (3, 0):
     xrange = range
+else:
+    from future_builtins import filter, zip
 
 
 def itemgetter(*items):
@@ -77,9 +78,9 @@ def fill(src, dst, tstart, tstop):
 
         (timeInfo, values) = whisper.fetch(src, fromTime, untilTime)
         (start, end, archive_step) = timeInfo
-        pointsToWrite = list(itertools.ifilter(
+        pointsToWrite = list(filter(
             lambda points: points[1] is not None,
-            itertools.izip(xrange(start, end, archive_step), values)))
+            zip(xrange(start, end, archive_step), values)))
         # order points by timestamp, newest first
         pointsToWrite.sort(key=lambda p: p[0], reverse=True)
         whisper.update_many(dst, pointsToWrite)
