@@ -47,7 +47,6 @@ def print_diffs(diffs, pretty=True, headers=True):
   if headers:
     sys.stdout.write(h % ('archive', 'timestamp', 'value_a', 'value_b'))
   for archive, points, total in diffs:
-    count = count=points.__len__()
     if pretty:
       sys.stdout.write('Archive %d (%d of %d datapoints differ)\n' % (archive, points.__len__(), total))
       sys.stdout.write(h % ('', 'timestamp', 'value_a', 'value_b'))

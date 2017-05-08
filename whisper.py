@@ -264,7 +264,7 @@ def __readHeader(fh):
     raise CorruptWhisperFile("Unable to read header", fh.name)
 
   try:
-    agm = aggregationTypeToMethod[aggregationType]
+    aggregationTypeToMethod[aggregationType]
   except:
     raise CorruptWhisperFile("Unable to read header", fh.name)
 
@@ -539,7 +539,6 @@ def __propagate(fh, header, timestamp, higher, lower):
   xff = header['xFilesFactor']
 
   lowerIntervalStart = timestamp - (timestamp % lower['secondsPerPoint'])
-  lowerIntervalEnd = lowerIntervalStart + lower['secondsPerPoint']
 
   fh.seek(higher['offset'])
   packedPoint = fh.read(pointSize)
@@ -660,7 +659,7 @@ def file_update(fh, value, timestamp):
   if baseInterval == 0:  # This file's first update
     fh.seek(archive['offset'])
     fh.write(myPackedPoint)
-    baseInterval, baseValue = myInterval, value
+    baseInterval = myInterval
   else:  # Not our first update
     timeDistance = myInterval - baseInterval
     pointDistance = timeDistance // archive['secondsPerPoint']
