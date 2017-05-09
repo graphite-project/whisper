@@ -53,7 +53,10 @@ except ImportError:
   CAN_FALLOCATE = False
 
 try:
-  from fadvise import posix_fadvise, POSIX_FADV_RANDOM
+  if sys.version_info >= (3, 0):
+    from os import posix_fadvise, POSIX_FADV_RANDOM
+  else:
+    from fadvise import posix_fadvise, POSIX_FADV_RANDOM
   CAN_FADVISE = True
 except ImportError:
   CAN_FADVISE = False
