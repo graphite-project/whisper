@@ -7,6 +7,12 @@ from optparse import OptionParser
 from distutils.spawn import find_executable
 from os.path import basename
 
+# bind raw_input to input on py2
+try:
+    input = raw_input
+except NameError:
+    pass
+
 # On Debian systems whisper-resize.py is available as whisper-resize
 whisperResizeExecutable = find_executable("whisper-resize.py")
 if whisperResizeExecutable is None:
@@ -221,7 +227,7 @@ def confirm(question, error_response='Valid options : yes or no'):
              error_response - the message to display if an invalid option is given.
     """
     while True:
-        answer = raw_input(question).lower()
+        answer = input(question).lower()
         if answer in ('y', 'yes'):
             return True
         if answer in ('n', 'no'):
