@@ -536,14 +536,14 @@ class TestWhisper(WhisperTestBase):
         # check step size
         self.assertEqual(fetch[0][2], retention[-1][0])
 
-    def _update(self, wsp=None, schema=None):
+    def _update(self, wsp=None, schema=None, sparse=False, useFallocate=False):
         wsp = wsp or self.filename
         schema = schema or [(1, 20)]
 
         num_data_points = 20
 
         # create sample data
-        whisper.create(wsp, schema)
+        whisper.create(wsp, schema, sparse=sparse, useFallocate=useFallocate)
         tn = time.time() - num_data_points
         data = []
         for i in range(num_data_points):
@@ -555,6 +555,36 @@ class TestWhisper(WhisperTestBase):
         # test multi update
         whisper.update_many(wsp, data[1:])
         return data
+
+    def test_fadvise(self):
+        original_fadvise = whisper.FADVISE_RANDOM
+        whisper.FADVISE_RANDOM = True
+
+        self._update()
+
+        whisper.FADVISE_RANDOM = original_fadvise
+
+    def test_lock(self):
+        original_lock = whisper.LOCK
+        whisper.LOCK = True
+
+        self._update()
+
+        whisper.LOCK = original_lock
+
+    def test_autoflush(self):
+        original_autoflush = whisper.AUTOFLUSH
+        whisper.AUTOFLUSH = True
+
+        self._update()
+
+        whisper.AUTOFLUSH = original_autoflush
+
+    def test_fallocate(self):
+        self._update(useFallocate=True)
+
+    def test_sparse(self):
+        self._update(sparse=True)
 
     def test_set_xfilesfactor(self):
         """
