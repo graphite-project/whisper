@@ -58,7 +58,7 @@ try:
   if not data:
     raise SystemExit('No data in selected timerange')
   (timeInfo, values) = data
-except whisper.WhisperException as exc:
+except (whisper.WhisperException, IOError) as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 if options.drop:
