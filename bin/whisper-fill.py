@@ -23,13 +23,15 @@ try:
 except ImportError:
     HAS_OPERATOR = False
 
-import itertools
 import time
 import sys
 import optparse
 
 if sys.version_info >= (3, 0):
     xrange = range
+else:
+    from future_builtins import filter, zip
+
 
 def itemgetter(*items):
     if HAS_OPERATOR:
@@ -76,9 +78,9 @@ def fill(src, dst, tstart, tstop):
 
         (timeInfo, values) = whisper.fetch(src, fromTime, untilTime)
         (start, end, archive_step) = timeInfo
-        pointsToWrite = list(itertools.ifilter(
+        pointsToWrite = list(filter(
             lambda points: points[1] is not None,
-            itertools.izip(xrange(start, end, archive_step), values)))
+            zip(xrange(start, end, archive_step), values)))
         # order points by timestamp, newest first
         pointsToWrite.sort(key=lambda p: p[0], reverse=True)
         whisper.update_many(dst, pointsToWrite)
@@ -123,8 +125,9 @@ def main():
         option_parser = optparse.OptionParser(
             usage='%prog [--lock] src dst',
             description='copies data from src in dst, if missing')
-        option_parser.add_option('--lock', help='Lock whisper files',
-                default=False, action='store_true')
+        option_parser.add_option(
+            '--lock', help='Lock whisper files',
+            default=False, action='store_true')
         (options, args) = option_parser.parse_args()
 
         if len(args) != 2:

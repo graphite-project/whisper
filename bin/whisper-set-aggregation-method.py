@@ -1,20 +1,19 @@
 #!/usr/bin/env python
 
-import os
 import sys
 import signal
 import optparse
 
 try:
-    import whisper
+  import whisper
 except ImportError:
-    raise SystemExit('[ERROR] Please make sure whisper is installed properly')
+  raise SystemExit('[ERROR] Please make sure whisper is installed properly')
 
 # Ignore SIGPIPE
 try:
   signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 except AttributeError:
-  #windows?
+  # windows?
   pass
 
 option_parser = optparse.OptionParser(
@@ -43,4 +42,4 @@ except whisper.WhisperException as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
 
-print('Updated aggregation method: %s (%s -> %s)' % (path,oldAggregationMethod,aggregationMethod))
+print('Updated aggregation method: %s (%s -> %s)' % (path, oldAggregationMethod, aggregationMethod))

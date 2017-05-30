@@ -36,6 +36,10 @@ Options:
                         The consolidation function to fetch from on input and
                         aggregationMethod to set on output. One of: average,
                         last, max, min, avg_zero, absmax, absmin
+  --destinationPath=DESTINATIONPATH
+                        Path to place created whisper file. Defaults to the
+                        RRD file's source path.
+
 ```
 
 whisper-create.py
@@ -199,6 +203,9 @@ Options:
   --ignore-empty  skip comparison if either value is undefined
   --columns       print output in simple columns
   --no-headers    do not print column headers
+  --until=UNTIL   Unix epoch time of the end of your requested interval
+                  (default: now)
+  --json          Output results in JSON form
 ```
 
 ## License
