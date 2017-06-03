@@ -1,5 +1,6 @@
 # Whisper
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f00d0b65802742e29de56f3744503ab0)](https://www.codacy.com/app/graphite-project/whisper?utm_source=github.com&utm_medium=referral&utm_content=graphite-project/whisper&utm_campaign=badger)
 [![Build Status](https://secure.travis-ci.org/graphite-project/whisper.png)](http://travis-ci.org/graphite-project/whisper)
 
 ## Overview
