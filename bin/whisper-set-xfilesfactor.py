@@ -27,5 +27,6 @@ def main():
     print('Updated xFilesFactor: %s (%s -> %s)' %
           (args.path, old_xff, args.xff))
 
+
 if __name__ == "__main__":
     main()

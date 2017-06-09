@@ -19,6 +19,7 @@ def byte_format(num):
     num /= 1024.0
   return "%.3f%s" % (num, 'GB')
 
+
 # Ignore SIGPIPE
 try:
   signal.signal(signal.SIGPIPE, signal.SIG_DFL)

@@ -172,6 +172,7 @@ def cli_opts():
                         default=False)
     return parser.parse_args()
 
+
 if __name__ == '__main__':
     i_args = cli_opts()
     if os.getenv('USER') != 'root':

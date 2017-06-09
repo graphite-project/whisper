@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import time
 import math
 import random
 import struct
-
 import errno
+
+from six.moves import StringIO
+from six import assertRegex
 
 try:
     from unittest.mock import patch, mock_open
@@ -660,6 +663,27 @@ class TestWhisper(WhisperTestBase):
         self.assertEqual(fetched[-1], 3.7337)
 
         whisper.LOCK = original_lock
+
+    def test_debug(self):
+        """
+        Test creating a file with debug enabled
+        Should print debug messages to stdout
+        """
+        # debug prints to stdout, redirect it to a variable
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        whisper.disableDebug()
+        whisper.enableDebug()
+        self._update()
+        whisper.disableDebug()
+
+        sys.stdout.seek(0)
+        out = sys.stdout.read()
+
+        sys.stdout = old_stdout
+
+        assertRegex(self, out, '(DEBUG :: (WRITE|READ) \d+ bytes #\d+\n)+')
 
     # TODO: This test method takes more time than virtually every
     #       single other test combined. Profile this code and potentially

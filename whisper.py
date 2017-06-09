@@ -219,25 +219,44 @@ class CorruptWhisperFile(WhisperException):
     return "%s (%s)" % (self.error, self.path)
 
 
+def disableDebug():
+  """ Disable writing IO statistics to stdout """
+  global open
+  try:
+    open = _open
+  except NameError:
+    pass
+
+
 def enableDebug():
-  global open, debug, startBlock, endBlock
+  """ Enable writing IO statistics to stdout """
+  global open, _open, debug, startBlock, endBlock
+  _open = open
 
-  class open(file):
-
+  class open(object):
     def __init__(self, *args, **kwargs):
-      file.__init__(self, *args, **kwargs)
+      self.f = _open(*args, **kwargs)
       self.writeCount = 0
       self.readCount = 0
+
+    def __enter__(self):
+      return self
+
+    def __exit__(self, *args):
+      self.f.close()
 
     def write(self, data):
       self.writeCount += 1
       debug('WRITE %d bytes #%d' % (len(data), self.writeCount))
-      return file.write(self, data)
+      return self.f.write(data)
 
-    def read(self, bytes):
+    def read(self, size):
       self.readCount += 1
-      debug('READ %d bytes #%d' % (bytes, self.readCount))
-      return file.read(self, bytes)
+      debug('READ %d bytes #%d' % (size, self.readCount))
+      return self.f.read(size)
+
+    def __getattr__(self, attr):
+      return getattr(self.f, attr)
 
   def debug(message):
     print('DEBUG :: %s' % message)

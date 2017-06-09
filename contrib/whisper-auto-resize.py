@@ -6,6 +6,7 @@ from subprocess import call
 from optparse import OptionParser
 from distutils.spawn import find_executable
 from os.path import basename
+from six.moves import input
 
 # On Debian systems whisper-resize.py is available as whisper-resize
 whisperResizeExecutable = find_executable("whisper-resize.py")
@@ -221,12 +222,13 @@ def confirm(question, error_response='Valid options : yes or no'):
              error_response - the message to display if an invalid option is given.
     """
     while True:
-        answer = raw_input(question).lower()
+        answer = input(question).lower()
         if answer in ('y', 'yes'):
             return True
         if answer in ('n', 'no'):
             return False
         print(error_response)
+
 
 if os.path.isfile(processPath) and processPath.endswith('.wsp'):
     processMetric(processPath, schemas, agg_schemas)
