@@ -111,5 +111,6 @@ def main():
       print_diffs(archive_diffs, pretty=(not options.columns),
                   headers=(not options.no_headers))
 
+
 if __name__ == "__main__":
   main()
