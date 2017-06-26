@@ -648,7 +648,7 @@ def __propagate(fh, header, timestamp, higher, lower):
     return False
 
 
-def update(path, value, timestamp=None):
+def update(path, value, timestamp=None, now=None):
   """
   update(path, value, timestamp=None)
 
@@ -660,15 +660,16 @@ def update(path, value, timestamp=None):
   with open(path, 'r+b', BUFFERING) as fh:
     if CAN_FADVISE and FADVISE_RANDOM:
       posix_fadvise(fh.fileno(), 0, 0, POSIX_FADV_RANDOM)
-    return file_update(fh, value, timestamp)
+    return file_update(fh, value, timestamp, now)
 
 
-def file_update(fh, value, timestamp):
+def file_update(fh, value, timestamp, now=None):
   if LOCK:
     fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
 
   header = __readHeader(fh)
-  now = int(time.time())
+  if now is None:
+    now = int(time.time())
   if timestamp is None:
     timestamp = now
 
@@ -717,7 +718,7 @@ def file_update(fh, value, timestamp):
     os.fsync(fh.fileno())
 
 
-def update_many(path, points):
+def update_many(path, points, now=None):
   """update_many(path,points)
 
 path is a string
@@ -730,15 +731,16 @@ points is a list of (timestamp,value) points
   with open(path, 'r+b', BUFFERING) as fh:
     if CAN_FADVISE and FADVISE_RANDOM:
       posix_fadvise(fh.fileno(), 0, 0, POSIX_FADV_RANDOM)
-    return file_update_many(fh, points)
+    return file_update_many(fh, points, now)
 
 
-def file_update_many(fh, points):
+def file_update_many(fh, points, now=None):
   if LOCK:
     fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
 
   header = __readHeader(fh)
-  now = int(time.time())
+  if now is None:
+    now = int(time.time())
   archives = iter(header['archives'])
   currentArchive = next(archives)
   currentPoints = []
@@ -992,7 +994,7 @@ archive on a read and request data older than the archive's retention
   return (timeInfo, valueList)
 
 
-def merge(path_from, path_to, time_from=None, time_to=None):
+def merge(path_from, path_to, time_from=None, time_to=None, now=None):
   """ Merges the data from one whisper file into another. Each file must have
   the same archive configuration. time_from and time_to can optionally be
   specified for the merge.
@@ -1003,10 +1005,10 @@ def merge(path_from, path_to, time_from=None, time_to=None):
   # contextlib.nested just for this):
   with open(path_from, 'rb') as fh_from:
     with open(path_to, 'rb+') as fh_to:
-      return file_merge(fh_from, fh_to, time_from, time_to)
+      return file_merge(fh_from, fh_to, time_from, time_to, now)
 
 
-def file_merge(fh_from, fh_to, time_from=None, time_to=None):
+def file_merge(fh_from, fh_to, time_from=None, time_to=None, now=None):
   headerFrom = __readHeader(fh_from)
   headerTo = __readHeader(fh_to)
   if headerFrom['archives'] != headerTo['archives']:
@@ -1014,7 +1016,8 @@ def file_merge(fh_from, fh_to, time_from=None, time_to=None):
       "%s and %s archive configurations are unalike. "
       "Resize the input before merging" % (fh_from.name, fh_to.name))
 
-  now = int(time.time())
+  if now is None:
+    now = int(time.time())
 
   if (time_to is not None):
     untilTime = time_to
@@ -1052,14 +1055,14 @@ def file_merge(fh_from, fh_to, time_from=None, time_to=None):
     __archive_update_many(fh_to, headerTo, archive, pointsToWrite)
 
 
-def diff(path_from, path_to, ignore_empty=False, until_time=None):
+def diff(path_from, path_to, ignore_empty=False, until_time=None, now=None):
   """ Compare two whisper databases. Each file must have the same archive configuration """
   with open(path_from, 'rb') as fh_from:
     with open(path_to, 'rb') as fh_to:
-      return file_diff(fh_from, fh_to, ignore_empty, until_time)
+      return file_diff(fh_from, fh_to, ignore_empty, until_time, now)
 
 
-def file_diff(fh_from, fh_to, ignore_empty=False, until_time=None):
+def file_diff(fh_from, fh_to, ignore_empty=False, until_time=None, now=None):
   headerFrom = __readHeader(fh_from)
   headerTo = __readHeader(fh_to)
 
@@ -1074,7 +1077,8 @@ def file_diff(fh_from, fh_to, ignore_empty=False, until_time=None):
 
   archive_diffs = []
 
-  now = int(time.time())
+  if now is None:
+    now = int(time.time())
   if until_time:
     untilTime = until_time
   else:
