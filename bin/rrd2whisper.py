@@ -24,6 +24,10 @@ aggregationMethods = whisper.aggregationMethods
 
 # RRD doesn't have a 'sum' or 'total' type
 aggregationMethods.remove('sum')
+# RRD doesn't have a 'absmax' type
+aggregationMethods.remove('absmax')
+# RRD doesn't have a 'absmin' type
+aggregationMethods.remove('absmin')
 
 option_parser = optparse.OptionParser(usage='''%prog rrd_path''')
 option_parser.add_option(
