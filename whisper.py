@@ -933,24 +933,21 @@ Fetch data from a single archive. Note that checks for validity of the time
 period requested happen above this level so it's possible to wrap around the
 archive on a read and request data older than the archive's retention
 """
-  fromInterval = int(
-    fromTime - (fromTime % archive['secondsPerPoint'])
-  ) + archive['secondsPerPoint']
+  step = archive['secondsPerPoint']
 
-  untilInterval = int(
-    untilTime - (untilTime % archive['secondsPerPoint'])
-  ) + archive['secondsPerPoint']
+  fromInterval = int(fromTime - (fromTime % step)) + step
+
+  untilInterval = int(untilTime - (untilTime % step)) + step
 
   if fromInterval == untilInterval:
     # Zero-length time range: always include the next point
-    untilInterval += archive['secondsPerPoint']
+    untilInterval += step
 
   fh.seek(archive['offset'])
   packedPoint = fh.read(pointSize)
   (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
 
   if baseInterval == 0:
-    step = archive['secondsPerPoint']
     points = (untilInterval - fromInterval) // step
     timeInfo = (fromInterval, untilInterval, step)
     valueList = [None] * points
@@ -958,13 +955,13 @@ archive on a read and request data older than the archive's retention
 
   # Determine fromOffset
   timeDistance = fromInterval - baseInterval
-  pointDistance = timeDistance // archive['secondsPerPoint']
+  pointDistance = timeDistance // step
   byteDistance = pointDistance * pointSize
   fromOffset = archive['offset'] + (byteDistance % archive['size'])
 
   # Determine untilOffset
   timeDistance = untilInterval - baseInterval
-  pointDistance = timeDistance // archive['secondsPerPoint']
+  pointDistance = timeDistance // step
   byteDistance = pointDistance * pointSize
   untilOffset = archive['offset'] + (byteDistance % archive['size'])
 
@@ -987,7 +984,6 @@ archive on a read and request data older than the archive's retention
   # And finally we construct a list of values (optimize this!)
   valueList = [None] * points  # Pre-allocate entire list for speed
   currentInterval = fromInterval
-  step = archive['secondsPerPoint']
 
   for i in xrange(0, len(unpackedSeries), 2):
     pointTime = unpackedSeries[i]
