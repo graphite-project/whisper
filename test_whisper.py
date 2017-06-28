@@ -385,7 +385,6 @@ class TestWhisper(WhisperTestBase):
         self._update(testdb)
 
         whisper.merge(self.filename, testdb)
-        self._remove(testdb)
 
     def test_merge_empty(self):
         """
@@ -395,19 +394,21 @@ class TestWhisper(WhisperTestBase):
         testdb_b = "test-b-%s" % self.filename
 
         # create two empty databases with same retention
+        self.addCleanup(self._remove, testdb_a)
         whisper.create(testdb_a, self.retention)
+        self.addCleanup(self._remove, testdb_b)
         whisper.create(testdb_b, self.retention)
 
         whisper.merge(testdb_a, testdb_b)
 
-        self._remove(testdb_a)
-        self._remove(testdb_b)
 
     def test_merge_bad_archive_config(self):
         testdb = "test-%s" % self.filename
 
         # Create 2 whisper databases with different schema
         self._update()
+
+        self.addCleanup(self._remove, testdb)
         whisper.create(testdb, [(100, 1)])
 
         with AssertRaisesException(
@@ -416,20 +417,20 @@ class TestWhisper(WhisperTestBase):
                     'unalike. Resize the input before merging')):
             whisper.merge(self.filename, testdb)
 
-        self._remove(testdb)
-
     def test_diff(self):
         testdb = "test-%s" % self.filename
 
-        now = time.time()
+        now = int(time.time())
 
+        self.addCleanup(self._remove, testdb)
         whisper.create(testdb, self.retention)
+
         whisper.create(self.filename, self.retention)
+
         whisper.update(testdb, 1.0, now)
         whisper.update(self.filename, 2.0, now)
 
         results = whisper.diff(testdb, self.filename)
-        self._remove(testdb)
 
         expected = [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)]
 
@@ -440,8 +441,11 @@ class TestWhisper(WhisperTestBase):
 
         now = time.time()
 
+        self.addCleanup(self._remove, testdb)
         whisper.create(testdb, self.retention)
+
         whisper.create(self.filename, self.retention)
+
         whisper.update(testdb, 1.0, now)
         whisper.update(self.filename, 2.0, now)
 
@@ -472,15 +476,17 @@ class TestWhisper(WhisperTestBase):
         self.assertTrue(
             math.isnan(results_empties[0][1][0][1])
         )
-        self._remove(testdb)
 
     def test_file_diff(self):
         testdb = "test-%s" % self.filename
 
         now = time.time()
 
+        self.addCleanup(self._remove, testdb)
         whisper.create(testdb, self.retention)
+
         whisper.create(self.filename, self.retention)
+
         whisper.update(testdb, 1.0, now)
         whisper.update(self.filename, 2.0, now)
 
@@ -488,7 +494,6 @@ class TestWhisper(WhisperTestBase):
         with open(testdb, 'rb') as fh_1:
             with open(self.filename, 'rb+') as fh_2:
                 results = whisper.file_diff(fh_1, fh_2)
-        self._remove(testdb)
 
         expected = [(0, [(int(now), 1.0, 2.0)], 1), (1, [], 0)]
 
@@ -497,7 +502,9 @@ class TestWhisper(WhisperTestBase):
     def test_file_diff_invalid(self):
         testdb = "test-%s" % self.filename
 
+        self.addCleanup(self._remove, testdb)
         whisper.create(testdb, [(120, 10)])
+
         whisper.create(self.filename, self.retention)
 
         # Merging 2 archives with different retentions should fail
@@ -508,7 +515,6 @@ class TestWhisper(WhisperTestBase):
                             'test-db.wsp and db.wsp archive configurations are '
                             'unalike. Resize the input before diffing')):
                     whisper.file_diff(fh_1, fh_2)
-        self._remove(testdb)
 
     def test_fetch(self):
         """
@@ -553,8 +559,10 @@ class TestWhisper(WhisperTestBase):
         num_data_points = 20
 
         # create sample data
+        self.addCleanup(self._remove, wsp)
         whisper.create(wsp, schema, sparse=sparse, useFallocate=useFallocate)
-        tn = time.time() - num_data_points
+        tn = int(time.time()) - num_data_points
+
         data = []
         for i in range(num_data_points):
             data.append((tn + 1 + i, random.random() * 10))
@@ -564,6 +572,7 @@ class TestWhisper(WhisperTestBase):
 
         # test multi update
         whisper.update_many(wsp, data[1:])
+
         return data
 
     def test_fadvise(self):
