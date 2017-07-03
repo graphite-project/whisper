@@ -907,7 +907,7 @@ Returns None if no data can be returned
     archiveToSelect = parseRetentionDef(retentionStr)[0]
 
   with open(path, 'rb') as fh:
-    return file_fetch_granularity(fh, fromTime, untilTime, now, archiveToSelect)    
+    return file_fetch_granularity(fh, fromTime, untilTime, now, archiveToSelect)
 
 
 def file_fetch(fh, fromTime, untilTime, now=None):
