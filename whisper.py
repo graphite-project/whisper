@@ -982,8 +982,6 @@ def file_fetch_granularity(fh, fromTime, untilTime, now=None, archiveToSelect = 
 
   diff = now - fromTime
 
-  #print header['archives']
-
   if not archiveToSelect:
     for archive in header['archives']:
       if archive['retention'] >= diff:
@@ -996,8 +994,6 @@ def file_fetch_granularity(fh, fromTime, untilTime, now=None, archiveToSelect = 
        archive = None
     if not archive:
       raise ValueError("Invalid granularity: %s" %(archiveToSelect))
-
-  #print 'Get data from archive %s from %s to %s' %(archive, fromTime, untilTime)
 
   return __archive_fetch(fh, archive, fromTime, untilTime)
 
