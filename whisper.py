@@ -872,23 +872,8 @@ def info(path):
   return None
 
 
-def fetch(path, fromTime, untilTime=None, now=None):
+def fetch(path, fromTime, untilTime=None, now=None, archiveToSelect=None):
   """fetch(path,fromTime,untilTime=None)
-
-path is a string
-fromTime is an epoch time
-untilTime is also an epoch time, but defaults to now.
-
-Returns a tuple of (timeInfo, valueList)
-where timeInfo is itself a tuple of (fromTime, untilTime, step)
-
-Returns None if no data can be returned
-"""
-  with open(path, 'rb') as fh:
-    return file_fetch(fh, fromTime, untilTime, now)
-
-def fetch_granularity(path, fromTime, untilTime=None, now=None, archiveToSelect=None):
-  """fetch_granularity(path,fromTime,untilTime=None,archiveToSelect=None)
 
 path is a string
 fromTime is an epoch time
@@ -906,11 +891,12 @@ Returns None if no data can be returned
     retentionStr = str(archiveToSelect)+":1s"
     archiveToSelect = parseRetentionDef(retentionStr)[0]
 
+
   with open(path, 'rb') as fh:
-    return file_fetch_granularity(fh, fromTime, untilTime, now, archiveToSelect)
+    return file_fetch(fh, fromTime, untilTime, now, archiveToSelect)
 
 
-def file_fetch(fh, fromTime, untilTime, now=None):
+def file_fetch(fh, fromTime, untilTime, now=None, archiveToSelect=None):
   header = __readHeader(fh)
   if now is None:
     now = int(time.time())
@@ -942,46 +928,6 @@ def file_fetch(fh, fromTime, untilTime, now=None):
     untilTime = now
 
   diff = now - fromTime
-  for archive in header['archives']:
-    if archive['retention'] >= diff:
-      break
-
-  return __archive_fetch(fh, archive, fromTime, untilTime)
-
-def file_fetch_granularity(fh, fromTime, untilTime, now=None, archiveToSelect = None):
-  header = __readHeader(fh)
-  if now is None:
-    now = int(time.time())
-  if untilTime is None:
-    untilTime = now
-  fromTime = int(fromTime)
-  untilTime = int(untilTime)
-
-  # Here we try and be flexible and return as much data as we can.
-  # If the range of data is from too far in the past or fully in the future, we
-  # return nothing
-  if fromTime > untilTime:
-    raise InvalidTimeInterval(
-        "Invalid time interval: from time '%s' is after until time '%s'" %
-        (fromTime, untilTime))
-
-
-  oldestTime = now - header['maxRetention']
-  # Range is in the future
-  if fromTime > now:
-    return None
-  # Range is beyond retention
-  if untilTime < oldestTime:
-    return None
-  # Range requested is partially beyond retention, adjust
-  if fromTime < oldestTime:
-    fromTime = oldestTime
-  # Range is partially in the future, adjust
-  if untilTime > now:
-    untilTime = now
-
-  diff = now - fromTime
-
   if not archiveToSelect:
     for archive in header['archives']:
       if archive['retention'] >= diff:
@@ -993,11 +939,9 @@ def file_fetch_granularity(fh, fromTime, untilTime, now=None, archiveToSelect = 
       else:
        archive = None
     if not archive:
-      raise ValueError("Invalid granularity: %s" %(archiveToSelect))
+      raise ValueError("Invalid granularity: %s" %(archiveToSelect))        
 
   return __archive_fetch(fh, archive, fromTime, untilTime)
-
-
 
 def __archive_fetch(fh, archive, fromTime, untilTime):
   """
