@@ -873,7 +873,7 @@ def info(path):
 
 
 def fetch(path, fromTime, untilTime=None, now=None, archiveToSelect=None):
-  """fetch(path,fromTime,untilTime=None)
+  """fetch(path,fromTime,untilTime=None,archiveToSelect=None)
 
 path is a string
 fromTime is an epoch time
@@ -928,18 +928,18 @@ def file_fetch(fh, fromTime, untilTime, now=None, archiveToSelect=None):
     untilTime = now
 
   diff = now - fromTime
-  if not archiveToSelect:
-    for archive in header['archives']:
-      if archive['retention'] >= diff:
-        break
-  else:
-    for archive in header['archives']:
-      if archive['secondsPerPoint'] == archiveToSelect:
-        break
-      else:
-       archive = None
-    if not archive:
-      raise ValueError("Invalid granularity: %s" %(archiveToSelect))
+
+  for archive in header['archives']:
+    if not archiveToSelect and archive['retention'] >= diff:
+      break
+    if archiveToSelect and archive['secondsPerPoint'] == archiveToSelect:
+      break
+    elif archiveToSelect:
+      archive = None
+
+  if archiveToSelect and not archive:
+    raise ValueError("Invalid granularity: %s" %(archiveToSelect))      
+
 
   return __archive_fetch(fh, archive, fromTime, untilTime)
 
