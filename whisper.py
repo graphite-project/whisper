@@ -938,7 +938,7 @@ def file_fetch(fh, fromTime, untilTime, now=None, archiveToSelect=None):
       archive = None
 
   if archiveToSelect and not archive:
-    raise ValueError("Invalid granularity: %s" %(archiveToSelect))      
+    raise ValueError("Invalid granularity: %s" %(archiveToSelect))
 
 
   return __archive_fetch(fh, archive, fromTime, untilTime)
