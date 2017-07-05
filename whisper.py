@@ -941,6 +941,7 @@ def file_fetch(fh, fromTime, untilTime, now=None, archiveToSelect=None):
 
   return __archive_fetch(fh, archive, fromTime, untilTime)
 
+
 def __archive_fetch(fh, archive, fromTime, untilTime):
   """
 Fetch data from a single archive. Note that checks for validity of the time
