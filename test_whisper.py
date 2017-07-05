@@ -766,6 +766,27 @@ class TestWhisper(WhisperTestBase):
         whisper.AUTOFLUSH = original_autoflush
         whisper.CACHE_HEADERS = original_caching
 
+    def test_fetch_with_archive_to_select(self):
+        """
+        fetch info from database providing the archive to select
+        """
+
+        # SECOND MINUTE HOUR DAY
+        retention = [(1, 60), (60, 60), (3600, 24), (86400, 365)]
+        whisper.create(self.filename, retention)
+
+        archives = ["1s","1m","1h","1d"]
+
+        for i in range(len(archives)):
+            fetch = whisper.fetch(self.filename, 0, archiveToSelect=archives[i])
+            self.assertEqual(fetch[0][2], retention[i][0])
+
+            # check time range
+            self.assertEqual(fetch[0][1] - fetch[0][0],
+                         retention[-1][0] * retention[-1][1])
+        with AssertRaisesException(ValueError("Invalid granularity: 2")):
+            fetch = whisper.fetch(self.filename, 0, archiveToSelect="2s")
+
 
 class TestgetUnitString(unittest.TestCase):
     def test_function(self):

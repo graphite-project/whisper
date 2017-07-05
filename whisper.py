@@ -885,13 +885,6 @@ where timeInfo is itself a tuple of (fromTime, untilTime, step)
 
 Returns None if no data can be returned
 """
-
-  #Parse granularity
-  if archiveToSelect:
-    retentionStr = str(archiveToSelect)+":1s"
-    archiveToSelect = parseRetentionDef(retentionStr)[0]
-
-
   with open(path, 'rb') as fh:
     return file_fetch(fh, fromTime, untilTime, now, archiveToSelect)
 
@@ -929,17 +922,22 @@ def file_fetch(fh, fromTime, untilTime, now=None, archiveToSelect=None):
 
   diff = now - fromTime
 
+  #Parse granularity if requested
+  if archiveToSelect:
+    retentionStr = str(archiveToSelect)+":1"
+    archiveToSelect = parseRetentionDef(retentionStr)[0]
+
   for archive in header['archives']:
-    if not archiveToSelect and archive['retention'] >= diff:
-      break
-    if archiveToSelect and archive['secondsPerPoint'] == archiveToSelect:
-      break
-    elif archiveToSelect:
+    if archiveToSelect:
+      if archive['secondsPerPoint'] == archiveToSelect:
+        break
       archive = None
+    else:
+      if archive['retention'] >= diff:
+        break
 
   if archiveToSelect and not archive:
     raise ValueError("Invalid granularity: %s" %(archiveToSelect))
-
 
   return __archive_fetch(fh, archive, fromTime, untilTime)
 
