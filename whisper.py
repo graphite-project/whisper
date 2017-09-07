@@ -107,7 +107,6 @@ try:
   ])
 except ImportError:
   pointFormatNumpy = None
-  pass
 
 aggregationTypeToMethod = dict({
   1: 'average',
@@ -869,7 +868,6 @@ archive on a read and request data older than the archive's retention
     points = len(seriesString) // pointSize
     seriesFormat = byteOrder + (pointTypes * points)
     unpackedSeries = struct.unpack(seriesFormat, seriesString)
-  
     # And finally we construct a list of values (optimize this!)
     valueList = [None] * points  # Pre-allocate entire list for speed
     currentInterval = fromInterval
