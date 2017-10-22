@@ -37,6 +37,9 @@ option_parser.add_option(
   '--pretty', default=False, action='store_true',
   help="Show human-readable timestamps instead of unix times")
 option_parser.add_option(
+  '-t', '--time-format', action='store', type='string', dest='time_format',
+  help='Time format to use with --pretty; see time.strftime()')
+option_parser.add_option(
   '--drop', choices=list(_DROP_FUNCTIONS.keys()), action='store',
   help="Specify 'nulls' to drop all null values. "
        "Specify 'zeroes' to drop all zero values. "
@@ -80,7 +83,10 @@ if options.json:
 t = start
 for value in values:
   if options.pretty:
-    timestr = time.ctime(t)
+    if options.time_format:
+      timestr = time.strftime(options.time_format, time.localtime(t))
+    else:
+      timestr = time.ctime(t)
   else:
     timestr = str(t)
   if value is None:
