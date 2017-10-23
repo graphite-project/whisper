@@ -79,6 +79,9 @@ Usage: whisper-dump.py path
 
 Options:
   -h, --help  show this help message and exit
+  --pretty    Show human-readable timestamps instead of unix times
+  -t TIME_FORMAT, --time-format=TIME_FORMAT
+              Time format to use with --pretty; see time.strftime()
 ```
 
 whisper-fetch.py
