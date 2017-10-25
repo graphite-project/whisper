@@ -2,6 +2,7 @@
 
 import os
 import mmap
+import time
 import struct
 import signal
 import sys
@@ -19,6 +20,12 @@ if sys.version_info >= (3, 0):
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 option_parser = optparse.OptionParser(usage='''%prog path''')
+option_parser.add_option(
+  '--pretty', default=False, action='store_true',
+  help="Show human-readable timestamps instead of unix times")
+option_parser.add_option(
+  '-t', '--time-format', action='store', type='string', dest='time_format',
+  help='Time format to use with --pretty; see time.strftime()')
 (options, args) = option_parser.parse_args()
 
 if len(args) != 1:
@@ -92,7 +99,7 @@ def dump_archive_headers(archives):
     print("")
 
 
-def dump_archives(archives):
+def dump_archives(archives, options):
   for i, archive in enumerate(archives):
     print('Archive %d data:' % i)
     offset = archive['offset']
@@ -101,7 +108,15 @@ def dump_archives(archives):
         whisper.pointFormat,
         map[offset:offset + whisper.pointSize]
       )
-      print('%d: %d, %10.35g' % (point, timestamp, value))
+      if options.pretty:
+        if options.time_format:
+          timestr = time.localtime(timestamp)
+          timestr = time.strftime(options.time_format, timestr)
+        else:
+          timestr = time.ctime(timestamp)
+      else:
+        timestr = str(timestamp)
+      print('%d: %s, %10.35g' % (point, timestr, value))
       offset += whisper.pointSize
     print
 
@@ -112,4 +127,4 @@ if not os.path.exists(path):
 map = mmap_file(path)
 header = read_header(map)
 dump_header(header)
-dump_archives(header['archives'])
+dump_archives(header['archives'], options)

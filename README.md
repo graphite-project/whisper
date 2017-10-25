@@ -79,6 +79,9 @@ Usage: whisper-dump.py path
 
 Options:
   -h, --help  show this help message and exit
+  --pretty    Show human-readable timestamps instead of unix times
+  -t TIME_FORMAT, --time-format=TIME_FORMAT
+              Time format to use with --pretty; see time.strftime()
 ```
 
 whisper-fetch.py
@@ -96,6 +99,8 @@ Options:
                  (default: now)
   --json         Output results in JSON form
   --pretty       Show human-readable timestamps instead of unix times
+  -t TIME_FORMAT, --time-format=TIME_FORMAT
+                 Time format to use with --pretty; see time.strftime()
   --drop=DROP    Specify 'nulls' to drop all null values. Specify 'zeroes' to
                  drop all zero values. Specify 'empty' to drop both null and
                  zero values.
