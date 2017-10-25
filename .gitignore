@@ -4,6 +4,7 @@ dist
 *.pyc
 .tox
 .coverage
+coverage.xml
 htmlcov/*
 ve
 .idea
