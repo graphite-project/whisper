@@ -921,9 +921,9 @@ def file_fetch(fh, fromTime, untilTime, now=None, archiveToSelect=None):
 
   diff = now - fromTime
 
-  #Parse granularity if requested
+  # Parse granularity if requested
   if archiveToSelect:
-    retentionStr = str(archiveToSelect)+":1"
+    retentionStr = str(archiveToSelect) + ":1"
     archiveToSelect = parseRetentionDef(retentionStr)[0]
 
   for archive in header['archives']:
@@ -936,7 +936,7 @@ def file_fetch(fh, fromTime, untilTime, now=None, archiveToSelect=None):
         break
 
   if archiveToSelect and not archive:
-    raise ValueError("Invalid granularity: %s" %(archiveToSelect))
+    raise ValueError("Invalid granularity: %s" % (archiveToSelect))
 
   return __archive_fetch(fh, archive, fromTime, untilTime)
 
