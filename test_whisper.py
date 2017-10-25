@@ -401,7 +401,6 @@ class TestWhisper(WhisperTestBase):
 
         whisper.merge(testdb_a, testdb_b)
 
-
     def test_merge_bad_archive_config(self):
         testdb = "test-%s" % self.filename
 
@@ -775,15 +774,14 @@ class TestWhisper(WhisperTestBase):
         retention = [(1, 60), (60, 60), (3600, 24), (86400, 365)]
         whisper.create(self.filename, retention)
 
-        archives = ["1s","1m","1h","1d"]
+        archives = ["1s", "1m", "1h", "1d"]
 
         for i in range(len(archives)):
             fetch = whisper.fetch(self.filename, 0, archiveToSelect=archives[i])
             self.assertEqual(fetch[0][2], retention[i][0])
 
             # check time range
-            self.assertEqual(fetch[0][1] - fetch[0][0],
-                         retention[-1][0] * retention[-1][1])
+            self.assertEqual(fetch[0][1] - fetch[0][0], retention[-1][0] * retention[-1][1])
         with AssertRaisesException(ValueError("Invalid granularity: 2")):
             fetch = whisper.fetch(self.filename, 0, archiveToSelect="2s")
 
