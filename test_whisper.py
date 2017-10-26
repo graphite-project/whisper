@@ -700,10 +700,10 @@ class TestWhisper(WhisperTestBase):
 
         # then only the most recent input points (those at the end) were written
         actual_time_info = whisper.fetch(wsp, 0, now=test_now)[0]
-        self.assertEquals(actual_time_info,
-                          (input_points[-archive_len][0],
-                           input_points[-1][0] + archive_step, # untilInterval = newest + step
-                           archive_step))
+        self.assertEqual(actual_time_info,
+                         (input_points[-archive_len][0],
+                          input_points[-1][0] + archive_step,  # untilInterval = newest + step
+                          archive_step))
 
     def test_debug(self):
         """
