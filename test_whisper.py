@@ -679,6 +679,32 @@ class TestWhisper(WhisperTestBase):
 
         whisper.LOCK = original_lock
 
+    def test_update_many_excess(self):
+        # given an empty db
+        wsp = "test_update_many_excess.wsp"
+        self.addCleanup(self._remove, wsp)
+        archive_len = 3
+        archive_step = 1
+        whisper.create(wsp, [(archive_step, archive_len)])
+
+        # given too many points than the db can hold
+        excess_len = 1
+        num_input_points = archive_len + excess_len
+        test_now = int(time.time())
+        input_start = test_now - num_input_points + archive_step
+        input_points = [(input_start + i, random.random() * 10)
+                        for i in range(num_input_points)]
+
+        # when the db is updated with too many points
+        whisper.update_many(wsp, input_points, now=test_now)
+
+        # then only the most recent input points (those at the end) were written
+        actual_time_info = whisper.fetch(wsp, 0, now=test_now)[0]
+        self.assertEquals(actual_time_info,
+                          (input_points[-archive_len][0],
+                           input_points[-1][0] + archive_step, # untilInterval = newest + step
+                           archive_step))
+
     def test_debug(self):
         """
         Test creating a file with debug enabled
