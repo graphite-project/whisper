@@ -827,8 +827,7 @@ def __archive_update_many(fh, header, archive, points):
 
     if bytesBeyond > 0:
       fh.write(packedString[:-bytesBeyond])
-      assert fh.tell() == (
-        archiveEnd,
+      assert fh.tell() == archiveEnd, (
         "archiveEnd=%d fh.tell=%d bytesBeyond=%d len(packedString)=%d" %
         (archiveEnd, fh.tell(), bytesBeyond, len(packedString))
       )
