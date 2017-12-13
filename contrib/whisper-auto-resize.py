@@ -2,6 +2,7 @@
 import sys
 import os
 import fnmatch
+import shlex
 from subprocess import call
 from optparse import OptionParser
 from distutils.spawn import find_executable
@@ -172,9 +173,14 @@ def processMetric(fullPath, schemas, agg_schemas):
 
     # if we need to rebuild, lets do it.
     if rebuild is True:
-        cmd = '%s "%s" %s --xFilesFactor=%s --aggregationMethod=%s %s' % \
-              (whisperResizeExecutable, fullPath, options.extra_args,
-               xFilesFactor, aggregationMethod, schema_config_args)
+        cmd = [whisperResizeExecutable, fullPath]
+        for x in shlex.split(options.extra_args):
+            cmd.append(x)
+        cmd.append('--xFilesFactor=' + str(xFilesFactor))
+        cmd.append('--aggregationMethod=' + str(aggregationMethod))
+        for x in shlex.split(schema_config_args):
+            cmd.append(x)
+
         if options.quiet is not True or options.confirm is True:
             print(messages)
             print(cmd)
@@ -185,7 +191,7 @@ def processMetric(fullPath, schemas, agg_schemas):
                 print("Skipping command \n")
 
         if options.doit is True:
-            exitcode = call(cmd, shell=True)
+            exitcode = call(cmd)
             # if the command failed lets bail so we can take a look before proceeding
             if (exitcode > 0):
                 print('Error running: %s' % (cmd))
