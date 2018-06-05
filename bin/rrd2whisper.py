@@ -20,7 +20,7 @@ except ImportError:
 # Ignore SIGPIPE
 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-aggregationMethods = whisper.aggregationMethods
+aggregationMethods = list(whisper.aggregationMethods)
 
 # RRD doesn't have a 'sum' or 'total' type
 aggregationMethods.remove('sum')
