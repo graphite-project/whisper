@@ -9,3 +9,4 @@ htmlcov/*
 ve
 .idea
 *.iml
+*.swp

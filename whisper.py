@@ -285,12 +285,12 @@ def __readHeader(fh):
   try:
     (aggregationType, maxRetention, xff, archiveCount) \
         = struct.unpack(metadataFormat, packedMetadata)
-  except:
+  except (struct.error, ValueError, TypeError):
     raise CorruptWhisperFile("Unable to read header", fh.name)
 
   try:
     aggregationTypeToMethod[aggregationType]
-  except:
+  except KeyError:
     raise CorruptWhisperFile("Unable to read header", fh.name)
 
   if not 0 <= xff <= 1:
@@ -398,7 +398,7 @@ def __writeHeaderMetadata(fh, aggregationMethod, maxRetention, xFilesFactor, arc
 
   try:
     xFilesFactor = float(xFilesFactor)
-  except:
+  except ValueError:
     raise InvalidXFilesFactor("Invalid xFilesFactor %s, not a float" %
                               xFilesFactor)
 
