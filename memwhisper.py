@@ -28,7 +28,7 @@
 import itertools
 import operator
 import re
-import cStringIO
+import StringIO
 import struct
 import sys
 import time
@@ -425,10 +425,10 @@ def create(archiveList, xFilesFactor=None, aggregationMethod=None,
   aggregationMethod  specifies the function to use when propagating data (see
                      ``whisper.aggregationMethods``)
 
-  Returns in-memory file-like whisper database (cStringIO)
+  Returns in-memory file-like whisper database (StringIO)
   """
 
-  mFile = cStringIO.StringIO()
+  mFile = StringIO.StringIO()
   # Set default params
   if xFilesFactor is None:
     xFilesFactor = 0.5
