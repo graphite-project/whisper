@@ -5,15 +5,14 @@ from distutils.core import setup
 
 
 setup(
-  name='whisper',
+  name='memwhisper',
   version='1.2.0',
-  url='http://graphiteapp.org/',
-  author='Chris Davis',
-  author_email='chrismd@gmail.com',
+  url='https://github.com/goeuro/mem-whisper',
+  author='Lorenzo Fundaro',
+  author_email='lorenzo.fundaro@goeuro.com',
   license='Apache Software License 2.0',
-  description='Fixed size round-robin style database',
-  py_modules=['whisper'],
-  scripts=glob('bin/*') + glob('contrib/*'),
+  description='Fork implementation taken from Chris Davis <chrismd@gmail.com>',
+  py_modules=['memwhisper'],
   install_requires=['six'],
   classifiers=[
     'Programming Language :: Python :: 2',

@@ -29,6 +29,6 @@ script:
   - contrib/whisper-auto-resize.py --help
   - "if echo $TRAVIS_PYTHON_VERSION | egrep -q '^pypy$'; then pip install unittest2; fi"
   # Coverage of tests ensures we don't have dead coded in the tests
-  - coverage run --include='whisper.py,test_whisper.py' test_whisper.py
+  - coverage run --include='memwhisper.py,test_whisper.py' test_whisper.py
 after_success:
   coveralls
