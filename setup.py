@@ -8,7 +8,7 @@ setup(
   name='mem-whisper',
   version='1.2.0',
   url='https://github.com/goeuro/mem-whisper',
-  author='Lorenzo Fundar',
+  author='Lorenzo Fundaro',
   author_email='lorenzo.fundaro@goeuro.com',
   license='Apache Software License 2.0',
   description='Fork implementation taken from Chris Davis <chrismd@gmail.com>',
