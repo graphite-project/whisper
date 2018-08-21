@@ -4,12 +4,18 @@ sudo: false
 python:
   - 2.7
   - pypy
-  - 3.2
-  - 3.3
   - 3.4
   - 3.5
   - 3.6
   - pypy3
+
+# 3.7 needs xenial and sudo https://github.com/travis-ci/travis-ci/issues/9815
+# This enables 3.7 without globally enabling sudo and dist: xenial for other build jobs
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial
+      sudo: true
 
 install:
   - pip install .
