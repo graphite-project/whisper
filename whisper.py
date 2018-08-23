@@ -103,6 +103,17 @@ FADVISE_RANDOM = False
 BUFFERING = 0
 __headerCache = {}
 
+class HeaderCacheEntry():
+    name = None
+    info = None
+    time = None
+
+    def __init__(self, name, info, time):
+        self.name = name
+        self.info = info
+        self.time = time
+
+
 longFormat = "!L"
 longSize = struct.calcsize(longFormat)
 floatFormat = "!f"
@@ -274,10 +285,9 @@ def enableDebug():
 
 def __readHeader(fh):
   if CACHE_HEADERS:
-    info = __headerCache.get(fh.name)
-    if info:
-      return info
-
+    if fh.name in __headerCache:
+        __headerCache.get(fh.name).time = time.time()
+        return __headerCache.get(fh.name).info
   originalOffset = fh.tell()
   fh.seek(0)
   packedMetadata = fh.read(metadataSize)
@@ -322,7 +332,7 @@ def __readHeader(fh):
     'archives': archives,
   }
   if CACHE_HEADERS:
-    __headerCache[fh.name] = info
+    __headerCache[fh.name] = HeaderCacheEntry(fh.name, info, time.time())
 
   return info
 
