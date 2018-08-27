@@ -1,34 +1,39 @@
 language: python
 sudo: false
+python: 2.7
 
-python:
-  - 2.7
-  - pypy
-  - 3.2
-  - 3.3
-  - 3.4
-  - 3.5
-  - 3.6
-  - pypy3
+# 3.7 needs xenial and sudo https://github.com/travis-ci/travis-ci/issues/9815
+# This enables 3.7 without globally enabling sudo and dist: xenial for other build jobs
+matrix:
+  include:
+    - python: 2.7
+      env:
+        - TOXENV=py27
+    - python: 3.4
+      env:
+        - TOXENV=py34
+    - python: 3.5
+      env:
+        - TOXENV=py35
+    - python: 3.6
+      env:
+        - TOXENV=py36
+    - python: 3.7
+      dist: xenial
+      sudo: true
+      env:
+        - TOXENV=py37
+    - python: 3.7
+      dist: xenial
+      sudo: true
+      env:
+        - TOXENV=lint
 
 install:
-  - pip install .
-  - (python --version 2>&1 | grep -q "Python 3.2." && pip install "coverage<4" coveralls) || pip install coverage coveralls
+  - pip install tox
 
 script:
-  - bin/whisper-create.py --help
-  - bin/whisper-dump.py --help
-  - bin/whisper-fetch.py --help
-  - bin/whisper-fill.py --help
-  - bin/whisper-info.py --help
-  - bin/whisper-merge.py --help
-  - bin/whisper-resize.py --help
-  - bin/whisper-set-aggregation-method.py --help
-  - bin/whisper-update.py --help
-  - contrib/whisper-auto-update.py --help
-  - contrib/whisper-auto-resize.py --help
-  - "if echo $TRAVIS_PYTHON_VERSION | egrep -q '^pypy$'; then pip install unittest2; fi"
-  # Coverage of tests ensures we don't have dead coded in the tests
-  - coverage run --include='whisper.py,test_whisper.py' test_whisper.py
+  - tox -e $TOXENV
+
 after_success:
   coveralls
