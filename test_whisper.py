@@ -724,7 +724,7 @@ class TestWhisper(WhisperTestBase):
 
         sys.stdout = old_stdout
 
-        assertRegex(self, out, '(DEBUG :: (WRITE|READ) \d+ bytes #\d+\n)+')
+        assertRegex(self, out, '(DEBUG :: (WRITE|READ) \\d+ bytes #\\d+\n)+')
 
     # TODO: This test method takes more time than virtually every
     #       single other test combined. Profile this code and potentially
