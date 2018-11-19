@@ -32,21 +32,21 @@ aggregationMethods.remove('absmin')
 option_parser = optparse.OptionParser(usage='''%prog rrd_path''')
 option_parser.add_option(
     '--xFilesFactor',
-    help="The xFilesFactor to use in the output file. \
-          Defaults to the input RRD's xFilesFactor",
+    help="The xFilesFactor to use in the output file. " +
+    "Defaults to the input RRD's xFilesFactor",
     default=None,
     type='float')
 option_parser.add_option(
     '--aggregationMethod',
-    help="The consolidation function to fetch from on input and \
-          aggregationMethod to set on output. One of: %s" %
+    help="The consolidation function to fetch from on input and " +
+    "aggregationMethod to set on output. One of: %s" %
     ', '.join(aggregationMethods),
     default='average',
     type='string')
 option_parser.add_option(
     '--destinationPath',
-    help="Path to place created whisper file. Defaults to the \
-          RRD file's source path.",
+    help="Path to place created whisper file. Defaults to the " +
+    "RRD file's source path.",
     default=None,
     type='string')
 
