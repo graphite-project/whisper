@@ -583,7 +583,10 @@ def __propagate(fh, header, timestamp, higher, lower):
 
   fh.seek(higher['offset'])
   packedPoint = fh.read(pointSize)
-  (higherBaseInterval, higherBaseValue) = struct.unpack(pointFormat, packedPoint)
+  try:
+    (higherBaseInterval, higherBaseValue) = struct.unpack(pointFormat, packedPoint)
+  except struct.error:
+    raise CorruptWhisperFile("Unable to read base datapoint", fh.name)
 
   if higherBaseInterval == 0:
     higherFirstOffset = higher['offset']
@@ -612,7 +615,10 @@ def __propagate(fh, header, timestamp, higher, lower):
   byteOrder, pointTypes = pointFormat[0], pointFormat[1:]
   points = len(seriesString) // pointSize
   seriesFormat = byteOrder + (pointTypes * points)
-  unpackedSeries = struct.unpack(seriesFormat, seriesString)
+  try:
+    unpackedSeries = struct.unpack(seriesFormat, seriesString)
+  except struct.error:
+    raise CorruptWhisperFile("Unable to read datapoints", fh.name)
 
   # And finally we construct a list of values
   neighborValues = [None] * points
@@ -636,7 +642,10 @@ def __propagate(fh, header, timestamp, higher, lower):
     myPackedPoint = struct.pack(pointFormat, lowerIntervalStart, aggregateValue)
     fh.seek(lower['offset'])
     packedPoint = fh.read(pointSize)
-    (lowerBaseInterval, lowerBaseValue) = struct.unpack(pointFormat, packedPoint)
+    try:
+      (lowerBaseInterval, lowerBaseValue) = struct.unpack(pointFormat, packedPoint)
+    except struct.error:
+      raise CorruptWhisperFile("Unable to read base datapoint", fh.name)
 
     if lowerBaseInterval == 0:  # First propagated update to this lower archive
       fh.seek(lower['offset'])
@@ -699,7 +708,10 @@ def file_update(fh, value, timestamp, now=None):
   myPackedPoint = struct.pack(pointFormat, myInterval, value)
   fh.seek(archive['offset'])
   packedPoint = fh.read(pointSize)
-  (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
+  try:
+    (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
+  except struct.error:
+    raise CorruptWhisperFile("Unable to read base datapoint", fh.name)
 
   if baseInterval == 0:  # This file's first update
     fh.seek(archive['offset'])
@@ -812,9 +824,14 @@ def __archive_update_many(fh, header, archive, points):
   # Read base point and determine where our writes will start
   fh.seek(archive['offset'])
   packedBasePoint = fh.read(pointSize)
-  (baseInterval, baseValue) = struct.unpack(pointFormat, packedBasePoint)
+  try:
+    (baseInterval, baseValue) = struct.unpack(pointFormat, packedBasePoint)
+  except struct.error:
+    raise CorruptWhisperFile("Unable to read base datapoint", fh.name)
+
   if baseInterval == 0:  # This file's first update
-    baseInterval = packedStrings[0][0]  # Use our first string as the base, so we start at the start
+    # Use our first string as the base, so we start at the start
+    baseInterval = packedStrings[0][0]
 
   # Write all of our packed strings in locations determined by the baseInterval
   for (interval, packedString) in packedStrings:
@@ -960,7 +977,10 @@ archive on a read and request data older than the archive's retention
 
   fh.seek(archive['offset'])
   packedPoint = fh.read(pointSize)
-  (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
+  try:
+    (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
+  except struct.error:
+    raise CorruptWhisperFile("Unable to read base datapoint", fh.name)
 
   if baseInterval == 0:
     points = (untilInterval - fromInterval) // step
@@ -994,7 +1014,10 @@ archive on a read and request data older than the archive's retention
   byteOrder, pointTypes = pointFormat[0], pointFormat[1:]
   points = len(seriesString) // pointSize
   seriesFormat = byteOrder + (pointTypes * points)
-  unpackedSeries = struct.unpack(seriesFormat, seriesString)
+  try:
+    unpackedSeries = struct.unpack(seriesFormat, seriesString)
+  except struct.error:
+    raise CorruptWhisperFile("Unable to read datapoints", fh.name)
 
   # And finally we construct a list of values (optimize this!)
   valueList = [None] * points  # Pre-allocate entire list for speed
