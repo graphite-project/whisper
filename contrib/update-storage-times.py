@@ -115,9 +115,11 @@ def fix_metric(metric):
         else:
             res = subprocess.check_call(command_string,
                                         stdout=devnull)
+
+        os.chmod(metric, perms)
+        os.chown(metric, owner, group)
+
     devnull.close()
-    os.chmod(metric, perms)
-    os.chown(metric, owner, group)
     # wait for a second, so we don't kill I/O on the host
     time.sleep(0.3)
     """
