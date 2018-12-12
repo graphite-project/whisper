@@ -106,12 +106,18 @@ def fix_metric(metric):
         res = 0
     else:
         LOG.debug('Retention will be %s' % retention)
+        # record file owner/group and perms to set properly after whisper-resize.py is complete
+        perms = os.stat(metric).st_mode
+        owner = os.stat(metric).st_uid
+        group = os.stat(metric).st_gid
         if DEBUG:
             res = subprocess.check_call(command_string)
         else:
             res = subprocess.check_call(command_string,
                                         stdout=devnull)
     devnull.close()
+    os.chmod(metric, perms)
+    os.chown(metric, owner, group)
     # wait for a second, so we don't kill I/O on the host
     time.sleep(0.3)
     """
@@ -167,9 +173,9 @@ def cli_opts():
     parser.add_argument('--aggregate', action='store_true', dest='aggregate',
                         help="Passed through to whisper-resize.py, roll up values",
                         default=False)
-    parser.add_argument('--bin-dir', action='store', dest='bin_dir',
+    parser.add_argument('--bindir', action='store', dest='bindir',
                         help="The root path to whisper-resize.py and whisper-info.py",
-                        default='/opt/graphite/bin/')
+                        default='/opt/graphite/bin')
     return parser.parse_args()
 
 
@@ -187,9 +193,9 @@ if __name__ == '__main__':
     ROOT_PATH = i_args.path
     DEBUG = i_args.debug
     DRY_RUN = i_args.dry_run
-    BIN_DIR = i_args.bin_dir
-    RESIZE_BIN = BIN_DIR + "whisper-resize.py"
-    INFO_BIN = BIN_DIR + "whisper-info.py"
+    BINDIR = i_args.bindir
+    RESIZE_BIN = BINDIR + "/whisper-resize.py"
+    INFO_BIN = BINDIR + "/whisper-info.py"
     BASE_COMMAND = [RESIZE_BIN]
 
     if i_args.nobackup:
