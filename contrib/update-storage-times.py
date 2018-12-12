@@ -21,8 +21,6 @@ try:
 except ImportError:
     from os import listdir as scandir
 
-RESIZE_BIN = "/opt/graphite/bin/whisper-resize.py"
-INFO_BIN = "/opt/graphite/bin/whisper-info.py"
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 SCHEMA_LIST = {}
@@ -31,7 +29,6 @@ DEFAULT_SCHEMA = {'match': re.compile('.*'),
                   'retentions': '1m:7d'}
 DEBUG = False
 DRY_RUN = False
-BASE_COMMAND = [RESIZE_BIN]
 ROOT_PATH = ""
 
 
@@ -92,7 +89,7 @@ def fix_metric(metric):
     command_string = list(BASE_COMMAND) + [metric]
 
     retention = DEFAULT_SCHEMA['retentions']
-    matching = metric[len(ROOT_PATH):]
+    matching = metric.replace('/', '.')
     for schema, info in SCHEMA_LIST.iteritems():
         if info['match'].search(matching):
             retention = info['retentions']
@@ -170,6 +167,9 @@ def cli_opts():
     parser.add_argument('--aggregate', action='store_true', dest='aggregate',
                         help="Passed through to whisper-resize.py, roll up values",
                         default=False)
+    parser.add_argument('--bin-dir', action='store', dest='bin_dir',
+                        help="The root path to whisper-resize.py and whisper-info.py",
+                        default='/opt/graphite/bin/')
     return parser.parse_args()
 
 
@@ -187,6 +187,11 @@ if __name__ == '__main__':
     ROOT_PATH = i_args.path
     DEBUG = i_args.debug
     DRY_RUN = i_args.dry_run
+    BIN_DIR = i_args.bin_dir
+    RESIZE_BIN = BIN_DIR + "whisper-resize.py"
+    INFO_BIN = BIN_DIR + "whisper-info.py"
+    BASE_COMMAND = [RESIZE_BIN]
+
     if i_args.nobackup:
         BASE_COMMAND.append('--nobackup')
     if i_args.aggregate:
