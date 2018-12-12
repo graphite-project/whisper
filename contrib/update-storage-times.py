@@ -115,7 +115,6 @@ def fix_metric(metric):
         else:
             res = subprocess.check_call(command_string,
                                         stdout=devnull)
-
         os.chmod(metric, perms)
         os.chown(metric, owner, group)
 
