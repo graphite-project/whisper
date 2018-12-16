@@ -172,7 +172,7 @@ os.rename(path, backup)
 try:
   print('Renaming new database to: %s' % path)
   os.rename(tmpfile, path)
-except (OSError, FileNotFoundError, PermissionError):
+except (OSError):
   traceback.print_exc()
   print('\nOperation failed, restoring backup')
   os.rename(backup, path)
