@@ -107,16 +107,14 @@ def fix_metric(metric):
     else:
         LOG.debug('Retention will be %s' % retention)
         # record file owner/group and perms to set properly after whisper-resize.py is complete
-        perms = os.stat(metric).st_mode
-        owner = os.stat(metric).st_uid
-        group = os.stat(metric).st_gid
+        st = os.stat(metric)
         if DEBUG:
             res = subprocess.check_call(command_string)
         else:
             res = subprocess.check_call(command_string,
                                         stdout=devnull)
-        os.chmod(metric, perms)
-        os.chown(metric, owner, group)
+        os.chmod(metric, st.st_mode)
+        os.chown(metric, st.st_uid, st.st_gid)
 
     devnull.close()
     # wait for a second, so we don't kill I/O on the host
@@ -177,6 +175,8 @@ def cli_opts():
     parser.add_argument('--bindir', action='store', dest='bindir',
                         help="The root path to whisper-resize.py and whisper-info.py",
                         default='/opt/graphite/bin')
+    parser.add_argument('--sleep', action='store', dest='sleep',
+                        help="Sleep this amount of time in seconds between metric comparisons")
     return parser.parse_args()
 
 
