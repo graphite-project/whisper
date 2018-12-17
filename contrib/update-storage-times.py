@@ -118,7 +118,7 @@ def fix_metric(metric):
 
     devnull.close()
     # wait for a second, so we don't kill I/O on the host
-    time.sleep(0.3)
+    time.sleep(SLEEP)
     """
     We have manual commands for every failed file from these
     errors, so we can just go through each of these errors
@@ -176,7 +176,8 @@ def cli_opts():
                         help="The root path to whisper-resize.py and whisper-info.py",
                         default='/opt/graphite/bin')
     parser.add_argument('--sleep', action='store', dest='sleep',
-                        help="Sleep this amount of time in seconds between metric comparisons")
+                        help="Sleep this amount of time in seconds between metric comparisons",
+                        default=0.3)
     return parser.parse_args()
 
 
@@ -195,6 +196,7 @@ if __name__ == '__main__':
     DEBUG = i_args.debug
     DRY_RUN = i_args.dry_run
     BINDIR = i_args.bindir
+    SLEEP = i_args.sleep
     RESIZE_BIN = BINDIR + "/whisper-resize.py"
     INFO_BIN = BINDIR + "/whisper-info.py"
     BASE_COMMAND = [RESIZE_BIN]
