@@ -89,7 +89,7 @@ def fix_metric(metric):
     command_string = list(BASE_COMMAND) + [metric]
 
     retention = DEFAULT_SCHEMA['retentions']
-    matching = metric.replace('/', '.')
+    matching = metric[len(ROOT_PATH):].replace('/', '.')
     for schema, info in SCHEMA_LIST.iteritems():
         if info['match'].search(matching):
             retention = info['retentions']
