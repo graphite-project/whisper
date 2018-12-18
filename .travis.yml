@@ -36,4 +36,5 @@ script:
   - tox -e $TOXENV
 
 after_success:
-  coveralls
+  - pip install codecov
+  - codecov
