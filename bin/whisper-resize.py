@@ -110,7 +110,7 @@ if options.aggregate:
   for archive in old_archives:
     # Loading all datapoints into memory for fast querying
     timeinfo, values = archive['data']
-    new_datapoints = zip(range(*timeinfo), values)
+    new_datapoints = list(zip(range(*timeinfo), values))
     if all_datapoints:
       last_timestamp = all_datapoints[-1][0]
       slice_end = 0
@@ -122,8 +122,8 @@ if options.aggregate:
     else:
       all_datapoints += new_datapoints
 
-  oldtimestamps = map(lambda p: p[0], all_datapoints)
-  oldvalues = map(lambda p: p[1], all_datapoints)
+  oldtimestamps = list(map(lambda p: p[0], all_datapoints))
+  oldvalues = list(map(lambda p: p[1], all_datapoints))
 
   print("oldtimestamps: %s" % oldtimestamps)
   # Simply cleaning up some used memory
@@ -148,7 +148,7 @@ if options.aggregate:
       righti = bisect.bisect_left(oldtimestamps, tinterval[1], lo=lefti)
       newvalues = oldvalues[lefti:righti]
       if newvalues:
-        non_none = filter(lambda x: x is not None, newvalues)
+        non_none = list(filter(lambda x: x is not None, newvalues))
         if non_none and 1.0 * len(non_none) / len(newvalues) >= xff:
           newdatapoints.append([tinterval[0],
                                 whisper.aggregate(aggregationMethod,
