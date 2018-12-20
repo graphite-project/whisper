@@ -17,21 +17,39 @@ if sys.version_info >= (3, 0):
   xrange = range
 
 # Ignore SIGPIPE
-signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+try:
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+except AttributeError:
+    # OS=windows
+    pass
 
-option_parser = optparse.OptionParser(usage='''%prog path''')
-option_parser.add_option(
-  '--pretty', default=False, action='store_true',
-  help="Show human-readable timestamps instead of unix times")
-option_parser.add_option(
-  '-t', '--time-format', action='store', type='string', dest='time_format',
-  help='Time format to use with --pretty; see time.strftime()')
-(options, args) = option_parser.parse_args()
 
-if len(args) != 1:
-  option_parser.error("require one input file name")
-else:
-  path = args[0]
+def main():
+    option_parser = optparse.OptionParser(usage='''%prog path''')
+    option_parser.add_option(
+      '--pretty', default=False, action='store_true',
+      help="Show human-readable timestamps instead of unix times")
+    option_parser.add_option(
+      '-t', '--time-format', action='store', type='string', dest='time_format',
+      help='Time format to use with --pretty; see time.strftime()')
+    (options, args) = option_parser.parse_args()
+
+    if len(args) != 1:
+      option_parser.error("require one input file name")
+    else:
+      path = args[0]
+
+    dump(path, **vars(options))
+
+
+def dump(path, pretty=False, time_format=None):
+    if not os.path.exists(path):
+      raise SystemExit('[ERROR] File "%s" does not exist!' % path)
+
+    map = mmap_file(path)
+    header = read_header(map)
+    dump_header(header)
+    dump_archives(map, header['archives'], pretty, time_format)
 
 
 def mmap_file(filename):
@@ -99,7 +117,7 @@ def dump_archive_headers(archives):
     print("")
 
 
-def dump_archives(archives, options):
+def dump_archives(map, archives, pretty=False, time_format=None):
   for i, archive in enumerate(archives):
     print('Archive %d data:' % i)
     offset = archive['offset']
@@ -108,23 +126,18 @@ def dump_archives(archives, options):
         whisper.pointFormat,
         map[offset:offset + whisper.pointSize]
       )
-      if options.pretty:
-        if options.time_format:
+      if pretty:
+        if time_format:
           timestr = time.localtime(timestamp)
-          timestr = time.strftime(options.time_format, timestr)
+          timestr = time.strftime(time_format, timestr)
         else:
           timestr = time.ctime(timestamp)
       else:
         timestr = str(timestamp)
       print('%d: %s, %10.35g' % (point, timestr, value))
       offset += whisper.pointSize
-    print
+    print('')
 
 
-if not os.path.exists(path):
-  raise SystemExit('[ERROR] File "%s" does not exist!' % path)
-
-map = mmap_file(path)
-header = read_header(map)
-dump_header(header)
-dump_archives(header['archives'], options)
+if __name__ == '__main__':
+    main()

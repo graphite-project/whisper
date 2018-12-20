@@ -18,46 +18,56 @@ except AttributeError:
   # OS=windows
   pass
 
-option_parser = optparse.OptionParser(usage='''%prog [options] path [field]''')
-option_parser.add_option('--json', default=False, action='store_true',
-                         help="Output results in JSON form")
-(options, args) = option_parser.parse_args()
 
-if len(args) < 1:
-  option_parser.print_help()
-  sys.exit(1)
+def main():
+    option_parser = optparse.OptionParser(usage='''%prog [options] path [field]''')
+    option_parser.add_option('--json', default=False, action='store_true',
+                             help="Output results in JSON form")
+    (options, args) = option_parser.parse_args()
 
-path = args[0]
-if len(args) > 1:
-  field = args[1]
-else:
-  field = None
+    if len(args) < 1:
+      option_parser.print_help()
+      sys.exit(1)
 
-try:
-  info = whisper.info(path)
-except whisper.WhisperException as exc:
-  raise SystemExit('[ERROR] %s' % str(exc))
+    path = args[0]
+    if len(args) > 1:
+      field = args[1]
+    else:
+      field = None
 
-info['fileSize'] = os.stat(path).st_size
+    info(path, field, options.json)
 
-if field:
-  if field not in info:
-    print('Unknown field "%s". Valid fields are %s' % (field, ','.join(info)))
-    sys.exit(1)
 
-  print(info[field])
-  sys.exit(0)
+def info(path, field=None, json_output=False):
+    try:
+      info = whisper.info(path)
+    except whisper.WhisperException as exc:
+      raise SystemExit('[ERROR] %s' % str(exc))
 
-if options.json:
-  print(json.dumps(info, indent=2, separators=(',', ': ')))
-else:
-  archives = info.pop('archives')
-  for key, value in info.items():
-    print('%s: %s' % (key, value))
-  print('')
+    info['fileSize'] = os.stat(path).st_size
 
-  for i, archive in enumerate(archives):
-    print('Archive %d' % i)
-    for key, value in archive.items():
-      print('%s: %s' % (key, value))
-    print('')
+    if field:
+      if field not in info:
+        print('Unknown field "%s". Valid fields are %s' % (field, ','.join(info)))
+        sys.exit(1)
+
+      print(info[field])
+      sys.exit(0)
+
+    if json_output:
+      print(json.dumps(info, indent=2, separators=(',', ': ')))
+    else:
+      archives = info.pop('archives')
+      for key, value in info.items():
+        print('%s: %s' % (key, value))
+      print('')
+
+      for i, archive in enumerate(archives):
+        print('Archive %d' % i)
+        for key, value in archive.items():
+          print('%s: %s' % (key, value))
+        print('')
+
+
+if __name__ == '__main__':
+    main()

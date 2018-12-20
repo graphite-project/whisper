@@ -27,74 +27,90 @@ except AttributeError:
   # OS=windows
   pass
 
-option_parser = optparse.OptionParser(
-    usage='''%prog path timePerPoint:timeToStore [timePerPoint:timeToStore]*
-%prog --estimate timePerPoint:timeToStore [timePerPoint:timeToStore]*
 
-timePerPoint and timeToStore specify lengths of time, for example:
+def main():
+    option_parser = optparse.OptionParser(
+        usage='''%prog path timePerPoint:timeToStore [timePerPoint:timeToStore]*
+    %prog --estimate timePerPoint:timeToStore [timePerPoint:timeToStore]*
 
-60:1440      60 seconds per datapoint, 1440 datapoints = 1 day of retention
-15m:8        15 minutes per datapoint, 8 datapoints = 2 hours of retention
-1h:7d        1 hour per datapoint, 7 days of retention
-12h:2y       12 hours per datapoint, 2 years of retention
-''')
-option_parser.add_option('--xFilesFactor', default=0.5, type='float')
-option_parser.add_option('--aggregationMethod', default='average',
-                         type='string',
-                         help="Function to use when aggregating values (%s)" %
-                         ', '.join(whisper.aggregationMethods))
-option_parser.add_option('--overwrite', default=False, action='store_true')
-option_parser.add_option('--estimate', default=False, action='store_true',
-                         help="Don't create a whisper file, estimate storage "
-                              "requirements based on archive definitions")
-option_parser.add_option('--sparse', default=False, action='store_true',
-                         help="Create new whisper as sparse file")
-option_parser.add_option('--fallocate', default=False, action='store_true',
-                         help="Create new whisper and use fallocate")
+    timePerPoint and timeToStore specify lengths of time, for example:
 
-(options, args) = option_parser.parse_args()
+    60:1440      60 seconds per datapoint, 1440 datapoints = 1 day of retention
+    15m:8        15 minutes per datapoint, 8 datapoints = 2 hours of retention
+    1h:7d        1 hour per datapoint, 7 days of retention
+    12h:2y       12 hours per datapoint, 2 years of retention
+    ''')
+    option_parser.add_option('--xFilesFactor', default=0.5, type='float')
+    option_parser.add_option('--aggregationMethod', default='average',
+                             type='string',
+                             help="Function to use when aggregating values (%s)" %
+                             ', '.join(whisper.aggregationMethods))
+    option_parser.add_option('--overwrite', default=False, action='store_true')
+    option_parser.add_option('--estimate', default=False, action='store_true',
+                             help="Don't create a whisper file, estimate storage "
+                                  "requirements based on archive definitions")
+    option_parser.add_option('--sparse', default=False, action='store_true',
+                             help="Create new whisper as sparse file")
+    option_parser.add_option('--fallocate', default=False, action='store_true',
+                             help="Create new whisper and use fallocate")
 
-if options.estimate:
-  if len(args) == 0:
-    option_parser.print_usage()
-    sys.exit(1)
-  if len(args) == 1 and args[0].find(",") > 0:
-    args = args[0].split(",")
+    (options, args) = option_parser.parse_args()
 
-  archives = 0
-  total_points = 0
-  for (precision, points) in map(whisper.parseRetentionDef, args):
-    print("Archive %s: %s points of %ss precision" % (archives, points, precision))
-    archives += 1
-    total_points += points
+    if len(args) == 0:
+        option_parser.print_usage()
+        sys.exit(1)
 
-  size = 16 + (archives * 12) + (total_points * 12)
-  disk_size = int(math.ceil(size / 4096.0) * 4096)
-  print("\nEstimated Whisper DB Size: %s (%s bytes on disk with 4k blocks)\n" %
-        (byte_format(size), disk_size))
-  for x in [1, 5, 10, 50, 100, 500]:
-    print("Estimated storage requirement for %sk metrics: %s" %
-          (x, byte_format(x * 1000 * disk_size)))
-  sys.exit(0)
+    if options.estimate:
+        # parse comma separated retentions
+        if len(args) == 1 and args[0].find(",") > 0:
+            retentions = args[0].split(",")
+        else:
+            retentions = args
 
-if len(args) < 2:
-  option_parser.print_help()
-  sys.exit(1)
+        estimate(retentions)
+    else:
+        path = args[0]
+        retentions = args[1:]
+        create(path, retentions, **vars(options))
 
-path = args[0]
-archives = [whisper.parseRetentionDef(retentionDef)
-            for retentionDef in args[1:]]
 
-if os.path.exists(path) and options.overwrite:
-  print('Overwriting existing file: %s' % path)
-  os.unlink(path)
+def estimate(retentions):
+      archives = 0
+      total_points = 0
+      for (precision, points) in map(whisper.parseRetentionDef, retentions):
+        print("Archive %s: %s points of %ss precision" % (archives, points, precision))
+        archives += 1
+        total_points += points
 
-try:
-  whisper.create(path, archives, xFilesFactor=options.xFilesFactor,
-                 aggregationMethod=options.aggregationMethod, sparse=options.sparse,
-                 useFallocate=options.fallocate)
-except whisper.WhisperException as exc:
-  raise SystemExit('[ERROR] %s' % str(exc))
+      size = 16 + (archives * 12) + (total_points * 12)
+      disk_size = int(math.ceil(size / 4096.0) * 4096)
+      print("\nEstimated Whisper DB Size: %s (%s bytes on disk with 4k blocks)\n" %
+            (byte_format(size), disk_size))
+      for x in [1, 5, 10, 50, 100, 500]:
+        print("Estimated storage requirement for %sk metrics: %s" %
+              (x, byte_format(x * 1000 * disk_size)))
+      sys.exit(0)
 
-size = os.stat(path).st_size
-print('Created: %s (%d bytes)' % (path, size))
+
+def create(path, retentions, xFilesFactor=0.5, aggregationMethod='average',
+           overwrite=False, estimate=False, sparse=False, fallocate=False):
+    archives = [whisper.parseRetentionDef(retentionDef)
+                for retentionDef in retentions]
+
+    if os.path.exists(path) and overwrite:
+      print('Overwriting existing file: %s' % path)
+      os.unlink(path)
+
+    try:
+      whisper.create(path, archives, xFilesFactor=xFilesFactor,
+                     aggregationMethod=aggregationMethod, sparse=sparse,
+                     useFallocate=fallocate)
+    except whisper.WhisperException as exc:
+      raise SystemExit('[ERROR] %s' % str(exc))
+
+    size = os.stat(path).st_size
+    print('Created: %s (%d bytes)' % (path, size))
+
+
+if __name__ == '__main__':
+    main()
