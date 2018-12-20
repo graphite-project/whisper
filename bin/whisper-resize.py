@@ -149,7 +149,7 @@ if options.aggregate:
       newvalues = oldvalues[lefti:righti]
       if newvalues:
         non_none = filter(lambda x: x is not None, newvalues)
-        if 1.0 * len(non_none) / len(newvalues) >= xff:
+        if non_none and 1.0 * len(non_none) / len(newvalues) >= xff:
           newdatapoints.append([tinterval[0],
                                 whisper.aggregate(aggregationMethod,
                                                   non_none, newvalues)])
