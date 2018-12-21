@@ -46,23 +46,23 @@ def dump(path, pretty=False, time_format=None):
     if not os.path.exists(path):
       raise SystemExit('[ERROR] File "%s" does not exist!' % path)
 
-    map = mmap_file(path)
-    header = read_header(map)
+    mm = mmap_file(path)
+    header = read_header(mm)
     dump_header(header)
-    dump_archives(map, header['archives'], pretty, time_format)
+    dump_archives(mm, header['archives'], pretty, time_format)
 
 
 def mmap_file(filename):
   fd = os.open(filename, os.O_RDONLY)
-  map = mmap.mmap(fd, os.fstat(fd).st_size, prot=mmap.PROT_READ)
+  mm = mmap.mmap(fd, os.fstat(fd).st_size, prot=mmap.PROT_READ)
   os.close(fd)
-  return map
+  return mm
 
 
-def read_header(map):
+def read_header(mm):
   try:
     (aggregationType, maxRetention, xFilesFactor, archiveCount) \
-      = struct.unpack(whisper.metadataFormat, map[:whisper.metadataSize])
+      = struct.unpack(whisper.metadataFormat, mm[:whisper.metadataSize])
   except (struct.error, ValueError, TypeError):
     raise whisper.CorruptWhisperFile("Unable to unpack header")
 
@@ -73,7 +73,7 @@ def read_header(map):
     try:
       (offset, secondsPerPoint, points) = struct.unpack(
         whisper.archiveInfoFormat,
-        map[archiveOffset:archiveOffset + whisper.archiveInfoSize]
+        mm[archiveOffset:archiveOffset + whisper.archiveInfoSize]
       )
     except (struct.error, ValueError, TypeError):
       raise whisper.CorruptWhisperFile("Unable to read archive %d metadata" % i)
@@ -117,14 +117,14 @@ def dump_archive_headers(archives):
     print("")
 
 
-def dump_archives(map, archives, pretty=False, time_format=None):
+def dump_archives(mm, archives, pretty=False, time_format=None):
   for i, archive in enumerate(archives):
     print('Archive %d data:' % i)
     offset = archive['offset']
     for point in xrange(archive['points']):
       (timestamp, value) = struct.unpack(
         whisper.pointFormat,
-        map[offset:offset + whisper.pointSize]
+        mm[offset:offset + whisper.pointSize]
       )
       if pretty:
         if time_format:
