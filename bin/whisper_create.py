@@ -89,7 +89,6 @@ def estimate(retentions):
       for x in [1, 5, 10, 50, 100, 500]:
         print("Estimated storage requirement for %sk metrics: %s" %
               (x, byte_format(x * 1000 * disk_size)))
-      sys.exit(0)
 
 
 def create(path, retentions, xFilesFactor=0.5, aggregationMethod='average',
