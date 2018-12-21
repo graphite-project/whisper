@@ -127,7 +127,7 @@ def resize(path, retentions, xFilesFactor=None, aggregationMethod=None, force=Fa
         new_datapoints = list(zip(range(*timeinfo), values))
         if all_datapoints:
           last_timestamp = all_datapoints[-1][0]
-          for i, (timestamp, value) in enumerate(new_datapoints):
+          for i, (timestamp, _) in enumerate(new_datapoints):
             if timestamp > last_timestamp:
               break
           all_datapoints += new_datapoints[i:]

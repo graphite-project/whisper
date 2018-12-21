@@ -21,7 +21,7 @@ def main():
     option_parser = optparse.OptionParser(
         usage='%%prog path <%s> [xFilesFactor]' % '|'.join(whisper.aggregationMethods))
 
-    (options, args) = option_parser.parse_args()
+    (_, args) = option_parser.parse_args()
 
     if len(args) < 2:
       option_parser.print_help()
