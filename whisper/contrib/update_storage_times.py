@@ -181,7 +181,7 @@ def cli_opts():
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+def main():
     i_args = cli_opts()
     if os.getenv('USER') != 'root':
         print("You must run this script as root!")
@@ -208,3 +208,7 @@ if __name__ == '__main__':
 
     config_schemas(i_args.cfg)
     search_and_fix(i_args.subdir)
+
+
+if __name__ == '__main__':
+    main()

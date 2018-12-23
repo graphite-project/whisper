@@ -10,3 +10,5 @@ ve
 .idea
 *.iml
 *.swp
+.eggs
+whisper.egg-info
