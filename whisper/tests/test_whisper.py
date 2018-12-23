@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import contextlib
 import os
 import sys
 import time
@@ -30,43 +31,18 @@ except NameError:
 import whisper
 
 
-class SimulatedCorruptWhisperFile(object):
-    """
-    Simple context manager to be used as a decorator for simulating a
-    corrupt whisper file for testing purposes.
-
-    Example:
-
-        >>> whisper.create('test.wsp', [(60, 10)])
-        >>> with SimulatedCorruptWhisperFile():
-        ...     whisper.info('test.wsp')
-
-    When 'corrupt_archive' is passed as True, the metadata will be left
-    intact, but the archive will seem corrupted.
-    """
-    def __init__(self, corrupt_archive=False):
-        self.corrupt_archive = corrupt_archive
-
-        self.metadataFormat = whisper.metadataFormat
-        self.archiveInfoFormat = whisper.archiveInfoFormat
-        self.CACHE_HEADERS = whisper.CACHE_HEADERS
-
-    def __enter__(self):
-        # Force the struct unpack to fail by changing the metadata
-        # format. This simulates an actual corrupted whisper file
-        if not self.corrupt_archive:
-            whisper.metadataFormat = '!ssss'
-        else:
-            whisper.archiveInfoFormat = '!ssss'
-
-        # Force whisper to reread the header instead of returning
-        # the previous (correct) header from the header cache
-        whisper.CACHE_HEADERS = False
-
-    def __exit__(self, *args, **kwargs):
-        whisper.metadataFormat = self.metadataFormat
-        whisper.archiveInfoFormat = self.archiveInfoFormat
-        whisper.CACHE_HEADERS = self.CACHE_HEADERS
+@contextlib.contextmanager
+def SimulatedCorruptWhisperFile(corrupt_archive=False):
+    if corrupt_archive:
+        with patch.multiple('whisper.whisper',
+                            archiveInfoFormat='!ssss',
+                            CACHE_HEADERS=False) as ctx:
+            yield [ctx]
+    else:
+        with patch.multiple('whisper.whisper',
+                            metadataFormat='!ssss',
+                            CACHE_HEADERS=False) as ctx:
+            yield [ctx]
 
 
 class AssertRaisesException(object):
@@ -247,7 +223,7 @@ class TestWhisper(WhisperTestBase):
           e = IOError(errno.ENOSPC, "Mocked IOError")
         method.side_effect = e
 
-        with patch('whisper.open', m_open, create=True):
+        with patch('whisper.whisper.open', m_open, create=True):
           with patch('os.unlink') as m_unlink:
             self.assertRaises(e.__class__, whisper.create, self.filename, self.retention)
 

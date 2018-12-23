@@ -34,6 +34,8 @@ setup(
   },
   scripts=glob('contrib/*'),
   install_requires=['six'],
+  setup_requires=['pytest-runner'],
+  tests_require=['pytest'],
   classifiers=[
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.7',
