@@ -2,7 +2,7 @@
 
 import os
 from glob import glob
-from distutils.core import setup
+from setuptools import setup
 
 
 def read(fname):
@@ -34,4 +34,5 @@ setup(
     'Programming Language :: Python :: Implementation :: CPython',
     'Programming Language :: Python :: Implementation :: PyPy',
   ],
+  zip_safe=False
 )
