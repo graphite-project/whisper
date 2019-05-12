@@ -122,27 +122,27 @@ def fill_archives(src, dst, startFrom):
 
 
 def main():
-        option_parser = optparse.OptionParser(
-            usage='%prog [--lock] src dst',
-            description='copies data from src in dst, if missing')
-        option_parser.add_option(
-            '--lock', help='Lock whisper files',
-            default=False, action='store_true')
-        (options, args) = option_parser.parse_args()
+    option_parser = optparse.OptionParser(
+        usage='%prog [--lock] src dst',
+        description='copies data from src in dst, if missing')
+    option_parser.add_option(
+        '--lock', help='Lock whisper files',
+        default=False, action='store_true')
+    (options, args) = option_parser.parse_args()
 
-        if len(args) != 2:
-                option_parser.print_help()
-                sys.exit(1)
+    if len(args) != 2:
+        option_parser.print_help()
+        sys.exit(1)
 
-        if options.lock is True and whisper.CAN_LOCK:
-            whisper.LOCK = True
+    if options.lock is True and whisper.CAN_LOCK:
+        whisper.LOCK = True
 
-        src = args[0]
-        dst = args[1]
-        startFrom = time.time()
+    src = args[0]
+    dst = args[1]
+    startFrom = time.time()
 
-        fill_archives(src, dst, startFrom)
+    fill_archives(src, dst, startFrom)
 
 
 if __name__ == "__main__":
-        main()
+    main()
