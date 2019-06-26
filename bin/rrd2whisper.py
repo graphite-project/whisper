@@ -1,4 +1,4 @@
-#!/home/rrawdon/git/whisper-env/bin/python3
+#!/usr/bin/env python
 
 import errno
 import os
