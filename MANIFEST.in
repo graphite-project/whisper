@@ -1,3 +1,4 @@
+include README.md
 exclude .* MANIFEST.in
 global-exclude __pycache__
 global-exclude *.py[co]

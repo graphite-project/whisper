@@ -157,7 +157,7 @@ for datasource in datasources:
     values = [row[column_index] for row in rows]
     timestamps = list(range(*time_info))
     datapoints = zip(timestamps, values)
-    datapoints = filter(lambda p: p[1] is not None, datapoints)
+    datapoints = [datapoint for datapoint in datapoints if datapoint[1] is not None]
     print(' migrating %d datapoints from archive %d' % (len(datapoints), archiveNumber))
     archiveNumber -= 1
     whisper.update_many(path, datapoints)

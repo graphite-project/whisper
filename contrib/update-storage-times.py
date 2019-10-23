@@ -175,7 +175,7 @@ def cli_opts():
     parser.add_argument('--bindir', action='store', dest='bindir',
                         help="The root path to whisper-resize.py and whisper-info.py",
                         default='/opt/graphite/bin')
-    parser.add_argument('--sleep', action='store', dest='sleep',
+    parser.add_argument('--sleep', action='store', type=float, dest='sleep',
                         help="Sleep this amount of time in seconds between metric comparisons",
                         default=0.3)
     return parser.parse_args()

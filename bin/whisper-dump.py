@@ -26,6 +26,9 @@ option_parser.add_option(
 option_parser.add_option(
   '-t', '--time-format', action='store', type='string', dest='time_format',
   help='Time format to use with --pretty; see time.strftime()')
+option_parser.add_option(
+  '-r', '--raw', default=False, action='store_true',
+  help='Dump value only in the same format for whisper-update (UTC timestamps)')
 (options, args) = option_parser.parse_args()
 
 if len(args) != 1:
@@ -101,7 +104,8 @@ def dump_archive_headers(archives):
 
 def dump_archives(archives, options):
   for i, archive in enumerate(archives):
-    print('Archive %d data:' % i)
+    if not options.raw:
+      print('Archive %d data:' % i)
     offset = archive['offset']
     for point in xrange(archive['points']):
       (timestamp, value) = struct.unpack(
@@ -116,7 +120,10 @@ def dump_archives(archives, options):
           timestr = time.ctime(timestamp)
       else:
         timestr = str(timestamp)
-      print('%d: %s, %10.35g' % (point, timestr, value))
+      if options.raw:
+        print('%s:%.35g' % (timestamp, value))
+      else:
+        print('%d: %s, %10.35g' % (point, timestr, value))
       offset += whisper.pointSize
     print
 
@@ -126,5 +133,6 @@ if not os.path.exists(path):
 
 map = mmap_file(path)
 header = read_header(map)
-dump_header(header)
+if not options.raw:
+  dump_header(header)
 dump_archives(header['archives'], options)
