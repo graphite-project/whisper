@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**Please report bug only for whisper component here, if you want to to do so for Graphite, please use [graphite-web repo](https://github.com/graphite-project/graphite-web/issues/new/choose)**
+**Please report bug only for whisper component here, if you want to do so for Graphite, please use [graphite-web repo](https://github.com/graphite-project/graphite-web/issues/new/choose)**
 
 **Describe the bug**
 A clear and concise description of what the bug is.
