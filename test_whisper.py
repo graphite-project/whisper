@@ -7,6 +7,7 @@ import math
 import random
 import struct
 import errno
+from datetime import datetime
 
 from six.moves import StringIO
 from six import assertRegex
@@ -810,6 +811,59 @@ class TestWhisper(WhisperTestBase):
             self.assertEqual(fetch[0][1] - fetch[0][0], retention[-1][0] * retention[-1][1])
         with AssertRaisesException(ValueError("Invalid granularity: 2")):
             fetch = whisper.fetch(self.filename, 0, archiveToSelect="2s")
+
+    def test_resize_with_aggregate(self):
+        """resize whisper file with aggregate"""
+        # 60s per point save two days
+        retention = [(60, 60 * 24 * 2)]
+        whisper.create(self.filename, retention)
+
+        # insert data
+        now_timestamp = int(datetime.now().timestamp())
+        now_timestamp -= now_timestamp % 60  # format timestamp
+        points = [(now_timestamp - i * 60, i) for i in range(0, 60 * 24 * 2)]
+        whisper.update_many(self.filename, points)
+        data = whisper.fetch(self.filename,
+                             fromTime=now_timestamp - 3600 * 25,
+                             untilTime=now_timestamp - 3600 * 25 + 60 * 10)
+        self.assertEqual(len(data[1]), 10)
+        self.assertEqual(data[0][2], 60)  # high retention == 60
+        for d in data[1]:
+            self.assertIsNotNone(d)
+        # resize from high to low
+        os.system('whisper-resize.py %s 60s:1d 300s:2d --aggregate --nobackup >/dev/null' % self.filename)  # noqa
+        data_low = whisper.fetch(
+            self.filename, fromTime=now_timestamp - 3600 * 25,
+            untilTime=now_timestamp - 3600 * 25 + 60 * 10)
+        self.assertEqual(len(data_low[1]), 2)
+        self.assertEqual(data_low[0][2], 300)  # low retention == 300
+        for d in data_low[1]:
+            self.assertIsNotNone(d)
+        data_high = whisper.fetch(
+            self.filename, fromTime=now_timestamp - 60 * 10,
+            untilTime=now_timestamp
+        )
+        self.assertEqual(len(data_high[1]), 10)
+        self.assertEqual(data_high[0][2], 60)  # high retention == 60
+        # resize from low to high
+        os.system('whisper-resize.py %s 60s:2d --aggregate --nobackup >/dev/null' % self.filename) # noqa
+        data1 = whisper.fetch(
+            self.filename, fromTime=now_timestamp - 3600 * 25,
+            untilTime=now_timestamp - 3600 * 25 + 60 * 10)
+        self.assertEqual(len(data1[1]), 10)
+        # noqa data1 looks like ((1588836720, 1588837320, 60), [None, None, 1490.0, None, None, None, None, 1485.0, None, None])
+        # data1[1] have two not none value
+        self.assertEqual(len(list(filter(lambda x: x is not None, data1[1]))),
+                         2)
+        data2 = whisper.fetch(
+            self.filename, fromTime=now_timestamp - 60 * 15,
+            untilTime=now_timestamp - 60 * 5)
+        # noqa data2 looks like ((1588925820, 1588926420, 60), [10.0, 11.0, 10.0, 9.0, 8.0, 5.0, 6.0, 5.0, 4.0, 3.0])
+        self.assertEqual(len(list(filter(lambda x: x is not None, data2[1]))),
+                         10)
+
+        # clean up
+        self.tearDown()
 
 
 class TestgetUnitString(unittest.TestCase):
