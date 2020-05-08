@@ -107,20 +107,22 @@ if options.aggregate:
   # This is where data will be interpolated (best effort)
   print('Migrating data with aggregation...')
   all_datapoints = []
-  for archive in old_archives:
+  for archive in sorted(old_archives, key=lambda x: x['secondsPerPoint']):
     # Loading all datapoints into memory for fast querying
     timeinfo, values = archive['data']
     new_datapoints = list(zip(range(*timeinfo), values))
+    new_datapoints.reverse()
     if all_datapoints:
       last_timestamp = all_datapoints[-1][0]
       slice_end = 0
       for i, (timestamp, value) in enumerate(new_datapoints):
-        if timestamp > last_timestamp:
+        if timestamp < last_timestamp:
           slice_end = i
           break
-      all_datapoints += new_datapoints[i:]
+      all_datapoints += new_datapoints[slice_end:]
     else:
       all_datapoints += new_datapoints
+    all_datapoints.reverse()
 
   oldtimestamps = list(map(lambda p: p[0], all_datapoints))
   oldvalues = list(map(lambda p: p[1], all_datapoints))
