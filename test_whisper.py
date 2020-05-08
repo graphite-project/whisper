@@ -819,7 +819,7 @@ class TestWhisper(WhisperTestBase):
         whisper.create(self.filename, retention)
 
         # insert data
-        now_timestamp = int(datetime.now().timestamp())
+        now_timestamp = int((datetime.now() - datetime(1970, 1, 1)).total_seconds())
         now_timestamp -= now_timestamp % 60  # format timestamp
         points = [(now_timestamp - i * 60, i) for i in range(0, 60 * 24 * 2)]
         whisper.update_many(self.filename, points)
