@@ -122,7 +122,7 @@ if options.aggregate:
       all_datapoints += new_datapoints[slice_end:]
     else:
       all_datapoints += new_datapoints
-    all_datapoints.reverse()
+  all_datapoints.reverse()
 
   oldtimestamps = list(map(lambda p: p[0], all_datapoints))
   oldvalues = list(map(lambda p: p[1], all_datapoints))
