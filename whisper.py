@@ -46,12 +46,15 @@ try:
 except ImportError:
   CAN_LOCK = False
 
-try:
-  import ctypes
-  import ctypes.util
-  CAN_FALLOCATE = True
-except ImportError:
+if os.name == 'nt':
   CAN_FALLOCATE = False
+else:
+  try:
+    import ctypes
+    import ctypes.util
+    CAN_FALLOCATE = True
+  except ImportError:
+    CAN_FALLOCATE = False
 
 try:
   if sys.version_info >= (3, 0):
