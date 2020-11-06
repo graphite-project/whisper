@@ -73,16 +73,18 @@ Options:
 
 whisper-dump.py
 ---------------
-Dump the metadata about a whisper file to stdout.
+Dump the whole whisper file content to stdout.
 
 ```
 Usage: whisper-dump.py path
 
 Options:
-  -h, --help  show this help message and exit
-  --pretty    Show human-readable timestamps instead of unix times
+  -h, --help            show this help message and exit
+  --pretty              Show human-readable timestamps instead of unix times
   -t TIME_FORMAT, --time-format=TIME_FORMAT
-              Time format to use with --pretty; see time.strftime()
+                        Time format to use with --pretty; see time.strftime()
+  -r, --raw             Dump value only in the same format for whisper-update
+                        (UTC timestamps)
 ```
 
 whisper-fetch.py
@@ -109,12 +111,14 @@ Options:
 
 whisper-info.py
 ---------------
+Dump the metadata about a whisper file to stdout.
 
 ```
-Usage: whisper-info.py path [field]
+Usage: whisper-info.py [options] path [field]
 
 Options:
   -h, --help  show this help message and exit
+  --json      Output results in JSON form
 ```
 
 whisper-merge.py
