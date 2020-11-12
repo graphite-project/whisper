@@ -64,14 +64,12 @@ try:
 except (whisper.WhisperException, IOError) as exc:
   raise SystemExit('[ERROR] %s' % str(exc))
 
-if options.drop:
-  fcn = _DROP_FUNCTIONS.get(options.drop)
-  values = [x for x in values if fcn(x)]
+keep = _DROP_FUNCTIONS.get(options.drop, lambda: True)
 
 (start, end, step) = timeInfo
 
 if options.json:
-  values_json = str(values).replace('None', 'null')
+  values_json = str([x for x in values if keep(x)]).replace('None', 'null')
   print('''{
     "start" : %d,
     "end" : %d,
@@ -82,6 +80,10 @@ if options.json:
 
 t = start
 for value in values:
+  if not keep(value):
+    t += step
+    continue
+
   if options.pretty:
     if options.time_format:
       timestr = time.strftime(options.time_format, time.localtime(t))
