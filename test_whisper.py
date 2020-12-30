@@ -239,7 +239,7 @@ class TestWhisper(WhisperTestBase):
         Behaviour when creating a whisper file on a full filesystem
         """
         m_open = mock_open()
-        # Get the mocked file object and override interresting attributes
+        # Get the mocked file object and override interesting attributes
         m_file = m_open.return_value
         m_file.name = self.filename
         method = getattr(m_file, exception_method)
