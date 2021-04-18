@@ -12,7 +12,7 @@ def read(fname):
 
 setup(
   name='whisper',
-  version='1.1.7',
+  version='1.1.8',
   url='http://graphiteapp.org/',
   author='Chris Davis',
   author_email='chrismd@gmail.com',
