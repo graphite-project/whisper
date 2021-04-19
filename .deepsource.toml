@@ -5,3 +5,7 @@ test_patterns = ["*/test/**"]
 [[analyzers]]
 name = "python"
 enabled = false
+
+[[analyzers]]
+name = "secrets"
+enabled = true
