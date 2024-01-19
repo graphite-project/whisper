@@ -84,7 +84,8 @@ if not os.path.exists(path):
 if not options.silent:
     size = os.stat(path).st_size
     blocks = os.stat(path).st_blocks
-    print('Old file: %s (%d bytes, %d blocks*%d=%d bytes on disk)' % (path, size, blocks, 512, blocks*512))
+    print('Old file: %s (%d bytes, %d blocks*%d=%d bytes on disk)'
+          % (path, size, blocks, 512, blocks * 512))
 
 info = whisper.info(path)
 
@@ -127,15 +128,17 @@ if not options.quiet and not options.silent:
     print('Creating new whisper database: %s' % newfile)
 
 try:
-    whisper.create(newfile, new_archives, xFilesFactor=xff, aggregationMethod=aggregationMethod,
-               sparse=options.sparse, useFallocate=options.fallocate)
+    whisper.create(newfile, new_archives, xFilesFactor=xff,
+                   aggregationMethod=aggregationMethod, sparse=options.sparse,
+                   useFallocate=options.fallocate)
 except whisper.WhisperException as exc:
     raise SystemExit('[ERROR] %s' % str(exc))
 
 size = os.stat(newfile).st_size
 blocks = os.stat(newfile).st_blocks
 if not options.quiet and not options.silent:
-    print('Created: %s (%d bytes, %d blocks*%d=%d bytes on disk)' % (newfile, size, blocks, 512, blocks*512))
+    print('Created: %s (%d bytes, %d blocks*%d=%d bytes on disk)'
+          % (newfile, size, blocks, 512, blocks * 512))
 
 if options.aggregate:
   # This is where data will be interpolated (best effort)
@@ -230,10 +233,10 @@ if options.chown_uid > 0 and options.chown_gid > 0:
 if not options.silent:
     size = os.stat(path).st_size
     blocks = os.stat(path).st_blocks
-    print('New file: %s (%d bytes, %d blocks*%d=%d bytes on disk)' % (path, size, blocks, 512, blocks*512))
+    print('New file: %s (%d bytes, %d blocks*%d=%d bytes on disk)'
+          % (path, size, blocks, 512, blocks * 512))
 
 if options.nobackup:
   if not options.quiet and not options.silent:
     print("Unlinking backup: %s" % backup)
   os.unlink(backup)
-
