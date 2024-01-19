@@ -43,12 +43,30 @@ option_parser.add_option(
     '--newfile', default=None, action='store',
     help="Create a new database file without removing the existing one")
 option_parser.add_option(
+    '--sparse', default=True, action='store_true',
+    help="Create new whisper as sparse file")
+option_parser.add_option(
+    '--fallocate', default=False, action='store_true',
+    help="Create new whisper and use fallocate (disabling sparse)")
+option_parser.add_option(
+    '--chown-uid', default=-1,
+    type='int', help="Run chown for specific UID")
+option_parser.add_option(
+    '--chown-gid', default=-1,
+    type='int', help="Run chown for specific GID")
+option_parser.add_option(
     '--nobackup', action='store_true',
     help='Delete the .bak file after successful execution')
 option_parser.add_option(
     '--aggregate', action='store_true',
     help='Try to aggregate the values to fit the new archive better.'
          ' Note that this will make things slower and use more memory.')
+option_parser.add_option(
+    '--quiet', default=False, action='store_true',
+    help='Print less messages')
+option_parser.add_option(
+    '--silent', default=False, action='store_true',
+    help='Print no messages')
 
 (options, args) = option_parser.parse_args()
 
@@ -62,6 +80,12 @@ if not os.path.exists(path):
   sys.stderr.write("[ERROR] File '%s' does not exist!\n\n" % path)
   option_parser.print_help()
   sys.exit(1)
+
+if not options.silent:
+    size = os.stat(path).st_size
+    blocks = os.stat(path).st_blocks
+    print('Old file: %s (%d bytes, %d blocks*%d=%d bytes on disk)'
+          % (path, size, blocks, 512, blocks * 512))
 
 info = whisper.info(path)
 
@@ -82,7 +106,8 @@ if options.aggregationMethod is None:
 else:
   aggregationMethod = options.aggregationMethod
 
-print('Retrieving all data from the archives')
+if not options.quiet and not options.silent:
+    print('Retrieving all data from the archives')
 for archive in old_archives:
   fromTime = now - archive['retention'] + archive['secondsPerPoint']
   untilTime = now
@@ -92,20 +117,33 @@ for archive in old_archives:
 if options.newfile is None:
   tmpfile = path + '.tmp'
   if os.path.exists(tmpfile):
-    print('Removing previous temporary database file: %s' % tmpfile)
+    if not options.quiet and not options.silent:
+        print('Removing previous temporary database file: %s' % tmpfile)
     os.unlink(tmpfile)
   newfile = tmpfile
 else:
   newfile = options.newfile
 
-print('Creating new whisper database: %s' % newfile)
-whisper.create(newfile, new_archives, xFilesFactor=xff, aggregationMethod=aggregationMethod)
+if not options.quiet and not options.silent:
+    print('Creating new whisper database: %s' % newfile)
+
+try:
+    whisper.create(newfile, new_archives, xFilesFactor=xff,
+                   aggregationMethod=aggregationMethod, sparse=options.sparse,
+                   useFallocate=options.fallocate)
+except whisper.WhisperException as exc:
+    raise SystemExit('[ERROR] %s' % str(exc))
+
 size = os.stat(newfile).st_size
-print('Created: %s (%d bytes)' % (newfile, size))
+blocks = os.stat(newfile).st_blocks
+if not options.quiet and not options.silent:
+    print('Created: %s (%d bytes, %d blocks*%d=%d bytes on disk)'
+          % (newfile, size, blocks, 512, blocks * 512))
 
 if options.aggregate:
   # This is where data will be interpolated (best effort)
-  print('Migrating data with aggregation...')
+  if not options.quiet and not options.silent:
+    print('Migrating data with aggregation...')
   all_datapoints = []
   for archive in sorted(old_archives, key=lambda x: x['secondsPerPoint']):
     # Loading all datapoints into memory for fast querying
@@ -126,8 +164,8 @@ if options.aggregate:
 
   oldtimestamps = list(map(lambda p: p[0], all_datapoints))
   oldvalues = list(map(lambda p: p[1], all_datapoints))
-
-  print("oldtimestamps: %s" % oldtimestamps)
+  if not options.quiet and not options.silent:
+    print("oldtimestamps: %s" % oldtimestamps)
   # Simply cleaning up some used memory
   del all_datapoints
 
@@ -138,9 +176,11 @@ if options.aggregate:
     step = archive['secondsPerPoint']
     fromTime = now - archive['retention'] + now % step
     untilTime = now + now % step + step
-    print("(%s,%s,%s)" % (fromTime, untilTime, step))
+    if not options.quiet and not options.silent:
+      print("(%s,%s,%s)" % (fromTime, untilTime, step))
     timepoints_to_update = range(fromTime, untilTime, step)
-    print("timepoints_to_update: %s" % timepoints_to_update)
+    if not options.quiet and not options.silent:
+      print("timepoints_to_update: %s" % timepoints_to_update)
     newdatapoints = []
     for tinterval in zip(timepoints_to_update[:-1], timepoints_to_update[1:]):
       # TODO: Setting lo= parameter for 'lefti' based on righti from previous
@@ -157,7 +197,8 @@ if options.aggregate:
                                                   non_none, newvalues)])
     whisper.update_many(newfile, newdatapoints)
 else:
-  print('Migrating data without aggregation...')
+  if not options.quiet and not options.silent:
+    print('Migrating data without aggregation...')
   for archive in old_archives:
     timeinfo, values = archive['data']
     datapoints = zip(range(*timeinfo), values)
@@ -168,18 +209,34 @@ if options.newfile is not None:
   sys.exit(0)
 
 backup = path + '.bak'
-print('Renaming old database to: %s' % backup)
+if not options.quiet and not options.silent:
+    print('Renaming old database to: %s' % backup)
 os.rename(path, backup)
 
 try:
-  print('Renaming new database to: %s' % path)
+  if not options.quiet and not options.silent:
+    print('Renaming new database to: %s' % path)
   os.rename(tmpfile, path)
 except (OSError):
   traceback.print_exc()
-  print('\nOperation failed, restoring backup')
+  if not options.quiet and not options.silent:
+    print('\nOperation failed, restoring backup')
   os.rename(backup, path)
   sys.exit(1)
 
+if options.chown_uid > 0 and options.chown_gid > 0:
+  try:
+    os.chown(path=path, uid=options.chown_uid, gid=options.chown_gid)
+  except (OSError):
+    traceback.print_exc()
+
+if not options.silent:
+    size = os.stat(path).st_size
+    blocks = os.stat(path).st_blocks
+    print('New file: %s (%d bytes, %d blocks*%d=%d bytes on disk)'
+          % (path, size, blocks, 512, blocks * 512))
+
 if options.nobackup:
-  print("Unlinking backup: %s" % backup)
+  if not options.quiet and not options.silent:
+    print("Unlinking backup: %s" % backup)
   os.unlink(backup)
