@@ -68,5 +68,5 @@ jobs:
           codecov
       - name: Upload coverage to Codecov
         if: ${{ matrix.python-version==3.12 }}
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
 
