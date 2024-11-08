@@ -228,6 +228,14 @@ class TestWhisper(WhisperTestBase):
         self.assertEqual(whisper.aggregate('absmin', [-3, -2, 1, 2]), 1)
         # absmin with negative min
         self.assertEqual(whisper.aggregate('absmin', [-2, -1, 2, 3]), -1)
+        # median with odd number of values
+        self.assertEqual(whisper.aggregate('median', [10, 1, 12, 42, 7]), 10)
+        # median with even number of values
+        self.assertEqual(whisper.aggregate('median', [9, 2, 5, 4]), 4.5)
+        # median_low
+        self.assertEqual(whisper.aggregate('median_low', [9, 2, 5, 4]), 4)
+        # median_high
+        self.assertEqual(whisper.aggregate('median_high', [9, 2, 5, 4]), 5)
 
         with AssertRaisesException(
                 whisper.InvalidAggregationMethod(
