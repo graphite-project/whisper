@@ -16,15 +16,6 @@ jobs:
           - name: "Pypy 2.7"
             python-version: 'pypy-2.7'
             toxenv: 'pypy'
-          - name: "Python 3.7"
-            python-version: '3.7'
-            toxenv: 'py3'
-          - name: "Pypy 3.7"
-            python-version: 'pypy-3.7'
-            toxenv: 'pypy3'
-          - name: "Python 3.8"
-            python-version: '3.8'
-            toxenv: 'py3'
           - name: "Python 3.9"
             python-version: '3.9'
             toxenv: 'py3'
@@ -36,6 +27,9 @@ jobs:
             toxenv: 'py3'
           - name: "Python 3.12"
             python-version: '3.12'
+            toxenv: 'py3'
+          - name: "Python 3.13"
+            python-version: '3.13'
             toxenv: 'py3'
     steps:
       - uses: actions/checkout@v4

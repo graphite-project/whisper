@@ -1,1 +1,1 @@
-fadvise==6.0.1
+git+https://github.com/deniszh/python-fadvise.git#egg=fadvise
