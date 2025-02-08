@@ -38,7 +38,8 @@ Options:
   --aggregationMethod=AGGREGATIONMETHOD
                         The consolidation function to fetch from on input and
                         aggregationMethod to set on output. One of: average,
-                        last, max, min, avg_zero, absmax, absmin
+                        last, max, min, avg_zero, absmax, absmin, median,
+                        median_low, median_high
   --destinationPath=DESTINATIONPATH
                         Path to place created whisper file. Defaults to the
                         RRD file's source path.
@@ -66,7 +67,8 @@ Options:
   --xFilesFactor=XFILESFACTOR
   --aggregationMethod=AGGREGATIONMETHOD
                         Function to use when aggregating values (average, sum,
-                        last, max, min, avg_zero, absmax, absmin)
+                        last, max, min, avg_zero, absmax, absmin, median,
+                        median_low, median_high)
   --overwrite
   --estimate            Don't create a whisper file, estimate storage requirements based on archive definitions
 ```
@@ -170,7 +172,8 @@ Options:
                         Change the xFilesFactor
   --aggregationMethod=AGGREGATIONMETHOD
                         Change the aggregation function (average, sum, last,
-                        max, min, avg_zero, absmax, absmin)
+                        max, min, avg_zero, absmax, absmin, median,
+                        median_low, median_high)
   --force               Perform a destructive change
   --newfile=NEWFILE     Create a new database file without removing the
                         existing one
@@ -185,7 +188,7 @@ whisper-set-aggregation-method.py
 Change the aggregation method of an existing whisper file.
 
 ```
-Usage: whisper-set-aggregation-method.py path <average|sum|last|max|min|avg_zero|absmax|absmin>
+Usage: whisper-set-aggregation-method.py path <average|sum|last|max|min|avg_zero|absmax|absmin|median|median_low|median_high>
 
 Options:
   -h, --help  show this help message and exit
