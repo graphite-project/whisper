@@ -66,11 +66,12 @@ except (whisper.WhisperException, IOError) as exc:
 
 if options.drop:
   fcn = _DROP_FUNCTIONS.get(options.drop)
-  values = [x for x in values if fcn(x)]
 
 (start, end, step) = timeInfo
 
 if options.json:
+  if options.drop:
+    values = [x for x in values if fcn(x)]
   values_json = str(values).replace('None', 'null')
   print('''{
     "start" : %d,
@@ -82,16 +83,17 @@ if options.json:
 
 t = start
 for value in values:
-  if options.pretty:
-    if options.time_format:
-      timestr = time.strftime(options.time_format, time.localtime(t))
+  if not options.drop or fcn(value):
+    if options.pretty:
+      if options.time_format:
+        timestr = time.strftime(options.time_format, time.localtime(t))
+      else:
+        timestr = time.ctime(t)
     else:
-      timestr = time.ctime(t)
-  else:
-    timestr = str(t)
-  if value is None:
-    valuestr = "None"
-  else:
-    valuestr = "%f" % value
-  print("%s\t%s" % (timestr, valuestr))
+      timestr = str(t)
+    if value is None:
+      valuestr = "None"
+    else:
+      valuestr = "%f" % value
+    print("%s\t%s" % (timestr, valuestr))
   t += step
