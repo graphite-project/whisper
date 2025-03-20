@@ -5,14 +5,14 @@ import fnmatch
 import shlex
 from subprocess import call
 from optparse import OptionParser
-from distutils.spawn import find_executable
+from shutil import which
 from os.path import basename
 from six.moves import input
 
 # On Debian systems whisper-resize.py is available as whisper-resize
-whisperResizeExecutable = find_executable("whisper-resize.py")
+whisperResizeExecutable = which("whisper-resize.py")
 if whisperResizeExecutable is None:
-    whisperResizeExecutable = find_executable("whisper-resize")
+    whisperResizeExecutable = which("whisper-resize")
     if whisperResizeExecutable is None:
         # Probably will fail later, set it nevertheless
         whisperResizeExecutable = "whisper-resize.py"
