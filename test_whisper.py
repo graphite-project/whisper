@@ -7,27 +7,11 @@ import math
 import random
 import struct
 import errno
+import unittest
 from datetime import datetime
+from io import StringIO
+from unittest.mock import patch, mock_open
 
-from six.moves import StringIO
-from six import assertRegex
-
-try:
-    from unittest.mock import patch, mock_open
-except ImportError:
-    from mock import patch, mock_open
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
-# For py3k in TestWhisper.test_merge
-try:
-    FileNotFoundError  # noqa
-except NameError:
-    class FileNotFoundError(Exception):
-        pass
 import whisper
 
 
@@ -725,7 +709,7 @@ class TestWhisper(WhisperTestBase):
 
         sys.stdout = old_stdout
 
-        assertRegex(self, out, r'(DEBUG :: (WRITE|READ) \d+ bytes #\d+\n)+')
+        self.assertRegex(out, r'(DEBUG :: (WRITE|READ) \d+ bytes #\d+\n)+')
 
     # TODO: This test method takes more time than virtually every
     #       single other test combined. Profile this code and potentially

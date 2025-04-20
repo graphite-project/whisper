@@ -7,7 +7,6 @@ from subprocess import call
 from optparse import OptionParser
 from shutil import which
 from os.path import basename
-from six.moves import input
 
 # On Debian systems whisper-resize.py is available as whisper-resize
 whisperResizeExecutable = which("whisper-resize.py")
