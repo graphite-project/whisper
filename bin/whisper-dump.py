@@ -5,7 +5,6 @@ import mmap
 import time
 import struct
 import signal
-import sys
 import optparse
 
 try:
