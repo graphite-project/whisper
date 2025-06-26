@@ -58,9 +58,9 @@ except ImportError:
 
 try:
     if sys.version_info >= (3, 0):
-        from os import posix_fadvise, POSIX_FADV_RANDOM
+        from os import POSIX_FADV_RANDOM, posix_fadvise
     else:
-        from fadvise import posix_fadvise, POSIX_FADV_RANDOM
+        from fadvise import POSIX_FADV_RANDOM, posix_fadvise
     CAN_FADVISE = True
 except ImportError:
     CAN_FADVISE = False
@@ -255,12 +255,12 @@ def enableDebug():
         def __exit__(self, *args):
             self.f.close()
 
-        def write(self, data):
+        def _write(self, data):
             self.writeCount += 1
             debug("WRITE %d bytes #%d" % (len(data), self.writeCount))
             return self.f.write(data)
 
-        def read(self, size):
+        def _read(self, size):
             self.readCount += 1
             debug("READ %d bytes #%d" % (size, self.readCount))
             return self.f.read(size)
@@ -680,9 +680,7 @@ def __propagate(fh, header, timestamp, higher, lower):
         fh.seek(lower["offset"])
         packedPoint = fh.read(pointSize)
         try:
-            (lowerBaseInterval, _) = struct.unpack(
-                pointFormat, packedPoint
-            )
+            (lowerBaseInterval, _) = struct.unpack(pointFormat, packedPoint)
         except struct.error:
             raise CorruptWhisperFile("Unable to read base datapoint", fh.name)
 
@@ -892,10 +890,11 @@ def __archive_update_many(fh, header, archive, points):
 
         if bytesBeyond > 0:
             fh.write(packedString[:-bytesBeyond])
-            assert fh.tell() == archiveEnd, (
-                "archiveEnd=%d fh.tell=%d bytesBeyond=%d len(packedString)=%d"
-                % (archiveEnd, fh.tell(), bytesBeyond, len(packedString))
-            )
+            if fh.tell() != archiveEnd:
+                raise AssertionError(
+                    "archiveEnd=%d fh.tell=%d bytesBeyond=%d len(packedString)=%d"
+                    % (archiveEnd, fh.tell(), bytesBeyond, len(packedString))
+                )
             fh.seek(archive["offset"])
             # Safe because it can't exceed the archive (retention checking logic above)
             fh.write(packedString[-bytesBeyond:])
@@ -984,9 +983,9 @@ def file_fetch(fh, fromTime, untilTime, now=None, archiveToSelect=None):
     if untilTime < oldestTime:
         return None
     # Range requested is partially beyond retention, adjust
-    fromTime = max(fromTime,oldestTime)
+    fromTime = max(fromTime, oldestTime)
     # Range is partially in the future, adjust
-    untilTime = min(untilTime,now)
+    untilTime = min(untilTime, now)
 
     diff = now - fromTime
 
