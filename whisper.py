@@ -783,7 +783,7 @@ def update_many(path, points, now=None):
     points is a list of (timestamp,value) points
     """
     if not points:
-        return
+        return None
     points = [(int(t), float(v)) for (t, v) in points]
     points.sort(
         key=lambda p: p[0], reverse=True
