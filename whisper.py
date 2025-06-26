@@ -622,7 +622,7 @@ def __propagate(fh, header, timestamp, higher, lower):
     fh.seek(higher["offset"])
     packedPoint = fh.read(pointSize)
     try:
-        (higherBaseInterval, higherBaseValue) = struct.unpack(pointFormat, packedPoint)
+        (higherBaseInterval, _) = struct.unpack(pointFormat, packedPoint)
     except struct.error:
         raise CorruptWhisperFile("Unable to read base datapoint", fh.name)
 
@@ -681,7 +681,7 @@ def __propagate(fh, header, timestamp, higher, lower):
         fh.seek(lower["offset"])
         packedPoint = fh.read(pointSize)
         try:
-            (lowerBaseInterval, lowerBaseValue) = struct.unpack(
+            (lowerBaseInterval, _) = struct.unpack(
                 pointFormat, packedPoint
             )
         except struct.error:
@@ -750,7 +750,7 @@ def file_update(fh, value, timestamp, now=None):
     fh.seek(archive["offset"])
     packedPoint = fh.read(pointSize)
     try:
-        (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
+        (baseInterval, _) = struct.unpack(pointFormat, packedPoint)
     except struct.error:
         raise CorruptWhisperFile("Unable to read base datapoint", fh.name)
 
@@ -875,7 +875,7 @@ def __archive_update_many(fh, header, archive, points):
     fh.seek(archive["offset"])
     packedBasePoint = fh.read(pointSize)
     try:
-        (baseInterval, baseValue) = struct.unpack(pointFormat, packedBasePoint)
+        (baseInterval, _) = struct.unpack(pointFormat, packedBasePoint)
     except struct.error:
         raise CorruptWhisperFile("Unable to read base datapoint", fh.name)
 
@@ -1036,7 +1036,7 @@ def __archive_fetch(fh, archive, fromTime, untilTime):
     fh.seek(archive["offset"])
     packedPoint = fh.read(pointSize)
     try:
-        (baseInterval, baseValue) = struct.unpack(pointFormat, packedPoint)
+        (baseInterval, _) = struct.unpack(pointFormat, packedPoint)
     except struct.error:
         raise CorruptWhisperFile("Unable to read base datapoint", fh.name)
 
