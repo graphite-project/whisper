@@ -74,7 +74,8 @@ if CAN_FALLOCATE:
     c_off_t = ctypes.c_int
 
     if platform.uname()[0] == "FreeBSD":
-        # offset type is 64-bit on FreeBSD 32-bit & 64-bit platforms to address files more than 2GB
+        # offset type is 64-bit on FreeBSD 32-bit & 64-bit platforms to address
+        # files more than 2GB
         c_off_t = ctypes.c_int64
 
     try:
@@ -556,8 +557,9 @@ def create(
                 fh.write(archiveInfo)
                 archiveOffsetPointer += points * pointSize
 
-            # If configured to use fallocate and capable of fallocate use that, else
-            # attempt sparse if configure or zero pre-allocate if sparse isn't configured.
+            # If configured to use fallocate and capable of fallocate use that,
+            # else attempt sparse if configure or zero pre-allocate if sparse
+            # isn't configured.
             if CAN_FALLOCATE and useFallocate:
                 remaining = archiveOffsetPointer - headerSize
                 fallocate(fh, headerSize, remaining)
@@ -668,7 +670,8 @@ def __propagate(fh, header, timestamp, higher, lower):
             neighborValues[i // 2] = unpackedSeries[i + 1]
         currentInterval += step
 
-    # Propagate aggregateValue to propagate from neighborValues if we have enough known points
+    # Propagate aggregateValue to propagate from neighborValues if we have
+    # enough known points
     knownValues = [v for v in neighborValues if v is not None]
     if not knownValues:
         return False
@@ -928,7 +931,8 @@ def __archive_update_many(fh, header, archive, points):
 
 def info(path):
     """
-    info(path)
+    Fetches the header segment of a file and returns the interpreted header,
+    if that file exists.
 
     path is a string
     """
@@ -941,7 +945,7 @@ def info(path):
 
 
 def fetch(path, fromTime, untilTime=None, now=None, archiveToSelect=None):
-    """fetch(path,fromTime,untilTime=None,archiveToSelect=None)
+    """Opens the given file and fetches the values for a given time range.
 
     path is a string
     fromTime is an epoch time
