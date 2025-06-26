@@ -804,7 +804,11 @@ def file_update_many(fh, points, now=None):
     if now is None:
         now = int(time.time())
     archives = iter(header["archives"])
-    currentArchive = next(archives)
+    try:
+        currentArchive = next(archives)
+    except StopIteration:
+        raise CorruptWhisperFile("No Archives found!", fh.name)
+
     currentPoints = []
 
     for point in points:
@@ -1004,11 +1008,13 @@ def file_fetch(fh, fromTime, untilTime, now=None, archiveToSelect=None):
         else:
             if archive["retention"] >= diff:
                 break
+    else:
+        raise ValueError("No Archive in Header declaration.")
 
     if archiveToSelect and not archive:
         raise ValueError("Invalid granularity: %s" % (archiveToSelect))
-
-    return __archive_fetch(fh, archive, fromTime, untilTime)
+    else:
+        return __archive_fetch(fh, archive, fromTime, untilTime)
 
 
 def __archive_fetch(fh, archive, fromTime, untilTime):
