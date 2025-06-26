@@ -539,7 +539,7 @@ def create(
                 posix_fadvise(fh.fileno(), 0, 0, POSIX_FADV_RANDOM)
 
             oldest = max(
-                [secondsPerPoint * points for secondsPerPoint, points in archiveList]
+                secondsPerPoint * points for secondsPerPoint, points in archiveList
             )
 
             __writeHeaderMetadata(
@@ -588,29 +588,28 @@ def create(
 def aggregate(aggregationMethod, knownValues, neighborValues=None):
     if aggregationMethod == "average":
         return float(sum(knownValues)) / float(len(knownValues))
-    elif aggregationMethod == "sum":
+    if aggregationMethod == "sum":
         return float(sum(knownValues))
-    elif aggregationMethod == "last":
+    if aggregationMethod == "last":
         return knownValues[-1]
-    elif aggregationMethod == "max":
+    if aggregationMethod == "max":
         return max(knownValues)
-    elif aggregationMethod == "min":
+    if aggregationMethod == "min":
         return min(knownValues)
-    elif aggregationMethod == "avg_zero":
+    if aggregationMethod == "avg_zero":
         if not neighborValues:
             raise InvalidAggregationMethod("Using avg_zero without neighborValues")
         values = [x or 0 for x in neighborValues]
         return float(sum(values)) / float(len(values))
-    elif aggregationMethod == "absmax":
+    if aggregationMethod == "absmax":
         return max(knownValues, key=abs)
-    elif aggregationMethod == "absmin":
+    if aggregationMethod == "absmin":
         return min(knownValues, key=abs)
-    elif aggregationMethod == "median":
+    if aggregationMethod == "median":
         return statistics.median(knownValues)
-    else:
-        raise InvalidAggregationMethod(
-            "Unrecognized aggregation method %s" % aggregationMethod
-        )
+    raise InvalidAggregationMethod(
+        "Unrecognized aggregation method %s" % aggregationMethod
+    )
 
 
 def __propagate(fh, header, timestamp, higher, lower):
@@ -699,9 +698,7 @@ def __propagate(fh, header, timestamp, higher, lower):
             fh.write(myPackedPoint)
 
         return True
-
-    else:
-        return False
+    return False
 
 
 def update(path, value, timestamp=None, now=None):
@@ -987,11 +984,9 @@ def file_fetch(fh, fromTime, untilTime, now=None, archiveToSelect=None):
     if untilTime < oldestTime:
         return None
     # Range requested is partially beyond retention, adjust
-    if fromTime < oldestTime:
-        fromTime = oldestTime
+    fromTime = max(fromTime,oldestTime)
     # Range is partially in the future, adjust
-    if untilTime > now:
-        untilTime = now
+    untilTime = min(untilTime,now)
 
     diff = now - fromTime
 
