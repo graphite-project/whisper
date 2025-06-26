@@ -30,6 +30,7 @@ import operator
 import os
 import platform
 import re
+import statistics
 import struct
 import sys
 import time
@@ -125,7 +126,8 @@ aggregationTypeToMethod = dict({
   5: 'min',
   6: 'avg_zero',
   7: 'absmax',
-  8: 'absmin'
+  8: 'absmin',
+  9: 'median'
 })
 aggregationMethodToType = dict([[v, k] for k, v in aggregationTypeToMethod.items()])
 aggregationMethods = aggregationTypeToMethod.values()
@@ -570,6 +572,8 @@ def aggregate(aggregationMethod, knownValues, neighborValues=None):
     return max(knownValues, key=abs)
   elif aggregationMethod == 'absmin':
     return min(knownValues, key=abs)
+  elif aggregationMethod == 'median':
+    return statistics.median(knownValues)
   else:
     raise InvalidAggregationMethod(
       "Unrecognized aggregation method %s" % aggregationMethod)
