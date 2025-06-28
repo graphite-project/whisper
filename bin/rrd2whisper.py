@@ -28,6 +28,8 @@ aggregationMethods.remove('sum')
 aggregationMethods.remove('absmax')
 # RRD doesn't have a 'absmin' type
 aggregationMethods.remove('absmin')
+# RRD doesn't have a 'median' type
+aggregationMethods.remove('median')
 
 option_parser = optparse.OptionParser(usage='''%prog rrd_path''')
 option_parser.add_option(
