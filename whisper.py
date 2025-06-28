@@ -31,14 +31,10 @@ import os
 import platform
 import re
 import struct
-import sys
 import time
 
 izip = getattr(itertools, 'izip', zip)
 ifilter = getattr(itertools, 'ifilter', filter)
-
-if sys.version_info >= (3, 0):
-  xrange = range
 
 try:
   import fcntl
@@ -54,10 +50,7 @@ except ImportError:
   CAN_FALLOCATE = False
 
 try:
-  if sys.version_info >= (3, 0):
-    from os import posix_fadvise, POSIX_FADV_RANDOM
-  else:
-    from fadvise import posix_fadvise, POSIX_FADV_RANDOM
+  from os import posix_fadvise, POSIX_FADV_RANDOM
   CAN_FADVISE = True
 except ImportError:
   CAN_FADVISE = False
@@ -299,7 +292,7 @@ def __readHeader(fh):
 
   archives = []
 
-  for i in xrange(archiveCount):
+  for i in range(archiveCount):
     packedArchiveInfo = fh.read(archiveInfoSize)
     try:
       (offset, secondsPerPoint, points) = struct.unpack(archiveInfoFormat, packedArchiveInfo)
@@ -625,7 +618,7 @@ def __propagate(fh, header, timestamp, higher, lower):
   currentInterval = lowerIntervalStart
   step = higher['secondsPerPoint']
 
-  for i in xrange(0, len(unpackedSeries), 2):
+  for i in range(0, len(unpackedSeries), 2):
     pointTime = unpackedSeries[i]
     if pointTime == currentInterval:
       neighborValues[i // 2] = unpackedSeries[i + 1]
@@ -802,7 +795,7 @@ def __archive_update_many(fh, header, archive, points):
   previousInterval = None
   currentString = b""
   lenAlignedPoints = len(alignedPoints)
-  for i in xrange(0, lenAlignedPoints):
+  for i in range(0, lenAlignedPoints):
     # Take last point in run of points with duplicate intervals
     if i + 1 < lenAlignedPoints and alignedPoints[i][0] == alignedPoints[i + 1][0]:
       continue
@@ -1023,7 +1016,7 @@ archive on a read and request data older than the archive's retention
   valueList = [None] * points  # Pre-allocate entire list for speed
   currentInterval = fromInterval
 
-  for i in xrange(0, len(unpackedSeries), 2):
+  for i in range(0, len(unpackedSeries), 2):
     pointTime = unpackedSeries[i]
     if pointTime == currentInterval:
       pointValue = unpackedSeries[i + 1]
@@ -1088,7 +1081,7 @@ def file_merge(fh_from, fh_to, time_from=None, time_to=None, now=None):
     (start, end, archive_step) = timeInfo
     pointsToWrite = list(ifilter(
       lambda points: points[1] is not None,
-      izip(xrange(start, end, archive_step), values)))
+      izip(range(start, end, archive_step), values)))
     # skip if there are no points to write
     if len(pointsToWrite) == 0:
       continue
@@ -1136,7 +1129,7 @@ def file_diff(fh_from, fh_to, ignore_empty=False, until_time=None, now=None):
          min(fromTimeInfo[2], toTimeInfo[2]))
 
     points = map(lambda s: (s * archive_step + start, fromValues[s], toValues[s]),
-                 xrange(0, (end - start) // archive_step))
+                 range(0, (end - start) // archive_step))
     if ignore_empty:
       points = [p for p in points if p[1] is not None and p[2] is not None]
     else:

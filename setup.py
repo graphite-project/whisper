@@ -22,10 +22,7 @@ setup(
   long_description_content_type='text/markdown',
   py_modules=['whisper'],
   scripts=glob('bin/*') + glob('contrib/*'),
-  install_requires=['six'],
   classifiers=[
-    'Programming Language :: Python :: 2',
-    'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',

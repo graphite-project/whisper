@@ -27,11 +27,6 @@ import time
 import sys
 import optparse
 
-if sys.version_info >= (3, 0):
-    xrange = range
-else:
-    from future_builtins import filter, zip
-
 
 def itemgetter(*items):
     if HAS_OPERATOR:
@@ -80,7 +75,7 @@ def fill(src, dst, tstart, tstop):
         (start, end, archive_step) = timeInfo
         pointsToWrite = list(filter(
             lambda points: points[1] is not None,
-            zip(xrange(start, end, archive_step), values)))
+            zip(range(start, end, archive_step), values)))
         # order points by timestamp, newest first
         pointsToWrite.sort(key=lambda p: p[0], reverse=True)
         whisper.update_many(dst, pointsToWrite)
