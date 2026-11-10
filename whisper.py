@@ -66,7 +66,13 @@ fallocate = None
 
 if CAN_FALLOCATE:
   libc_name = ctypes.util.find_library('c')
-  libc = ctypes.CDLL(libc_name)
+  if libc_name is None:
+    # No libc to probe (e.g. on Windows): fall back to not using
+    # fallocate, like when it exposes no usable fallocate symbol.
+    CAN_FALLOCATE = False
+    libc = None
+  else:
+    libc = ctypes.CDLL(libc_name)
   c_off64_t = ctypes.c_int64
   c_off_t = ctypes.c_int
 
