@@ -602,6 +602,22 @@ class TestWhisper(WhisperTestBase):
     def test_fallocate(self):
         self._update(useFallocate=True)
 
+    def test_import_without_libc(self):
+        # ctypes.util.find_library('c') returns None on platforms without a
+        # libc (e.g. Windows); importing whisper must then disable fallocate
+        # instead of crashing inside ctypes.CDLL(None).
+        import ctypes.util
+        try:
+            from importlib import reload as reload_module
+        except ImportError:  # Python 2
+            reload_module = reload
+        with patch.object(ctypes.util, 'find_library', return_value=None):
+            reload_module(whisper)
+        try:
+            self.assertFalse(whisper.CAN_FALLOCATE)
+        finally:
+            reload_module(whisper)
+
     def test_sparse(self):
         self._update(sparse=True)
 
