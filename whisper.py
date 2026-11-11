@@ -64,36 +64,48 @@ except ImportError:
 
 fallocate = None
 
-if CAN_FALLOCATE:
-  libc_name = ctypes.util.find_library('c')
-  libc = ctypes.CDLL(libc_name)
-  c_off64_t = ctypes.c_int64
-  c_off_t = ctypes.c_int
 
-  if platform.uname()[0] == 'FreeBSD':
-    # offset type is 64-bit on FreeBSD 32-bit & 64-bit platforms to address files more than 2GB
-    c_off_t = ctypes.c_int64
+def _setup_fallocate():
+    """Return a posix_fallocate wrapper when libc exposes one."""
+    libc_name = ctypes.util.find_library('c')
+    if libc_name is None:
+        return None
 
-  try:
-    _fallocate = libc.posix_fallocate64
-    _fallocate.restype = ctypes.c_int
-    _fallocate.argtypes = [ctypes.c_int, c_off64_t, c_off64_t]
-  except AttributeError:
     try:
-      _fallocate = libc.posix_fallocate
-      _fallocate.restype = ctypes.c_int
-      _fallocate.argtypes = [ctypes.c_int, c_off_t, c_off_t]
-    except AttributeError:
-      CAN_FALLOCATE = False
+        libc = ctypes.CDLL(libc_name)
+    except OSError:
+        return None
 
-  if CAN_FALLOCATE:
+    c_off64_t = ctypes.c_int64
+    c_off_t = ctypes.c_int
+
+    if platform.uname()[0] == 'FreeBSD':
+        # offset type is 64-bit on FreeBSD 32-bit & 64-bit platforms
+        # to address files more than 2GB.
+        c_off_t = ctypes.c_int64
+
+    try:
+        _fallocate = libc.posix_fallocate64
+        _fallocate.restype = ctypes.c_int
+        _fallocate.argtypes = [ctypes.c_int, c_off64_t, c_off64_t]
+    except AttributeError:
+        try:
+            _fallocate = libc.posix_fallocate
+            _fallocate.restype = ctypes.c_int
+            _fallocate.argtypes = [ctypes.c_int, c_off_t, c_off_t]
+        except AttributeError:
+            return None
+
     def _py_fallocate(fd, offset, len_):
-      res = _fallocate(fd.fileno(), offset, len_)
-      if res != 0:
-        raise IOError(res, 'fallocate')
-    fallocate = _py_fallocate
-  del libc
-  del libc_name
+        res = _fallocate(fd.fileno(), offset, len_)
+        if res != 0:
+            raise IOError(res, 'fallocate')
+    return _py_fallocate
+
+
+if CAN_FALLOCATE:
+  fallocate = _setup_fallocate()
+  CAN_FALLOCATE = fallocate is not None
 
 LOCK = False
 CACHE_HEADERS = False
